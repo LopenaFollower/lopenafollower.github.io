@@ -3,7 +3,11 @@
 	<head>
 		<title>Filipino</title>
 		<meta name="viewport"content="width=device-width,initial-scale=1">
+		<link href="https://fonts.googleapis.com/css?family=Montserrat"rel="stylesheet">
 		<style>
+			*{
+				font-family:"Montserrat";
+			}
 			body{margin:0 0}
 			div#header{
 				position:-webkit-sticky;
@@ -67,8 +71,12 @@
 				background-color:#f1f1f1;
 				min-width:160px;
 				overflow:auto;
+				border-radius:2.5px;
 				box-shadow:0px 8px 16px 0px rgba(0,0,0,.2);
 				z-index:1;
+				offset-position:80px 125px;
+				offset-anchor:center;
+				offset-path:ray(90deg);
 			}
 			.pg_cn a{
 				user-select:none;
