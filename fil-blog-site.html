@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title></title>
+		<meta name="viewport"content="width=device-width,initial-scale=1">
+		<style>
+			body{margin:0 0}
+			div#header{
+				position:-webkit-sticky;
+				position:sticky;
+				top:0;
+				left:0;
+				width:100%;
+				height:55px;
+				box-shadow:0 4px 8px 0 rgba(0,0,0,.2),0 6px 20px 0 rgba(0,0,0,.2);
+				z-index:500;
+				background:#071c2e;
+			}
+			div.content{
+				word-wrap:break-word;
+				overflow-wrap:break-word;
+			}
+			div#tab_container>span{
+				display:inline-block;
+				float:right;
+				padding:5px;
+				margin-riht:5px;
+				margin-top:20px;
+			}
+			div#tab_container>div{
+				transition-timing-function:linear;
+				transition-duration:.15s;
+				user-select:none;
+				color:white;
+				padding:18px;
+				float:left;
+				border-radius:5px;
+				margin-left:5px;
+				background:none;
+				background:#071c2e;
+			}
+			div#tab_container>div:hover{
+				background:#103452;
+				border-radius:0px;
+			}
+			div.page{
+				padding:25px;
+			}
+			button.section_btn{
+				border:1px solid black;
+				border-radius:5px;
+				background:#fff;
+			}
+			div.ct_cnt{
+				border:2px solid #ddd;
+				width:80%;
+				min-height:600px;
+				display:flex;
+			}
+			div.dropdown{
+				position:relative;
+				display:inline-block;
+			}
+			.pg_cn{
+				display:none;
+				position:absolute;
+				background-color:#f1f1f1;
+				min-width:160px;
+				overflow:auto;
+				box-shadow:0px 8px 16px 0px rgba(0,0,0,.2);
+				z-index:1;
+			}
+			.pg_cn a{
+				user-select:none;
+				color:black;
+				padding:12px 16px;
+				text-decoration:none;
+				display:block;
+			}
+			.dropdown a:hover{background-color:#ddd;}
+			.show{display:block}
+			div.content_text{
+				padding-top:5px;
+				padding-left:5px;
+			}
+			div.content_img{
+				padding-top:5px;
+			}
+		</style>
+	</head>
+	<body>
+		<div id=header>
+			<div id=tab_container>
+				<span>Chadwick logo</span>
+				<div onclick="switchTab('homepage')">Home</div>
+				<div class=dropdown onclick="showPages()">Pages
+					<div id=page_list class=pg_cn>
+						<a onclick="switchTab('page1')">Page 1</a>
+						<a onclick="switchTab('page2')">Page 2</a>
+						<a onclick="switchTab('page3')">Page 3</a>
+					</div>
+				</div>
+				<div onclick="switchTab('aboutpage')">About</div>
+			</div>
+		</div>
+		<div id=homepage class=page>
+			<div class=ct_cnt>
+				<div id=ct1_text class=content_text>
+					Home Page
+				</div>
+				<div id=ct1_img class=content_img>
+					img
+				</div>
+			</div>
+		</div>
+		<div id=page1 class=page>
+			<div class=ct_cnt>
+				<div id=p1_text class=content_text>
+					Page 1
+				</div>
+				<div id=p1_img class=content_img>
+					img
+				</div>
+			</div>
+		</div>
+		<div id=page2 class=page>
+			<div class=ct_cnt>
+				<div id=p2_text class=content_text>
+					Page 2
+				</div>
+				<div id=p2_img class=content_img>
+					img
+				</div>
+			</div>
+		</div>
+		<div id=page3 class=page>
+			<div class=ct_cnt>
+				<div id=p3_text class=content_text>
+					Page 3
+				</div>
+				<div id=p3_img class=content_img>
+					img
+				</div>
+			</div>
+		</div>
+		<div id=aboutpage class=page>
+			<div class=ct_cnt>
+				<div id=ct1_text class=content_text>
+					About Page
+				</div>
+				<div id=ct1_img class=content_img>
+					img
+				</div>
+			</div>
+		</div>
+		<script>
+function getById(id){
+	return document.getElementById(id);
+}
+function getByClass(id){
+	return document.getElementsByClassName(id);
+}
+let windowWidth;
+function percentToPixel(el,p,type){
+	let desired=p/100*windowWidth;
+	if(typeof el=="string")
+	getById(el).style[type]=desired+"px";
+	else el.style[type]=desired+"px";
+}
+function update(){
+	windowWidth=parseFloat(window.getComputedStyle(header).getPropertyValue("width"));
+	Array.from(getByClass("content_text")).forEach(e=>percentToPixel(e,65,"width"))
+	Array.from(getByClass("ct_cnt")).forEach(e=>percentToPixel(e,85,"width"))
+	Array.from(getByClass("content_img")).forEach(e=>percentToPixel(e,35,"width"))
+	requestAnimationFrame(update)
+}
+update()
+let currentTab="homepage";
+switchTab(currentTab)
+function switchTab(tab){
+	Array.from(getByClass("page")).forEach(e=>e.id!=tab&&(e.style.display="none"))
+	getById(tab).style.display="block"
+}
+function showPages(){
+	getById("page_list").classList.toggle("show");
+}
+window.onclick=e=>{
+	let d=getByClass("pg_cn");
+	if(!e.target.matches(".dropdown"))for(let i=0,opd=d[i];i<d.length;i++,opd=d[i])if(opd.classList.contains("show"))opd.classList.remove("show");
+}
+
+		</script>
+	</body>
+</html>
