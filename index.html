@@ -97,6 +97,7 @@ document.addEventListener("DOMContentLoaded",()=>{
 	vid.addEventListener("loadedmetadata",function omdl(){
 		vid.removeEventListener("loadedmetadata",omdl);
 		vid.style.opacity=1;
+		vid.play();
 		Array.from(document.getElementsByTagName("td")).forEach((e,i)=>{
 			hold(e);
 			e.onclick=_=>skipToTimestamp(i);
