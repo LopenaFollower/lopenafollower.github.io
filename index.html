@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<title></title>
+		<title>Calculus 1</title>
 		<meta name="viewport"content="width=device-width,initial-scale=1">
 		<style>
 			body{
@@ -38,15 +38,20 @@
 				overflow-x:scroll;
 				font-family:monospace;
 			}
+			#cont,video{
+				opacity:0;
+				transition-timing-function:linear;
+				transition-duration:1s;
+			}
 		</style>
 	</head>
 	<body>
 		<div id=flexbox>
 			<video id=vid type="video/mp4"controls></video>
-			<div class=container>
+			<div id=cont>
 				<div id=tbl>
+					<div><b>Lessons</b></div>
 					<table>
-						<tr><th style="text-align:left;"colspan=1000>Lessons</th></tr>
 						<tr>
 							<td>1: Rational Expressions</td>
 							<td>2: Difference Quotient</td>
@@ -62,8 +67,8 @@
 							<td>12: Limits at Infinity: Algebraic Tricks</td>
 							<td>13: Continuity</td>
 							<td>14: Continuity on Intervals and Functions</td>
-							<td>15</td>
-							<td>16</td>
+							<td>15: Intermediate Value Theorem</td>
+							<td>16: Right Angle Trigonometry</td>
 							<td>17</td>
 							<td>18</td>
 							<td>19</td>
@@ -73,12 +78,23 @@
 							<td>23</td>
 							<td>24</td>
 							<td>25</td>
+							<td>26</td>
+							<td>27</td>
+							<td>28</td>
+							<td>29</td>
+							<td>30</td>
+							<td>31</td>
+							<td>32</td>
+							<td>33</td>
+							<td>34</td>
+							<td>35</td>
+							<td>36</td>
 						</tr>
 					</table>
 				</div>
 				<span id=dur onclick="navigator.clipboard.writeText(this.innerText)"></span>
-				<div id=windowwidth style="width:100%">&nbsp;</div>
 				<button onclick="vid.currentTime-=30">-30</button><button onclick="vid.currentTime+=30">+30</button>
+				<div id=windowwidth style="width:100%">&nbsp;</div>
 			</div>
 		</div>
 		<script>
@@ -91,7 +107,7 @@ function hold(e){
 	["touchend","mouseup","mouseout"].forEach(m=>e.addEventListener(m,v=>e.style.backgroundColor="#fff"));
 }
 function skipToTimestamp(n){
-	let ts=[18.4,581,1100.7,1551.9,1889.15,2227.65,2578,3367.2,4120.7,4630.35,5435.4,5851.8,6334.6,6803];
+	let ts=[18.4,581,1100.7,1551.9,1889.15,2227.65,2578,3367.2,4120.7,4630.35,5435.4,5851.8,6334.6,6803,7183,7417.2];
 	if(n>=ts.length)return;
 	vid.currentTime=ts[n];
 	vid.play();
@@ -99,7 +115,7 @@ function skipToTimestamp(n){
 document.addEventListener("DOMContentLoaded",()=>{
 	vid.addEventListener("loadedmetadata",function omdl(){
 		vid.removeEventListener("loadedmetadata",omdl);
-		vid.style.opacity=1;
+		vid.style.opacity=cont.style.opacity=1;
 		Array.from(document.getElementsByTagName("td")).forEach((e,i)=>{
 			hold(e);
 			e.onclick=_=>skipToTimestamp(i);
