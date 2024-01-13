@@ -5,19 +5,26 @@
 		<meta name="viewport"content="width=device-width,initial-scale=1">
 		<style>
 			body{
-				display:flex;
 				margin:0 0;
 			}
-			video{border:1px solid black;}
+			@media(orientation:landscape){
+				video{width:auto}
+			}
+			@media(orientation:portrait){
+				video{width:100%}
+			}
+			video{
+				border:1px solid black;
+				border-radius:5px;
+				opacity:0;
+			}
 			table{
 				border-collapse:collapse;
-				max-width:70px;
 			}
-			div.tbc{
+			#tbl{
 				border:1px solid black;
 				overflow:hidden;
 				overflow-y:scroll;
-				height:50%;
 			}
 			td{
 				border:1px solid #000;
@@ -31,58 +38,54 @@
 				overflow-x:scroll;
 				font-family:monospace;
 			}
-			div.container{
-				padding:10px;
-			}
 		</style>
 	</head>
 	<body>
-		<video width=400 height=300 id=vid type="video/mp4"style="opacity:0"controls></video>
-		<div class=container>
-			<input type=number oninput="if(!isNaN(this.value)&&Number(this.value)>0){mg=Number(this.value);resize('fc')}"/><br>
-			<button onclick="vid.currentTime-=30">-30</button><button onclick="vid.currentTime+=30">+30</button>
-			<div class=tbc>
-				<table>
-					<tr><th style="text-align:left"colspan=1000>Lessons</th></tr>
-					<tr>
-						<td>1: Rational Expressions</td>
-						<td>2: Difference Quotient</td>
-						<td>3: Graphs and Limits</td>
-						<td>4: Nonexistent Limits</td>
-						<td>5: Limit Laws</td>
-						<td>6: The Squeeze Theorem</td>
-						<td>7: Calculate Limits using Algebra</td>
-						<td>8: When Limits of the Denominator is 0</td>
-						<td>9: Line Graphs and Equations</td>
-						<td>10: Rational Functions</td>
-						<td>11: Limits at Infinity: Graphs</td>
-						<td>12: Limits at Infinity: Algebraic Tricks</td>
-						<td>13: Continuity</td>
-						<td>14: Continuity on Intervals and Functions</td>
-						<td>15</td>
-					</tr>
-				</table>
+		<div id=flexbox>
+			<video id=vid type="video/mp4"controls></video>
+			<div class=container>
+				<div id=tbl>
+					<table>
+						<tr><th style="text-align:left;"colspan=1000>Lessons</th></tr>
+						<tr>
+							<td>1: Rational Expressions</td>
+							<td>2: Difference Quotient</td>
+							<td>3: Graphs and Limits</td>
+							<td>4: Nonexistent Limits</td>
+							<td>5: Limit Laws</td>
+							<td>6: The Squeeze Theorem</td>
+							<td>7: Calculate Limits using Algebra</td>
+							<td>8: When Limits of the Denominator is 0</td>
+							<td>9: Line Graphs and Equations</td>
+							<td>10: Rational Functions</td>
+							<td>11: Limits at Infinity: Graphs</td>
+							<td>12: Limits at Infinity: Algebraic Tricks</td>
+							<td>13: Continuity</td>
+							<td>14: Continuity on Intervals and Functions</td>
+							<td>15</td>
+							<td>16</td>
+							<td>17</td>
+							<td>18</td>
+							<td>19</td>
+							<td>20</td>
+							<td>21</td>
+							<td>22</td>
+							<td>23</td>
+							<td>24</td>
+							<td>25</td>
+						</tr>
+					</table>
+				</div>
+				<span id=dur onclick="navigator.clipboard.writeText(this.innerText)"></span>
+				<div id=windowwidth style="width:100%">&nbsp;</div>
+				<button onclick="vid.currentTime-=30">-30</button><button onclick="vid.currentTime+=30">+30</button>
 			</div>
-			<span id=dur onclick="navigator.clipboard.writeText(this.innerText)"></span>
 		</div>
 		<script>
-var mg=1;
-function resize(n){
-	if(n=="fc"){
-		vid.style.height=window.innerHeight*mg+"px";
-		vid.style.width=window.innerHeight/.75*mg+"px";
-		return;
-	}
-	n=Number(n);
-	if(n<2||n>10)return;
-	let w=100*n,h=w*.75;
-	vid.style.width=w*mg+"px";
-	vid.style.height=h*mg+"px";
+function resize(){
+	vid.style.height=getWidth()*mg+"px";
+	vid.style.width=getWidth()*mg/.75+"px";
 }
-requestAnimationFrame(function update(){
-	dur.innerText=vid.currentTime.toFixed(2)
-	requestAnimationFrame(update)
-})
 function hold(e){
 	["touchstart","mousedown"].forEach(m=>e.addEventListener(m,v=>e.style.backgroundColor="#999"));
 	["touchend","mouseup","mouseout"].forEach(m=>e.addEventListener(m,v=>e.style.backgroundColor="#fff"));
@@ -97,7 +100,6 @@ document.addEventListener("DOMContentLoaded",()=>{
 	vid.addEventListener("loadedmetadata",function omdl(){
 		vid.removeEventListener("loadedmetadata",omdl);
 		vid.style.opacity=1;
-		vid.play();
 		Array.from(document.getElementsByTagName("td")).forEach((e,i)=>{
 			hold(e);
 			e.onclick=_=>skipToTimestamp(i);
@@ -105,7 +107,13 @@ document.addEventListener("DOMContentLoaded",()=>{
 	})
 	vid.src="https://www.dropbox.com/scl/fi/si48hap617shxnw0gw2yf/vid.mp4?rlkey=t748kd0wsnl1zi4qyg96s6gsp&raw=1";
 });
-resize("fc")
+requestAnimationFrame(function update(){
+	dur.innerText=vid.currentTime.toFixed(3)
+	let res=window.screen.orientation.type=="portrait-primary"
+	flexbox.style.display=res?"inline-block":"flex";
+	vid.style.height=tbl.style.height=res?"auto":window.innerHeight*.98+"px";
+	requestAnimationFrame(update)
+})
 		</script>
 	</body>
 </html>
