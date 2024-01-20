@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Calculus 1</title>
+		<meta name="viewport"content="width=device-width,initial-scale=1">
+		<style>
+			body{margin:0 0}
+			@media(orientation:landscape){video{width:auto}}
+			@media(orientation:portrait){video{width:100%}}
+			video{opacity:0}
+			table{border-collapse:collapse}
+			#tbl{
+				border:1px solid black;
+				overflow-y:scroll;
+				overflow:hidden;
+			}
+			td{
+				font-family:monospace;
+				border:1px solid #000;
+				white-space:nowrap;
+				overflow-x:scroll;
+				text-align:left;
+				overflow:hidden;
+				display:block;
+				margin:auto;
+				float:left;
+				width:100%;
+			}
+			#cont,video{
+				transition-timing-function:linear;
+				transition-duration:.4s;
+				opacity:0;
+			}
+		</style>
+	</head>
+	<body>
+		<div id=flexbox>
+			<video id=vid type="video/mp4"controls></video>
+			<div id=cont>
+				<div id=tbl>
+					<div><b>Lessons</b></div>
+					<table>
+						<tr>
+							<td>1: Rational Expressions</td>
+							<td>2: Difference Quotient</td>
+							<td>3: Graphs and Limits</td>
+							<td>4: Nonexistent Limits</td>
+							<td>5: Limit Laws</td>
+							<td>6: The Squeeze Theorem</td>
+							<td>7: Calculate Limits using Algebra</td>
+							<td>8: When Limits of the Denominator is 0</td>
+							<td>9: Line Graphs and Equations</td>
+							<td>10: Rational Functions</td>
+							<td>11: Limits at Infinity: Graphs</td>
+							<td>12: Limits at Infinity: Algebraic Tricks</td>
+							<td>13: Continuity</td>
+							<td>14: Continuity on Intervals and Functions</td>
+							<td>15: Intermediate Value Theorem</td>
+							<td>16: Right Angle Trigonometry</td>
+							<td>17 to be continued</td>
+						</tr>
+					</table>
+				</div>
+				<span id=dur onclick="navigator.clipboard.writeText(this.innerText)"></span>
+				<button onclick="vid.currentTime-=30">-30</button><button onclick="vid.currentTime+=30">+30</button>
+			</div>
+		</div>
+		<script>
+function hold(e){
+	["touchstart","mousedown"].forEach(m=>e.addEventListener(m,v=>e.style.backgroundColor="#999"));
+	["touchend","mouseup","mouseout"].forEach(m=>e.addEventListener(m,v=>e.style.backgroundColor="#fff"));
+}
+function skipToTimestamp(n){
+	let ts=[18.4,581,1100.7,1551.9,1889.15,2227.6,2578,3367.2,4120.7,4630.35,5435.4,5851.8,6334.6,6803,7183,7417.2];
+	if(n>=ts.length)return;
+	vid.currentTime=ts[n];
+	vid.play();
+}
+document.addEventListener("DOMContentLoaded",()=>{
+	vid.addEventListener("loadedmetadata",function omdl(){
+		vid.removeEventListener("loadedmetadata",omdl);
+		vid.style.opacity=cont.style.opacity=1;
+		Array.from(document.getElementsByTagName("td")).forEach((e,i)=>{
+			hold(e);
+			e.onclick=_=>skipToTimestamp(i);
+		})
+	})
+	vid.src="https://www.dropbox.com/scl/fi/si48hap617shxnw0gw2yf/vid.mp4?rlkey=t748kd0wsnl1zi4qyg96s6gsp&raw=1";
+});
+requestAnimationFrame(function update(){
+	dur.innerText=vid.currentTime.toFixed(3)
+	let res=window.screen.orientation.type=="portrait-primary"
+	flexbox.style.display=res?"inline-block":"flex";
+	vid.style.height=tbl.style.height=res?"auto":window.innerHeight*.99+"px";
+	requestAnimationFrame(update)
+})
+		</script>
+	</body>
+</html>
