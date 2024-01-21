@@ -21,7 +21,11 @@
 			<legend>Options</legend>
 			<table>
 				<tr>
-					<td>coords</td>
+					<td>Generations</td>
+					<td id=gensps></td>
+				</tr>
+				<tr>
+					<td>Coords</td>
 					<td id=coords></td>
 				</tr>
 				<tr>
@@ -33,7 +37,7 @@
 					<td><button onclick="nextGen()">Step</button></td>
 				</tr>
 				<tr>
-					<td>connected edges</td>
+					<td>Wrap edges</td>
 					<td><input type=checkbox checked id='cneds'/></td>
 				</tr>
 				<tr>
@@ -41,19 +45,19 @@
 					<td><button onclick="init()">Clear</button></td>
 				</tr>
 				<tr>
-					<td>grid size</td>
+					<td>Grid size</td>
 					<td><input value=50 style='width:60px'oninput='set("gsz",parseInt(this.value))'/></td>
 				</tr>
 				<tr>
-					<td>tick delay</td>
+					<td>Tick delay</td>
 					<td><input value=100 style='width:60px'oninput='set("tps",parseInt(this.value))'/></td>
 				</tr>
 				<tr>
-					<td>gens per tick</td>
+					<td>Gens per tick</td>
 					<td><input value=1 style='width:60px'oninput='set("gpt",parseInt(this.value))'/></td>
 				</tr>
 				<tr>
-					<td>random set</td>
+					<td>Random set</td>
 					<td><button onclick='init();loadset(0,0,0);'>load</button></td>
 			</table>
 		</fieldset>
@@ -70,6 +74,7 @@ let cells,tmp;
 let instances=[];
 let tickdelay=100;
 let gens=1;
+let pgns=0;
 class Cell{
 	constructor(x,y){this.x=x;this.y=y}
 	countNeighbors(){
@@ -275,6 +280,28 @@ const sets={
 			[1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0]
 		]
 	},
+	"52514M":{
+		width:16,
+		height:16,
+		build:[
+			[0,1,0,1,1,0,0,1,1,1,1,1,0,1,1,0],
+			[1,1,0,0,0,1,1,1,0,0,1,0,0,0,1,1],
+			[0,0,1,0,1,0,0,0,0,0,0,0,1,0,0,1],
+			[0,0,0,0,0,1,0,0,1,0,1,1,1,0,0,1],
+			[1,1,1,0,0,0,1,0,0,1,1,0,0,0,1,1],
+			[0,0,0,0,1,1,1,0,1,0,0,0,1,1,1,0],
+			[0,0,0,0,1,0,0,1,1,1,0,0,0,0,0,1],
+			[0,0,0,1,0,1,1,0,1,0,0,0,0,0,1,0],
+			[1,0,0,1,1,1,0,0,0,0,1,1,0,1,1,1],
+			[1,0,1,0,1,0,0,1,0,0,1,0,0,0,0,0],
+			[1,0,0,0,0,0,0,1,0,0,1,1,0,0,0,0],
+			[0,1,1,0,1,0,0,1,0,0,0,0,1,0,0,1],
+			[0,1,0,0,1,1,0,0,0,0,1,0,1,0,1,1],
+			[0,0,1,0,0,0,0,0,1,1,0,0,0,1,0,0],
+			[1,0,1,1,0,1,1,1,0,0,0,0,1,0,0,1],
+			[1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+		]
+	},
 	"64P2H1V0":{
 		width:31,
 		height:8,
@@ -459,6 +486,7 @@ function fill(xs,ys,xe,ye,t){
 }
 function init(){
 	instances=[];
+	pgns=0;
 	cells=new Array(size).fill().map(e=>new Array(size).fill(0));
 	tmp=new Array(size).fill().map(e=>new Array(size).fill(0));
 	start=stbtn.checked=false;
@@ -491,6 +519,7 @@ function set(n,v){
 	}
 }
 function nextGen(){
+	pgns++
 	for(let i=0;i<size**2;i++)instances[i].next();
 	for(let i=0;i<size;i++){
 		cells[i]=[...tmp[i]];
@@ -500,6 +529,7 @@ function nextGen(){
 function draw(){
 	let pixel=cvs.width/size;
 	ctx.clearRect(0,0,cvs.width,cvs.width);
+	gensps.innerText=pgns;
 	for(let i=0;i<size;i++)for(let j=0;j<size;j++){
 		ctx.fillStyle=cells[i][j]?"#fff":"#000";
 		ctx.fillRect(pixel*j,pixel*i,pixel,pixel);
@@ -545,7 +575,7 @@ function convert(txt){
 	})
 	console.log({width:width,height:yp+1,build:arr})
 }
-convert("")
+convert("bob2o2b5ob2o$2o3b3o2bo3b2o$2bobo7bo2bo$5bo2bob3o2bo$3o3bo2b2o3b2o$4b3obo3b3o$4bo2b3o5bo$3bob2obo5bo$o2b3o4b2ob3o$obobo2bo2bo$o6bo2b2o$b2obo2bo4bo2bo$bo2b2o4bobob2o$2bo5b2o3bo$ob2ob3o4bo2bo$2o")
 //optimize using logic
 		</script>
 	</body>
