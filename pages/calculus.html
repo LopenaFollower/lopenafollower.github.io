@@ -70,7 +70,7 @@ function hold(e){
 	["touchend","mouseup","mouseout"].forEach(m=>e.addEventListener(m,v=>e.style.backgroundColor="#fff"));
 }
 function skipToTimestamp(n){
-	let ts=[18.4,581,1100.7,1551.9,1889.15,2227.6,2578,3367.2,4120.7,4630.35,5435.4,5851.8,6334.6,6803,7183,7417.2];
+	let ts=[18.4,581,1100.7,1551.9,1889.1,2227.6,2578,3367.2,4120.7,4630.3,5435.4,5851.8,6334.6,6803,7183,7417.2];
 	if(n>=ts.length)return;
 	vid.currentTime=ts[n];
 	vid.play();

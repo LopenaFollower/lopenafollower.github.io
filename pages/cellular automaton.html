@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Elementary Cellular Automaton</title>
+		<meta name="viewport"content="width=device-width,initial-scale=1">
+		<style>
+			body{margin:0 0}
+		</style>
+	</head>
+	<body>
+		<input id=pattern style='width:100%'value=00000000000000000000000000000000000000000000000001 oninput='setPattern(this.value)'placeholder='starting pattern'/>
+		<canvas id=cvs></canvas><br>
+		<input id=tgg type=checkbox oninput='tog(this.checked)'/><br>
+		<button onclick='reset()'>reset</button><br>
+		<input placeholder='0-255'value=0 oninput='rule(parseInt(this.value))'/>
+		<script>
+const states={"111":0,"110":0,"101":0,"100":0,"011":0,"010":0,"001":0,"000":0}
+const stv=Object.keys(states).sort((a,b)=>b.localeCompare(a));
+const width=99,height=99;
+const arr=[new Array(width).fill(0)];
+const ctx=cvs.getContext("2d");
+let toggle=false;
+function tog(s){
+	toggle=s;
+	for(let i=0;i<pattern.length;i++)arr[0][i]=pattern[i];
+}
+function rule(n){
+	if(n<0||n>255||isNaN(n))return;
+	let bin=n.toString(2).padStart(8,0);
+	for(let i=0;i<8;i++)states[stv[i]]=bin[i];
+}
+let pattern;setPattern("00000000000000000000000000000000000000000000000001");
+function setPattern(p){
+	let pa=p.match(/0|1/g)||[];
+	if(pa.length<=arr[0].length){
+		pattern=pa.map(e=>parseInt(e));
+	}
+}
+function getStateFromAdjacent(r,c){
+	const a=_=>Math.random()*2|0;
+	let tl=arr[r][c-1];
+	let tm=arr[r][c];
+	let tr=arr[r][c+1];
+	return states[""+(isNaN(tl)?a():tl)+(isNaN(tm)?a():tm)+(isNaN(tr)?a():tr)];
+}
+function step(){
+	let a=[];
+	let r=arr.length;
+	let c=arr[0].length;
+	for(let i=0;i<c;i++){
+		a.push(getStateFromAdjacent(r-1,i))
+	}
+	arr.push(a);
+	if(arr.length>height){
+		arr.shift();
+	}
+	let p=cvs.width/c;r=arr.length
+	for(let i=0;i<r;i++)for(let j=0;j<c;j++){
+		ctx.fillStyle=arr[i][j].toString()==="1"?"#000":"#fff";
+		ctx.fillRect(p*j,p*i,p,p);
+	}
+}
+function reset(){
+	while(arr.length>1)arr.shift();
+	let r=arr.length,c=arr[0].length,p=cvs.width/c;
+	for(let i=0;i<c;i++)arr[0][i]=pattern[i]||0;
+	for(let i=0;i<r;i++)for(let j=0;j<c;j++){
+		ctx.fillStyle=arr[i][j].toString()==="1"?"#000":"#fff";
+		ctx.fillRect(p*j,p*i,p,p);
+	}
+	
+}
+requestAnimationFrame(function a(){
+	if(toggle)step();
+	requestAnimationFrame(a);
+})
+cvs.width=cvs.height=(Math.min(screen.width,screen.height)|0)*.995;
+		</script>
+	</body>
+</html>
