@@ -10,7 +10,8 @@
 	<body>
 		<input id=pattern style='width:100%'value=00000000000000000000000000000000000000000000000001 oninput='setPattern(this.value)'placeholder='starting pattern'/>
 		<canvas id=cvs></canvas><br>
-		<input id=tgg type=checkbox oninput='tog(this.checked)'/><br>
+		toggle<input id=tgg type=checkbox oninput='tog(this.checked)'/><br>
+		wrap edges<input id=edge type=checkbox /><br>
 		<button onclick='reset()'>reset</button><br>
 		<input placeholder='0-255'value=0 oninput='rule(parseInt(this.value))'/>
 		<script>
@@ -38,10 +39,12 @@ function setPattern(p){
 }
 function getStateFromAdjacent(r,c){
 	const a=_=>Math.random()*2|0;
-	let tl=arr[r][c-1];
+	let e=edge.checked;
+	let tl=arr[r][c-1<0&&e?width-1:c-1];
 	let tm=arr[r][c];
-	let tr=arr[r][c+1];
-	return states[""+(isNaN(tl)?a():tl)+(isNaN(tm)?a():tm)+(isNaN(tr)?a():tr)];
+	let tr=arr[r][c+1>width-1&&e?0:c+1];
+	const q=_=>isNaN(_)?a():_;
+	return states[""+q(tl)+q(tm)+q(tr)];
 }
 function step(){
 	let a=[];
