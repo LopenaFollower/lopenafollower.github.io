@@ -7,8 +7,25 @@
 		</style>
 	</head>
 	<body>
-		<a href='pages/calculus.html'>test</a>
+		<input id=enter /><button onclick='verify(enter.value)'>go</button>
 		<script>
+function verify(file){
+	let xhr=new XMLHttpRequest(),response,to;
+	xhr.onreadystatechange=function(){
+		if(this.status+this.readyState==204){
+			response=true;
+		}
+	}
+	xhr.open("GET",location.href+"pages/"+file+".html",true);
+	xhr.send();
+	to=setTimeout(()=>{
+		if(response){
+			location.href+="pages/"+file+".html";
+		}else{
+			alert("file not found")
+		}
+	},1e3);
+}
 		</script>
 	</body>
 </html>
