@@ -33,7 +33,7 @@ document.addEventListener("DOMContentLoaded",()=>{
 	}
 	function appendPage(obj){
 		const opt=document.createElement("option");
-		opt.innerText=opt.value=obj.path;
+		opt.innerText=opt.value="pages/"+obj.path;
 		dropdown.appendChild(opt);
 	}
 	const xhr=new XMLHttpRequest();
