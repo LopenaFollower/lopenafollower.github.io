@@ -11,7 +11,7 @@
 		<script>
 var file=null;
 function verify(){
-	if(file)location.href+=file;
+	if(file)location.href+="pages/"+file;
 }
 document.addEventListener("DOMContentLoaded",()=>{
 	function getContents(){
@@ -33,7 +33,7 @@ document.addEventListener("DOMContentLoaded",()=>{
 	}
 	function appendPage(obj){
 		const opt=document.createElement("option");
-		opt.innerText=opt.value="pages/"+obj.path;
+		opt.innerText=opt.value=obj.path;
 		dropdown.appendChild(opt);
 	}
 	const xhr=new XMLHttpRequest();
