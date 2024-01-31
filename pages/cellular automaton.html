@@ -37,7 +37,7 @@ function setPattern(p){
 		pattern=pa.map(e=>parseInt(e));
 	}
 }
-function getStateFromAdjacent(r,c){
+function calcState(r,c){
 	const a=_=>Math.random()*2|0;
 	let e=edge.checked;
 	let tl=arr[r][c-1<0&&e?width-1:c-1];
@@ -49,9 +49,9 @@ function getStateFromAdjacent(r,c){
 function step(){
 	let a=[];
 	let r=arr.length;
-	let c=arr[0].length;
+	let c=width;
 	for(let i=0;i<c;i++){
-		a.push(getStateFromAdjacent(r-1,i))
+		a.push(calcState(r-1,i))
 	}
 	arr.push(a);
 	if(arr.length>height){
@@ -78,6 +78,5 @@ requestAnimationFrame(function a(){
 	requestAnimationFrame(a);
 })
 cvs.width=cvs.height=(Math.min(screen.width,screen.height)|0)*.995;
-		</script>
-	</body>
+		</script>	</body>
 </html>
