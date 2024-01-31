@@ -7,25 +7,40 @@
 		</style>
 	</head>
 	<body>
-		<input id=enter /><button onclick='verify(enter.value)'>go</button>
+		<select id=dropdown oninput="file=this.value"><option value=null></option></select><button onclick="verify()">go</button>
 		<script>
-function verify(file){
-	let xhr=new XMLHttpRequest(),response,to;
-	xhr.onreadystatechange=function(){
-		if(this.status+this.readyState==204){
-			response=true;
+var file=null;
+function verify(){
+	if(file)location.href+=file;
+}
+document.addEventListener("DOMContentLoaded",()=>{
+	function getContents(){
+		const self=this;
+		if(self.status+self.readyState==204){
+			console.log("contents loaded")
+			let x=new XMLHttpRequest();
+			x.onreadystatechange=handlePages;
+			x.open("GET",JSON.parse(this.responseText)[1].git_url,true);
+			x.send();
 		}
 	}
-	xhr.open("GET",location.href+"pages/"+file+".html",true);
-	xhr.send();
-	to=setTimeout(()=>{
-		if(response){
-			location.href+="pages/"+file+".html";
-		}else{
-			alert("file not found")
+	function handlePages(){
+		if(this.status+this.readyState==204){
+			console.log("data loaded");
+			const data=JSON.parse(this.responseText);
+			data.tree.forEach(appendPage);
 		}
-	},1e3);
-}
+	}
+	function appendPage(obj){
+		const opt=document.createElement("option");
+		opt.innerText=opt.value=obj.path;
+		dropdown.appendChild(opt);
+	}
+	const xhr=new XMLHttpRequest();
+	xhr.onreadystatechange=getContents;
+	xhr.open("GET","https://api.github.com/repos/LopenaFollower/lopenafollower.github.io/contents",true);
+	xhr.send();
+})
 		</script>
 	</body>
 </html>
