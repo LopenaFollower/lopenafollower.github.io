@@ -202,7 +202,7 @@ function placeFlag(x,y){
 }
 requestAnimationFrame(function update(){
 	let w=(Math.min(screen.width,screen.height)*.995)|0;
-	let o=screen.width<screen.height;
+	let o=window.innerWidth<window.innerHeight;
 	let r=gridSize.x/gridSize.y;
 	flexbox.style.display=o?"inline-block":"flex";
 	cvs.width=o?w:w*r*.75;
