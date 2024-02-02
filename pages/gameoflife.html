@@ -88,31 +88,28 @@
 			</fieldset>
 		</div>
 		<script>
-let settings={
+const settings={
 	running:false,
 	gridSize:100,
 	tickDelay:1,
 	generationsPerTick:1,
 	bounds:{x:50,y:50,X:0,Y:0},
-	color:"#ffffff"
+	color:"#fff"
 }
 const Cell=function(x,y,s){this.x=x;this.y=y;this.s=s}
 const ctx=cvs.getContext("2d");
 let cells=[],gens=0;
-for(let i=0;i<settings.gridSize;i++){
-	cells[i]=[];
-	for(let j=0;j<settings.gridSize;j++)cells[i][j]=0;
-}
+for(let i=0,j;i<settings.gridSize;i++)for(cells[i]=[],j=0;j<settings.gridSize;j++)cells[i][j]=0;
 function rgb(){
-	const g100=_=>Math.random()*155+100;
+	const g100=_=>Math.random()*156+100|0;
 	return"rgb("+g100()+","+g100()+","+g100()+")";
 }
 function set(n,v){
 	switch(n){
-	case"gsz":if(v>=5&&v<=1000)reload(v);break;
-	case"tps":if(v<=1000)settings.tickDelay=v;break;
-	case"gpt":if(v>0&&v<=25)settings.generationsPerTick=v;break;
-	case"col":if(/^#([0-9a-f]{3}){1,2}$/i.test(v))settings.color=v;else if(v=="rgb")settings.color="rndm";
+		case"gsz":if(v>=5&&v<=1000)reload(v);break;
+		case"tps":if(v<=1000)settings.tickDelay=v;break;
+		case"gpt":if(v>0&&v<=25)settings.generationsPerTick=v;break;
+		case"col":if(/^#([0-9a-f]{3}){1,2}$/i.test(v))settings.color=v;else if(v=="rgb")settings.color="rndm";
 	}
 }
 const sets={
@@ -144,7 +141,6 @@ const sets={
 	"copperhead":{width:8,height:12,build:RLEtoARR("b2o2b2o$3b2o$3b2o$obo2bobo$o6bo$$o6bo$b2o2b2o$2b4o$$3b2o$3b2o")},
 	"mosquito":{width:5,height:18,build:RLEtoARR("b4o$o3bo$4bo$3bo3$bo$2bo$2bo$b2o$o4$b4o$o3bo$4bo$3bo")},
 	"14911M":{width:39,height:1,build:RLEtoARR("8ob5o3b3o6b7ob5o")},
-	"LWSS":{width:5,height:4,build:RLEtoARR("bo2bo$o$o3bo$4o")},
 }
 function saverange(xs,ys,xe,ye){
 	let xl=xe-xs+1,yl=ye-ys+1;
@@ -174,17 +170,14 @@ function toggle(b,x){
 	window.onresize();
 	if(b||x){
 		const ctu=[];
-		let nX,nY,mX,mY;
-		nX=nY=settings.gridSize;mX=mY=0;
+		let nX,nY,mX,mY;nX=nY=settings.gridSize;mX=mY=0;
 		for(let i=0;i<settings.gridSize;i++){
 			for(let j=0;j<settings.gridSize;j++){
 				const s=cells[i][j],n=countNeightbors(j,i),cns=iCAONS(s,n);
 				if(cellChanged(s,cns))ctu.push(new Cell(j,i,cns?1:0));
 				if(cns){
-					if(j<nX)nX=j;
-					if(i<nY)nY=i;
-					if(j>mX)mX=j;
-					if(i>mY)mY=i;
+					if(j<nX)nX=j;if(j>mX)mX=j;
+					if(i<nY)nY=i;if(i>mY)mY=i;
 				}
 			}
 		}
@@ -194,43 +187,39 @@ function toggle(b,x){
 }
 function step(){
 	const ctu=[];	 
-	let nX,nY,mX,mY;
-	nX=nY=settings.gridSize;mX=mY=0;
+	let nX,nY,mX,mY;nX=nY=settings.gridSize;mX=mY=0;
 	for(let i=settings.bounds.y;i<=settings.bounds.Y;i++)for(let j=settings.bounds.x;j<=settings.bounds.X;j++){
 		const s=cells[i][j],n=countNeightbors(j,i),cns=iCAONS(s,n);
 		if(cellChanged(s,cns))ctu.push(new Cell(j,i,cns?1:0));
 		if(cns){
-			if(j<nX)nX=j;
-			if(i<nY)nY=i;
-			if(j>mX)mX=j;
-			if(i>mY)mY=i;
+			if(j<nX)nX=j;if(j>mX)mX=j;
+			if(i<nY)nY=i;if(i>mY)mY=i;
 		}
 	}
 	updateBounds(nX,nY,mX,mY);
 	updateGrid(ctu);
 }
 function reload(s=false){
-	settings.running=false;
-	cells=[];
+	settings.running=false;cells=[];
 	settings.gridSize=s||settings.gridSize;
 	settings.bounds={x:50,y:50,X:0,Y:0}
 	for(let i=0,j;i<settings.gridSize;i++)for(cells[i]=[],j=0;j<settings.gridSize;j++)cells[i][j]=0;
 	window.onresize();
 }
 function countNeightbors(x,y){
-	let n=0;
 	const s=settings.gridSize;
-	for(let i=(y-1<0)?y:y-1;i<=(y+1>=s?y:y+1);i++)for(let j=(x-1<0?x:x-1);j<=(x+1>=s?x:x+1);j++){
+	let n=0;
+	for(let i=y-1<0?y:y-1;i<=(y+1>=s?y:y+1);i++)for(let j=x-1<0?x:x-1;j<=(x+1>=s?x:x+1);j++){
 		if(j==x&&i==y)continue;
 		n+=cells[i][j];
 	}
 	return n;
 }
 function iCAONS(s,n){
-	return s>0?n==2||n==3:n==3;
+	return s?n>1&&n<4:n==3;
 }
 function cellChanged(s,c){
-	return s&&!c||!s&&c;
+	return s&&!c||c&&!s;
 }
 function updateBounds(x,y,X,Y){
 	const z=settings.gridSize;gens++;
@@ -239,17 +228,16 @@ function updateBounds(x,y,X,Y){
 	settings.bounds={x:x,y:y,X:X,Y:Y}
 }
 function updateGrid(ctu){
-	if(ctu.length<1)return;
+	if(!ctu.length)return;
 	for(let i=0;i<ctu.length;i++){
-		let cell=ctu[i];
-		let{x,y,s}=cell;
+		let{x,y,s}=ctu[i];
 		updateCell(x,y,s);
 	}
 }
 function updateCell(x,y,s){
 	let p=cvs.width/settings.gridSize;
 	cells[y][x]=s;
-	ctx.fillStyle=s?(settings.color=="rndm"?rgb():settings.color):"#000";
+	ctx.fillStyle=s?settings.color=="rndm"?rgb():settings.color:"#000";
 	ctx.fillRect(p*x,p*y,p,p);
 }
 cvs.addEventListener("click",e=>{
@@ -264,20 +252,16 @@ cvs.addEventListener("mousemove",e=>{
 	coords.innerText=x+", "+y;
 })
 requestAnimationFrame(function update(){
-	let o=screen.width<screen.height
-	flexbox.style.display=o?"inline-block":"flex";
-	cvs.style.height=o?"auto":window.innerHeight*.99+"px";
+	flexbox.style.display=screen.width<screen.height?"inline-block":"flex";
 	gensps.innerText=gens;
 	requestAnimationFrame(update);
 })
 window.onresize=function(){
 	if(cells.length!=settings.gridSize)reload();
+	cvs.width=cvs.height=(Math.min(screen.width,screen.height*.78)*.995)|0;
 	let p=cvs.width/settings.gridSize;
 	ctx.clearRect(0,0,cvs.width,cvs.width);
-	for(let i=settings.bounds.y;i<settings.bounds.Y;i++)for(let j=settings.bounds.x;j<settings.bounds.X;j++){
-		ctx.fillStyle=cells[i][j]?(settings.color=="rndm"?rgb():settings.color):"#000";
-		ctx.fillRect(p*j,p*i,p,p);
-	}
+	for(let i=settings.bounds.y;i<settings.bounds.Y;i++)for(let j=settings.bounds.x;j<settings.bounds.X;j++)updateCell(j,i,cells[i][j]);
 }
 window.onresize();
 function running(){
