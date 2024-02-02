@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Minesweeper</title>
+		<meta name="viewport"content="width=device-width,initial-scale=1">
+		<style>
+			body{margin:0 0}
+			fieldset.wrap{width:fit-content}
+		</style>
+	</head>
+	<body>
+		<div id=flexbox>
+			<canvas id=cvs></canvas><br>
+			<fieldset>
+				<div id=bombsLeftd></div>
+				<button onclick='init()'>restart</button><br>
+				<fieldset class=wrap>
+					Grid Size<br>
+					<input id=gdi type=range min=12 max=60 step=2 value=20 oninput='setVal("grid",parseFloat(this.value))'/><span id=gridSized>20</span><br>
+					Grouped Bomb %<br>
+					<input id=bnbi type=range min=0 max=.9 step=.05 value=.2 oninput='setVal("bnby",parseFloat(this.value))'/><span id=bombsNearbyd>20%</span><br>
+					Bomb Population<br>
+					<input id=bpci type=range min=.05 max=.6 step=.05 value=.15 oninput='setVal("bpc",parseFloat(this.value))'/><span id=bombPopulationd>15%</span><br>
+					<button onclick='reset()'>default</button>
+				</fieldset>
+			</fieldset>
+		</div>
+		<script>
+function getPixelSize(){
+	let w=cvs.width,h=cvs.height,{x,y}=gridSize;
+	return(w<h?w/x-.125:h/y-.15);
+}
+function bombDensity(p){
+	return Math.ceil(gridSize.x*gridSize.y*p)
+}
+const ctx=cvs.getContext("2d");
+const keybinds={
+	multi:"",
+	flag:"",
+	dig:""
+}
+const map={
+	"":{bg:"#555",txt:null},
+	"0":{bg:"#bbb",txt:null},
+	"1":{bg:"#bbb",txt:"#04f"},
+	"2":{bg:"#bbb",txt:"#194"},
+	"3":{bg:"#bbb",txt:"#f01"},
+	"4":{bg:"#bbb",txt:"#909"},
+	"5":{bg:"#bbb",txt:"#fd0"},
+	"6":{bg:"#bbb",txt:"#0af"},
+	"7":{bg:"#bbb",txt:"#777"},
+	"8":{bg:"#bbb",txt:"#eee"},
+	"f":{bg:"#555",sym:"f"},
+	"b":{bg:"#bbb",sym:"b"}
+}
+const gridSize={x:20,y:10};
+const userMouse={x:0,y:0};
+let firstPick=true;
+let bpc=.15;
+let bnb=.2;
+let died=false;
+let cells=[];
+let actual=[];
+let immune=[];
+let diedTimeout;
+let flagTimeout;
+let flagDelay=250;
+let flagDebounce=false;
+function reset(){
+	setVal("grid",20);
+	setVal("bnby",.2);
+	setVal("bpc",.15);
+}
+function setVal(n,v){
+	switch(n){
+		case"grid":
+			gridSize.x=gdi.value=v;
+			gridSize.y=v/2;
+			gridSized.innerText=v;
+			init();
+		break;
+		case"bnby":
+			bombsNearbyd.innerText=(v*100).toFixed()+"%";
+			bnb=bnbi.value=v;
+			init();
+		break;
+		case"bpc":
+			bombPopulationd.innerText=(v*100).toFixed()+"%";
+			bpc=bpci.value=v;
+			init();
+		break;
+	}
+}
+function init(){
+	clearTimeout(diedTimeout);
+	firstPick=true;died=false;
+	cells=[];actual=[];
+	for(let i=0,j;i<gridSize.y;i++)for(cells[i]=[],actual[i]=[],j=0;j<gridSize.x;j++){
+		cells[i][j]="";
+		actual[i][j]="";
+	}
+}
+function symNearby(x,y,s){
+	let n=false;
+	for(let i=(y-1<0)?y:y-1;i<=(y+1>=gridSize.y?y:y+1);i++)for(let j=(x-1<0?x:x-1);j<=(x+1>=gridSize.x?x:x+1);j++)if(actual[i][j]==s)n=true;
+	return n;
+}
+function checkIfWon(){
+	let won=true;
+	for(let i=0,j;i<gridSize.y;i++)for(j=0;j<gridSize.x;j++){
+		if(cells[i][j]=="f"&&actual[i][j]!="b")won=false;
+		else if(cells[i][j]==""&&actual[i][j]!="b")won=false;
+	}
+	return won;
+}
+function generateBombs(){
+	const total=bombDensity(bpc);
+	let count=0;
+	let tries=0;
+	while(count<total&&count<gridSize.x*gridSize.y-9){
+		let x=Math.random()*gridSize.x|0;
+		let y=Math.random()*gridSize.y|0;
+		let spwnchn=symNearby(x,y,"b")?1-bnb:bnb;
+		if(immune.indexOf(x+","+y)<0&&actual[y][x]!="b"&&Math.random()>spwnchn){
+			actual[y][x]="b";
+			count++;
+		}else tries++;
+		if(tries>1000&&count>0)break;
+	}
+}
+function initNumberedCells(){
+	for(let i=0,j;i<gridSize.y;i++)for(j=0;j<gridSize.x;j++){
+		if(actual[i][j]===""){
+			let bombCount=0;
+			for(let y=(i-1<0)?i:i-1;y<=(i+1>=gridSize.y?i:i+1);y++)for(let x=(j-1<0?j:j-1);x<=(j+1>=gridSize.x?j:j+1);x++){
+				if(actual[y][x]=="b")bombCount++;
+			}
+			actual[i][j]=bombCount+"";
+		}
+	}
+}
+function reveal(x,y){
+	if(flagDebounce)return;
+	cells[y][x]=actual[y][x];
+	if(cells[y][x]=="b"){
+		died=true;
+		diedTimeout=setTimeout(()=>{
+			init();
+		},1000);
+	}
+	if(checkIfWon()&&!firstPick){
+		firstPick=true;
+		setTimeout(()=>{
+			alert("won");
+			init();
+		},100);
+	}
+}
+function dig(x,y){
+	if(cells[y][x]=="f")return;
+	if(symNearby(x,y,"b"))reveal(x,y);
+	else digAdjacent(x,y);
+}
+function digAdjacent(x,y,g){
+	if(cells[y][x]=="f")return;
+	let c=actual[y][x];
+	for(let i=(y-1<0)?y:y-1;i<=(y+1>=gridSize.y?y:y+1);i++)for(let j=(x-1<0?x:x-1);j<=(x+1>=gridSize.x?x:x+1);j++){
+		if((actual[i][j]!="b"||g)&&cells[i][j]!="f")reveal(j,i);
+	}
+}
+function multiDig(x,y){
+	let c=actual[y][x];
+	if(isNaN(c)||c==="0")return;
+	let flags=0;
+	for(let i=(y-1<0)?y:y-1;i<=(y+1>=gridSize.y?y:y+1);i++)for(let j=(x-1<0?x:x-1);j<=(x+1>=gridSize.x?x:x+1);j++){
+		if(cells[i][j]=="f")flags++;
+	}
+	if(flags+""==c)digAdjacent(x,y,1);
+}
+function placeFlag(x,y){
+	flagDebounce=true;
+	if(cells[y][x]=="f")cells[y][x]="";
+	else if(cells[y][x]=="")cells[y][x]="f";
+	setTimeout(()=>flagDebounce=false,200);
+}
+requestAnimationFrame(function update(){
+	let w=(Math.min(screen.width,screen.height)*.995)|0;
+	let o=screen.width<screen.height;
+	let r=gridSize.x/gridSize.y;
+	flexbox.style.display=o?"inline-block":"flex";
+	cvs.width=o?w:w*r*.75;
+	cvs.height=o?w/r:w*.75;
+	let p=getPixelSize();
+	ctx.clearRect(0,0,cvs.width,cvs.width);
+	let flagCount=0;
+	for(let i=0,j;i<gridSize.y;i++)for(j=0;j<gridSize.x;j++){
+		if(cells[i][j]=="f")flagCount++;
+		if(cells[i][j]=="0")digAdjacent(j,i);
+		let st=map[cells[i][j]];
+		ctx.fillStyle=st.bg;
+		ctx.fillRect(p*j,p*i,p,p);
+		if(st.txt){
+			ctx.font=p+"px monospace";
+			ctx.fillStyle=st.txt;
+			ctx.fillText(cells[i][j],p*j+p/5,p*i+p/1.15);
+		}else if(st.sym){
+			if(st.sym=="f"){
+				ctx.beginPath();
+				ctx.fillStyle="red";
+				ctx.moveTo(p*j+p/3,p*i+p/12);
+				ctx.lineTo(p*j+p*8/9,p*i+p*33/80);
+				ctx.lineTo(p*j+p/3,p*i+p*97/136);
+				ctx.rect(p*j+p/3,p*i+p/12,-p/12,p*33/40);
+				ctx.fill();
+			}else{
+				ctx.font=p*.75+"px monospace";
+				ctx.fillText(String.fromCharCode(55357,56485),p*j,p*i+p/1.35);
+			}
+		}
+	}
+	bombsLeftd.innerText="Flags: "+(bombDensity(bpc)-flagCount);
+	requestAnimationFrame(update);
+})
+cvs.addEventListener("click",e=>{
+	if(died)return;
+	let p=getPixelSize();
+	let x=(e.pageX-cvs.offsetLeft)/p|0,y=(e.pageY-cvs.offsetTop)/p|0;
+	if(firstPick){
+		firstPick=false;
+		for(let i=y-1;i<y+2;i++)for(let j=x-1;j<x+2;j++)immune.push(j+","+i);
+		generateBombs();
+		initNumberedCells();
+		digAdjacent(x,y);
+	}
+	dig(x,y);
+	multiDig(x,y);
+});
+cvs.addEventListener("mousedown",e=>{
+	flagTimeout=setTimeout(()=>{
+		placeFlag(userMouse.x,userMouse.y)
+	},flagDelay);
+});
+cvs.addEventListener("touchstart",e=>{
+	let p=getPixelSize();
+	let t=e.targetTouches.length?e.targetTouches.item(0):e.touches.item(0);
+	userMouse.x=(t.pageX-cvs.offsetLeft)/p|0;
+	userMouse.y=(t.pageY-cvs.offsetTop)/p|0;
+	flagTimeout=setTimeout(()=>{
+		placeFlag(userMouse.x,userMouse.y)
+	},flagDelay);
+});
+cvs.addEventListener("mouseup",e=>{
+	clearTimeout(flagTimeout);
+});
+cvs.addEventListener("touchend",e=>{
+	clearTimeout(flagTimeout);
+});
+cvs.addEventListener("mousemove",e=>{
+	clearTimeout(flagTimeout);
+	if(died)return;
+	let p=getPixelSize();
+	userMouse.x=(e.pageX-cvs.offsetLeft)/p|0;
+	userMouse.y=(e.pageY-cvs.offsetTop)/p|0;
+});
+init();
+async function auto(ms,f){
+	if(firstPick){
+		firstPick=false;
+		generateBombs();
+		initNumberedCells();
+	}
+	for(let i=0,j;i<gridSize.y;i++)for(j=0;j<gridSize.x;j++){
+		if(cells[i][j]!="")continue;
+		if(actual[i][j]!="b")reveal(j,i);
+		else if(f)placeFlag(j,i);
+		flagDebounce=false;
+		if(Math.random()>.8)await new Promise(r=>setTimeout(r,ms));
+	}
+}
+//add desktop counterparts later
+		</script>
+	</body>
+</html>
