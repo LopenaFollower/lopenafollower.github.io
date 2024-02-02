@@ -254,13 +254,13 @@ cvs.addEventListener("mousemove",e=>{
 	coords.innerText=x+", "+y;
 })
 requestAnimationFrame(function update(){
-	flexbox.style.display=screen.width<screen.height?"inline-block":"flex";
+	flexbox.style.display=window.innerWidth<window.innerHeight?"inline-block":"flex";
 	gensps.innerText=gens;
 	requestAnimationFrame(update);
 })
 window.onresize=function(){
 	if(cells.length!=settings.gridSize)reload();
-	cvs.width=cvs.height=(Math.min(screen.width,screen.height*.78)*.995)|0;
+	cvs.width=cvs.height=(Math.min(window.innerWidth,window.innerHeight)*.995)|0;
 	let p=cvs.width/settings.gridSize;
 	ctx.clearRect(0,0,cvs.width,cvs.width);
 	for(let i=settings.bounds.y;i<settings.bounds.Y;i++)for(let j=settings.bounds.x;j<settings.bounds.X;j++)updateCell(j,i,cells[i][j]);
