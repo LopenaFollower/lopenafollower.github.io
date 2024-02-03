@@ -7,55 +7,71 @@
 			body{
 				margin:0 0;
 				font-family:Arial,sans-serif;
+				overflow:hidden;
 			}
 			fieldset.wrap{width:fit-content}
+			input.clrin{
+				width:60px;
+				text-shadow:0 0 1px #000;
+			}
+			td{text-align:right}
 		</style>
 	</head>
 	<body>
 		<div id=flexbox>
 			<canvas id=cvs></canvas><br>
 			<fieldset>
+				<button onclick='init()'>restart</button>
 				<div id=bombsLeftd></div>
-				<button onclick='init()'>restart</button><br>
-				<fieldset class=wrap>
-					Grid Size<br>
-					<input id=gdi type=range min=12 max=60 step=2 value=20 oninput='setVal("grid",parseFloat(this.value))'/><span id=gridSized>20</span><br>
-					Grouped Bomb %<br>
-					<input id=bnbi type=range min=0 max=.9 step=.05 value=.2 oninput='setVal("bnby",parseFloat(this.value))'/><span id=bombsNearbyd>20%</span><br>
-					Bomb Population<br>
-					<input id=bpci type=range min=.05 max=.6 step=.05 value=.15 oninput='setVal("bpc",parseFloat(this.value))'/><span id=bombPopulationd>15%</span><br>
-					<button onclick='reset()'>default</button>
-				</fieldset>
+				<div style='display:flex'>
+					<fieldset class=wrap>
+						<div id=gridArea></div>
+						Grid Size<br>
+						<input id=gdi type=range min=12 max=60 step=2 value=20 oninput='setVal("grid",parseFloat(this.value))'/><span id=gridSized>20</span><br>
+						Grouped Bomb %<br>
+						<input id=bnbi type=range min=0 max=.9 step=.05 value=.2 oninput='setVal("bnby",parseFloat(this.value))'/><span id=bombsNearbyd>20%</span><br>
+						Bomb Population<br>
+						<input id=bpci type=range min=.05 max=.6 step=.025 value=.15 oninput='setVal("bpc",parseFloat(this.value))'/><span id=bombPopulationd>30</span><br>
+						<button onclick='reset()'>default</button>
+					</fieldset>
+					<fieldset class=wrap id=clrs>
+						<table>
+							<tr>
+								<td>BG1</td>
+								<td><input class=clrin id=bgColor1In oninput='this.style.color=this.value;setVal("bgc1",this.style.color);'/></td>
+								<td>BG2</td>
+								<td><input class=clrin id=bgColor2In oninput='this.style.color=this.value;setVal("bgc2",this.style.color);'/></td>
+							</tr>
+							<tr>
+								<td>1</td><td><input class=clrin id=tile1In oninput='this.style.color=this.value;setVal("tile",this.style.color,"1");'/></td><td>2</td><td><input class=clrin id=tile2In oninput='this.style.color=this.value;setVal("tile",this.style.color,"2");'/></td>
+							</tr>
+							<tr>
+								<td>3</td><td><input class=clrin id=tile3In oninput='this.style.color=this.value;setVal("tile",this.style.color,"3");'/></td><td>4</td><td><input class=clrin id=tile4In oninput='this.style.color=this.value;setVal("tile",this.style.color,"4");'/></td>
+							</tr>
+							<tr>
+								<td>5</td><td><input class=clrin id=tile5In oninput='this.style.color=this.value;setVal("tile",this.style.color,"5");'/></td><td>6</td><td><input class=clrin id=tile6In oninput='this.style.color=this.value;setVal("tile",this.style.color,"6");'/></td>
+							</tr>
+							<tr>
+								<td>7</td><td><input class=clrin id=tile7In oninput='this.style.color=this.value;setVal("tile",this.style.color,"7");'/></td><td>8</td><td><input class=clrin id=tile8In oninput='this.style.color=this.value;setVal("tile",this.style.color,"8");'/></td>
+							</tr>
+						</table>
+						<button onclick='initMap()'>default</button>
+					</fieldset>
+				</div>
 			</fieldset>
 		</div>
 		<script>
-function getPixelSize(){
-	let w=cvs.width,h=cvs.height,{x,y}=gridSize;
-	return(w<h?w/x-.125:h/y-.15);
-}
-function bombDensity(p){
-	return Math.ceil(gridSize.x*gridSize.y*p)
-}
 const ctx=cvs.getContext("2d");
 const keybinds={
 	multi:"",
 	flag:"",
 	dig:""
 }
-const map={
-	"":{bg:"#555",txt:null},
-	"0":{bg:"#bbb",txt:null},
-	"1":{bg:"#bbb",txt:"#04f"},
-	"2":{bg:"#bbb",txt:"#194"},
-	"3":{bg:"#bbb",txt:"#f01"},
-	"4":{bg:"#bbb",txt:"#909"},
-	"5":{bg:"#bbb",txt:"#fd0"},
-	"6":{bg:"#bbb",txt:"#0af"},
-	"7":{bg:"#bbb",txt:"#777"},
-	"8":{bg:"#bbb",txt:"#eee"},
-	"f":{bg:"#555",sym:"f"},
-	"b":{bg:"#bbb",sym:"b"}
+const backgroundColors={
+	bg1:"#555",
+	bg2:"#bbb"
 }
+const map={"f":{sym:"f"},"b":{sym:"b"}}
 const gridSize={x:20,y:10};
 const userMouse={x:0,y:0};
 let firstPick=true;
@@ -67,19 +83,32 @@ let actual=[];
 let immune=[];
 let diedTimeout;
 let flagTimeout;
-let flagDelay=250;
+let flagDelay=150;
 let flagDebounce=false;
 function reset(){
 	setVal("grid",20);
 	setVal("bnby",.2);
 	setVal("bpc",.15);
 }
-function setVal(n,v){
+function initMap(){
+	map["1"]={txt:tile1In.value=tile1In.style.color="#04f"};
+	map["2"]={txt:tile2In.value=tile2In.style.color="#194"};
+	map["3"]={txt:tile3In.value=tile3In.style.color="#f01"};
+	map["4"]={txt:tile4In.value=tile4In.style.color="#909"};
+	map["5"]={txt:tile5In.value=tile5In.style.color="#fd0"};
+	map["6"]={txt:tile6In.value=tile6In.style.color="#0af"};
+	map["7"]={txt:tile7In.value=tile7In.style.color="#777"};
+	map["8"]={txt:tile8In.value=tile8In.style.color="#eee"};
+	bgColor1In.value=bgColor1In.style.color=backgroundColors.bg1="#555";
+	bgColor2In.value=bgColor2In.style.color=backgroundColors.bg2="#bbb";
+}
+function setVal(n,v,i,t){
 	switch(n){
 		case"grid":
 			gridSize.x=gdi.value=v;
 			gridSize.y=v/2;
 			gridSized.innerText=v;
+			bombPopulationd.innerText=bombDensity(bpc);
 			init();
 		break;
 		case"bnby":
@@ -88,10 +117,13 @@ function setVal(n,v){
 			init();
 		break;
 		case"bpc":
-			bombPopulationd.innerText=(v*100).toFixed()+"%";
+			bombPopulationd.innerText=bombDensity(v).toFixed();
 			bpc=bpci.value=v;
 			init();
 		break;
+		case"bgc1":backgroundColors.bg1=v;break;
+		case"bgc2":backgroundColors.bg2=v;break;
+		case"tile":map[i].txt=v;break;
 	}
 }
 function init(){
@@ -102,6 +134,13 @@ function init(){
 		cells[i][j]="";
 		actual[i][j]="";
 	}
+}
+function getPS(){
+	let w=cvs.width,h=cvs.height,{x,y}=gridSize;
+	return(w<h?w/x-.125:h/y-.15);
+}
+function bombDensity(p){
+	return gridSize.x*gridSize.y*p|0;
 }
 async function auto(ms,f){
 	if(firstPick){
@@ -142,7 +181,7 @@ function generateBombs(){
 			actual[y][x]="b";
 			count++;
 		}else tries++;
-		if(tries>1000&&count>0)break;
+		if(tries>1e6&&count>0)break;
 	}
 }
 function initNumberedCells(){
@@ -161,16 +200,12 @@ function reveal(x,y){
 	cells[y][x]=actual[y][x];
 	if(cells[y][x]=="b"){
 		died=true;
-		diedTimeout=setTimeout(()=>{
-			init();
-		},1000);
+		clearTimeout(flagTimeout);
+		diedTimeout=setTimeout(init,1000);
 	}
 	if(checkIfWon()&&!firstPick){
 		firstPick=true;
-		setTimeout(()=>{
-			alert("won");
-			init();
-		},100);
+		setTimeout(init,100);
 	}
 }
 function dig(x,y){
@@ -181,17 +216,13 @@ function dig(x,y){
 function digAdjacent(x,y,g){
 	if(cells[y][x]=="f")return;
 	let c=actual[y][x];
-	for(let i=(y-1<0)?y:y-1;i<=(y+1>=gridSize.y?y:y+1);i++)for(let j=(x-1<0?x:x-1);j<=(x+1>=gridSize.x?x:x+1);j++){
-		if((actual[i][j]!="b"||g)&&cells[i][j]!="f")reveal(j,i);
-	}
+	for(let i=(y-1<0)?y:y-1;i<=(y+1>=gridSize.y?y:y+1);i++)for(let j=(x-1<0?x:x-1);j<=(x+1>=gridSize.x?x:x+1);j++)if((actual[i][j]!="b"||g)&&cells[i][j]!="f")reveal(j,i);
 }
 function multiDig(x,y){
 	let c=actual[y][x];
 	if(isNaN(c)||c==="0")return;
 	let flags=0;
-	for(let i=(y-1<0)?y:y-1;i<=(y+1>=gridSize.y?y:y+1);i++)for(let j=(x-1<0?x:x-1);j<=(x+1>=gridSize.x?x:x+1);j++){
-		if(cells[i][j]=="f")flags++;
-	}
+	for(let i=(y-1<0)?y:y-1;i<=(y+1>=gridSize.y?y:y+1);i++)for(let j=(x-1<0?x:x-1);j<=(x+1>=gridSize.x?x:x+1);j++)if(cells[i][j]=="f")flags++;
 	if(flags+""==c)digAdjacent(x,y,1);
 }
 function placeFlag(x,y){
@@ -201,27 +232,21 @@ function placeFlag(x,y){
 	setTimeout(()=>flagDebounce=false,200);
 }
 requestAnimationFrame(function update(){
-	let w=(Math.min(screen.width,screen.height)*.995)|0;
-	let o=window.innerWidth<window.innerHeight;
-	let r=gridSize.x/gridSize.y;
-	flexbox.style.display=o?"inline-block":"flex";
-	cvs.width=o?w:w*r*.75;
-	cvs.height=o?w/r:w*.75;
-	let p=getPixelSize();
+	let p=getPS();
 	ctx.clearRect(0,0,cvs.width,cvs.width);
 	let flagCount=0,bombCount=0;
 	for(let i=0,j;i<gridSize.y;i++)for(j=0;j<gridSize.x;j++){
 		if(cells[i][j]=="f")flagCount++;
 		if(actual[i][j]=="b")bombCount++;
 		if(cells[i][j]=="0")digAdjacent(j,i);
-		let st=map[cells[i][j]];
-		ctx.fillStyle=st.bg;
+		let cell=cells[i][j],st=map[cell];
+		ctx.fillStyle=cell===""||cell=="f"?backgroundColors.bg1:backgroundColors.bg2;
 		ctx.fillRect(p*j,p*i,p,p);
-		if(st.txt){
+		if(st?.txt){
 			ctx.font=p+"px monospace";
 			ctx.fillStyle=st.txt;
-			ctx.fillText(cells[i][j],p*j+p/5,p*i+p/1.15);
-		}else if(st.sym){
+			ctx.fillText(cell,p*j+p/5,p*i+p/1.15);
+		}else if(st?.sym){
 			if(st.sym=="f"){
 				ctx.beginPath();
 				ctx.fillStyle="red";
@@ -237,11 +262,21 @@ requestAnimationFrame(function update(){
 		}
 	}
 	bombsLeftd.innerText="Flags: "+(bombCount-flagCount);
+	gridArea.innerText="Grid Area: "+gridSize.x*gridSize.y
 	requestAnimationFrame(update);
-})
+});
+window.onresize=function(){
+	let w=(Math.min(screen.width,screen.height)*.995)|0;
+	let o=window.innerWidth<window.innerHeight;
+	let r=gridSize.x/gridSize.y;
+	flexbox.style.display=o?"inline-block":"flex";
+	cvs.width=o?w:w*r*.8;
+	cvs.height=o?w/r:w*.8;
+}
+window.onresize();
 cvs.addEventListener("click",e=>{
 	if(died)return;
-	let p=getPixelSize();
+	let p=getPS();
 	userMouse.x=(e.pageX-cvs.offsetLeft)/p|0;
 	userMouse.y=(e.pageY-cvs.offsetTop)/p|0;
 	let x=(e.pageX-cvs.offsetLeft)/p|0,y=(e.pageY-cvs.offsetTop)/p|0;
@@ -251,40 +286,33 @@ cvs.addEventListener("click",e=>{
 		generateBombs();
 		initNumberedCells();
 		digAdjacent(x,y);
+	}else{
+		dig(x,y);
+		multiDig(x,y);
 	}
-	dig(x,y);
-	multiDig(x,y);
 });
-cvs.addEventListener("mousemove",e=>{
-	let p=getPixelSize();
-	let x=(e.pageX-cvs.offsetLeft)/p|0;
-	let y=(e.pageY-cvs.offsetTop)/p|0;
+["mouseup","touchend"].forEach(v=>cvs.addEventListener(v,e=>clearTimeout(flagTimeout)));
+["touchmove","mousemove"].forEach((v,j)=>cvs.addEventListener(v,e=>{
+	let p=getPS(),t=e.targetTouches&&e.targetTouches.item(0);
+	let x=((j?e:t).pageX-cvs.offsetLeft)/p|0,y=((j?e:t).pageY-cvs.offsetTop)/p|0;
 	if(x!=userMouse.x||y!=userMouse.y)clearTimeout(flagTimeout);
 	if(died)return;
 	userMouse.x=x;
 	userMouse.y=y;
-});
+}));
 cvs.addEventListener("mousedown",e=>{
-	flagTimeout=setTimeout(()=>{
-		placeFlag(userMouse.x,userMouse.y)
-	},flagDelay);
+	flagTimeout=setTimeout(()=>placeFlag(userMouse.x,userMouse.y),flagDelay);
 });
 cvs.addEventListener("touchstart",e=>{
-	let p=getPixelSize();
-	let t=e.targetTouches.length?e.targetTouches.item(0):e.touches.item(0);
+	if(died)return;
+	let p=getPS(),t=e.targetTouches.length?e.targetTouches.item(0):e.touches.item(0);
 	userMouse.x=(t.pageX-cvs.offsetLeft)/p|0;
 	userMouse.y=(t.pageY-cvs.offsetTop)/p|0;
 	flagTimeout=setTimeout(()=>{
 		placeFlag(userMouse.x,userMouse.y)
 	},flagDelay);
 });
-cvs.addEventListener("mouseup",e=>{
-	clearTimeout(flagTimeout);
-});
-cvs.addEventListener("touchend",e=>{
-	clearTimeout(flagTimeout);
-});
-init();
+init();initMap();
 //add desktop counterparts later
 		</script>
 	</body>

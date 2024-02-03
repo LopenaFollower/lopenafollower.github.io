@@ -7,7 +7,7 @@
 			body{margin:0 0}
 			@media(orientation:landscape){#cvs{width:auto}}
 			@media(orientation:portrait){#cvs{width:100%}}
-			#cvs{background:#000;margin-top:.25%}
+			#cvs{background:#000}
 			input[type=text]{width:60px}
 			#cont{vertical-align:top}
 			div.holder{display:flex}
@@ -260,7 +260,7 @@ requestAnimationFrame(function update(){
 })
 window.onresize=function(){
 	if(cells.length!=settings.gridSize)reload();
-	cvs.width=cvs.height=(Math.min(window.innerWidth,window.innerHeight)*.995)|0;
+	cvs.width=cvs.height=Math.min(window.innerWidth,window.innerHeight)|0;
 	let p=cvs.width/settings.gridSize;
 	ctx.clearRect(0,0,cvs.width,cvs.width);
 	for(let i=settings.bounds.y;i<settings.bounds.Y;i++)for(let j=settings.bounds.x;j<settings.bounds.X;j++)updateCell(j,i,cells[i][j]);

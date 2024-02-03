@@ -5,19 +5,18 @@
 		<meta name="viewport"content="width=device-width,initial-scale=1">
 		<style>
 			body{margin:0 0}
-			@media(orientation:landscape){video{width:auto}}
-			@media(orientation:portrait){video{width:100%}}
+			@media(orientation:landscape){video,#tbl{width:auto}}
+			@media(orientation:portrait){video,#tbl{width:100%}}
 			table{border-collapse:collapse}
 			#tbl{
 				border:1px solid black;
-				overflow-y:scroll;
 				overflow:hidden;
+				overflow-y:scroll;
 			}
 			td{
 				font-family:monospace;
 				border:1px solid #000;
 				white-space:nowrap;
-				overflow-x:scroll;
 				text-align:left;
 				overflow:hidden;
 				display:block;
@@ -57,6 +56,15 @@
 							<td>15: Intermediate Value Theorem</td>
 							<td>16: Right Angle Trigonometry</td>
 							<td>17: Sin and Cos of Special Angles</td>
+							<td>18: Unit Circle</td>
+							<td>19: Properties of Trig Functions</td>
+							<td>20: Graphs of Sin and Cos</td>
+							<td>21: Graphs of Sinusoidal Functions</td>
+							<td>22: Graphs of Tan, Sec, Cot, Csc</td>
+							<td>23: Solving Basic Trig Equations</td>
+							<td>24: Derivatives and Rate of Change</td>
+							<td>25: Computing Derivatives from the Definition</td>
+							<td>26: Interpreting Derivatives</td>
 						</tr>
 					</table>
 				</div>
@@ -70,7 +78,7 @@ function hold(e){
 	["touchend","mouseup","mouseout"].forEach(m=>e.addEventListener(m,v=>e.style.backgroundColor="#fff"));
 }
 function skipToTimestamp(n){
-	let ts=[18.4,581,1100.7,1551.9,1889.1,2227.6,2578,3367.2,4120.7,4630.3,5435.4,5851.8,6334.6,6803,7183,7417.2,7873.2];
+	let ts=[18.4,581,1100.7,1551.9,1889.1,2227.6,2578,3367.2,4120.7,4630.3,5435.4,5851.8,6334.6,6803,7183,7417.2,7873.2,8356.5,8686.4,9325.1,9717.9,10330.8,10864.3,11294.9,12176.4,12843.3];
 	if(n>=ts.length)return;
 	vid.currentTime=ts[n];
 	vid.play();
@@ -88,7 +96,7 @@ document.addEventListener("DOMContentLoaded",()=>{
 });
 requestAnimationFrame(function update(){
 	dur.innerText=vid.currentTime.toFixed(3)
-	let res=window.screen.orientation.type=="portrait-primary"
+	let res=window.innerWidth<window.innerHeight;
 	flexbox.style.display=res?"inline-block":"flex";
 	vid.style.height=tbl.style.height=res?"auto":window.innerHeight*.99+"px";
 	requestAnimationFrame(update)
