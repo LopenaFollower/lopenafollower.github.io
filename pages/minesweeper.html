@@ -201,7 +201,7 @@ function reveal(x,y){
 		died=true;
 		setTimeout(()=>{
 			for(let i=0,j;i<gridSize.y;i++)for(j=0;j<gridSize.x;j++)if(actual[i][j]!="b"&&cells[i][j]=="f")cells[i][j]="x";
-		});
+		},5);
 		clearTimeout(flagTimeout);
 		diedTimeout=setTimeout(init,1500);
 	}
@@ -238,17 +238,17 @@ requestAnimationFrame(function update(){
 	ctx.clearRect(0,0,cvs.width,cvs.width);
 	let flagCount=0,bombCount=0;
 	for(let i=0,j;i<gridSize.y;i++)for(j=0;j<gridSize.x;j++){
-		if(cells[i][j]=="f"&&actual[i][j]=="0")cells[i][j]="0";
-		if(cells[i][j]=="f")flagCount++;
-		if(actual[i][j]=="b")bombCount++;
-		if(cells[i][j]=="0")digAdjacent(j,i);
 		let cell=cells[i][j],st=map[cell];
+		if(cell=="f"&&actual[i][j]=="0")cells[i][j]="0";
+		if(cell=="f")flagCount++;
+		if(actual[i][j]=="b")bombCount++;
+		if(cell=="0")digAdjacent(j,i);
 		ctx.fillStyle=cell===""||cell=="f"||cell=="x"?backgroundColors.bg1:backgroundColors.bg2;
 		ctx.fillRect(p*j,p*i,p,p);
 		if(st?.txt){
 			ctx.font=p+"px monospace";
 			ctx.fillStyle=st.txt;
-			ctx.fillText(cell,p*j+p/5,p*i+p/1.15);
+			ctx.fillText(cell,p*j+p/5,p*i+p/1.17);
 		}else if(st?.sym){
 			if(st.sym=="f"){
 				ctx.beginPath();
@@ -294,7 +294,7 @@ cvs.addEventListener("click",e=>{
 		multiDig(x,y);
 	}
 });
-["mouseup","touchend"].forEach(v=>cvs.addEventListener(v,e=>clearTimeout(flagTimeout)));
+["mouseup","touchend","touchcancel"].forEach(v=>cvs.addEventListener(v,e=>clearTimeout(flagTimeout)));
 ["touchmove","mousemove"].forEach((v,j)=>cvs.addEventListener(v,e=>{
 	let p=getPS(),t=e.targetTouches&&e.targetTouches.item(0);
 	let x=((j?e:t).pageX-cvs.offsetLeft)/p|0,y=((j?e:t).pageY-cvs.offsetTop)/p|0;

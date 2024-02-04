@@ -5,15 +5,21 @@
 		<meta name="viewport"content="width=device-width,initial-scale=1">
 		<style>
 			body{margin:0 0}
+			@media(orientation:landscape){#cvs{width:auto}}
+			@media(orientation:portrait){#cvs{width:100%}}
 		</style>
 	</head>
 	<body>
-		<input id=pattern style='width:100%'value=00000000000000000000000000000000000000000000000001 oninput='setPattern(this.value)'placeholder='starting pattern'/>
-		<canvas id=cvs></canvas><br>
-		toggle<input id=tgg type=checkbox oninput='tog(this.checked)'/><br>
-		wrap edges<input id=edge type=checkbox /><br>
-		<button onclick='reset()'>reset</button><br>
-		<input placeholder='0-255'value=0 oninput='rule(parseInt(this.value))'/>
+		<div id=flexbox>
+			<canvas id=cvs></canvas>
+			<fieldset>
+				<input id=pattern style='width:100%'value=00000000000000000000000000000000000000000000000001 oninput='setPattern(this.value)'placeholder='starting pattern'/>
+				toggle<input id=tgg type=checkbox oninput='tog(this.checked)'/><br>
+				wrap edges<input id=edge type=checkbox /><br>
+				<button onclick='reset()'>reset</button><br>
+				<input placeholder='0-255'value=0 oninput='rule(parseInt(this.value))'/>
+			</fieldset>
+		</div>
 		<script>
 const states={"111":0,"110":0,"101":0,"100":0,"011":0,"010":0,"001":0,"000":0}
 const stv=Object.keys(states).sort((a,b)=>b.localeCompare(a));
@@ -73,9 +79,14 @@ function reset(){
 	}
 }
 requestAnimationFrame(function a(){
+	flexbox.style.display=window.innerWidth<window.innerHeight?"inline-block":"flex";
 	if(toggle)step();
 	requestAnimationFrame(a);
 })
-cvs.width=cvs.height=(Math.min(screen.width,screen.height)|0)*.995;
-		</script>	</body>
+window.onresize=function(){
+	cvs.width=cvs.height=Math.min(window.innerWidth,window.innerHeight);
+}
+window.onresize();
+		</script>
+	</body>
 </html>

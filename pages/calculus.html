@@ -9,7 +9,7 @@
 			@media(orientation:portrait){video,#tbl{width:100%}}
 			table{border-collapse:collapse}
 			#tbl{
-				border:1px solid black;
+				border:1px solid #000;
 				overflow:hidden;
 				overflow-y:scroll;
 			}
@@ -24,9 +24,9 @@
 				float:left;
 				width:100%;
 			}
-			#cont,video{
+			#flexbox{
 				transition-timing-function:linear;
-				transition-duration:.4s;
+				transition-duration:.5s;
 				opacity:0;
 			}
 		</style>
@@ -65,6 +65,8 @@
 							<td>24: Derivatives and Rate of Change</td>
 							<td>25: Computing Derivatives from the Definition</td>
 							<td>26: Interpreting Derivatives</td>
+							<td>27: Derivative as a Function: Graph and Domain</td>
+							<td>28: Proof: Differential Funcs are Continuous</td>
 						</tr>
 					</table>
 				</div>
@@ -78,7 +80,7 @@ function hold(e){
 	["touchend","mouseup","mouseout"].forEach(m=>e.addEventListener(m,v=>e.style.backgroundColor="#fff"));
 }
 function skipToTimestamp(n){
-	let ts=[18.4,581,1100.7,1551.9,1889.1,2227.6,2578,3367.2,4120.7,4630.3,5435.4,5851.8,6334.6,6803,7183,7417.2,7873.2,8356.5,8686.4,9325.1,9717.9,10330.8,10864.3,11294.9,12176.4,12843.3];
+	let ts=[18,581,1100.7,1551.9,1889.1,2227.6,2578,3367.2,4120.7,4630.3,5435.4,5851.8,6334.6,6803,7183,7417.2,7873.2,8356.5,8686.4,9325.1,9717.9,10330.8,10864.3,11294.9,12176.4,12843.3,13354.9,14185.7];
 	if(n>=ts.length)return;
 	vid.currentTime=ts[n];
 	vid.play();
@@ -86,7 +88,7 @@ function skipToTimestamp(n){
 document.addEventListener("DOMContentLoaded",()=>{
 	vid.addEventListener("loadedmetadata",function omdl(){
 		vid.removeEventListener("loadedmetadata",omdl);
-		vid.style.opacity=cont.style.opacity=1;
+		flexbox.style.opacity=1;
 		Array.from(document.getElementsByTagName("td")).forEach((e,i)=>{
 			hold(e);
 			e.onclick=_=>skipToTimestamp(i);
@@ -95,10 +97,10 @@ document.addEventListener("DOMContentLoaded",()=>{
 	vid.src="https://www.dropbox.com/scl/fi/si48hap617shxnw0gw2yf/vid.mp4?rlkey=t748kd0wsnl1zi4qyg96s6gsp&raw=1";
 });
 requestAnimationFrame(function update(){
-	dur.innerText=vid.currentTime.toFixed(3)
+	dur.innerText=vid.currentTime.toFixed(1)
 	let res=window.innerWidth<window.innerHeight;
 	flexbox.style.display=res?"inline-block":"flex";
-	vid.style.height=tbl.style.height=res?"auto":window.innerHeight*.99+"px";
+	vid.style.height=tbl.style.height=res?"auto":window.innerHeight+"px";
 	requestAnimationFrame(update)
 })
 		</script>
