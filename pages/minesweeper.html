@@ -21,7 +21,8 @@
 		<div id=flexbox>
 			<canvas id=cvs></canvas><br>
 			<fieldset>
-				<button onclick='init()'>restart</button>
+				<button onclick='init()'>Restart</button>
+				<button onclick='clearFlags()'>Clear Flags</button>
 				<div id=bombsLeftd></div>
 				<div style='display:flex'>
 					<fieldset class=wrap>
@@ -32,7 +33,7 @@
 						<input id=bnbi type=range min=0 max=.9 step=.05 value=.2 oninput='setVal("bnby",parseFloat(this.value))'/><span id=bombsNearbyd>20%</span><br>
 						Bomb Population<br>
 						<input id=bpci type=range min=.05 max=.6 step=.025 value=.15 oninput='setVal("bpc",parseFloat(this.value))'/><span id=bombPopulationd>30</span><br>
-						<button onclick='reset()'>default</button>
+						<button onclick='reset()'>Default</button>
 					</fieldset>
 					<fieldset class=wrap id=clrs>
 						<table>
@@ -55,7 +56,7 @@
 								<td>7</td><td><input class=clrin id=tile7In oninput='this.style.color=this.value;setVal("tile",this.style.color,"7");'/></td><td>8</td><td><input class=clrin id=tile8In oninput='this.style.color=this.value;setVal("tile",this.style.color,"8");'/></td>
 							</tr>
 						</table>
-						<button onclick='initMap()'>default</button>
+						<button onclick='initMap()'>Default</button>
 					</fieldset>
 				</div>
 			</fieldset>
@@ -156,6 +157,9 @@ async function auto(ms,f){
 		if(Math.random()>.8)await new Promise(r=>setTimeout(r,ms));
 	}
 }
+function clearFlags(){
+	for(let i=0,j;i<gridSize.y;i++)for(j=0;j<gridSize.x;j++)if(cells[i][j]=="f")cells[i][j]="";
+}
 function symNearby(x,y,s){
 	let n=false;
 	for(let i=(y-1<0)?y:y-1;i<=(y+1>=gridSize.y?y:y+1);i++)for(let j=(x-1<0?x:x-1);j<=(x+1>=gridSize.x?x:x+1);j++)if(actual[i][j]==s)n=true;
@@ -239,7 +243,6 @@ requestAnimationFrame(function update(){
 	let flagCount=0,bombCount=0;
 	for(let i=0,j;i<gridSize.y;i++)for(j=0;j<gridSize.x;j++){
 		let cell=cells[i][j],st=map[cell];
-		if(cell=="f"&&actual[i][j]=="0")cells[i][j]="0";
 		if(cell=="f")flagCount++;
 		if(actual[i][j]=="b")bombCount++;
 		if(cell=="0")digAdjacent(j,i);
