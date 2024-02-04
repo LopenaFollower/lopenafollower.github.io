@@ -71,7 +71,7 @@ const backgroundColors={
 	bg1:"#555",
 	bg2:"#bbb"
 }
-const map={"f":{sym:"f"},"b":{sym:"b"}}
+const map={f:{sym:"f"},b:{sym:"b"},x:{txt:"red"}}
 const gridSize={x:20,y:10};
 const userMouse={x:0,y:0};
 let firstPick=true;
@@ -171,8 +171,7 @@ function checkIfWon(){
 }
 function generateBombs(){
 	const total=bombDensity(bpc);
-	let count=0;
-	let tries=0;
+	let count=0,tries=0;
 	while(count<total&&count<gridSize.x*gridSize.y-9){
 		let x=Math.random()*gridSize.x|0;
 		let y=Math.random()*gridSize.y|0;
@@ -200,12 +199,15 @@ function reveal(x,y){
 	cells[y][x]=actual[y][x];
 	if(cells[y][x]=="b"){
 		died=true;
+		setTimeout(()=>{
+			for(let i=0,j;i<gridSize.y;i++)for(j=0;j<gridSize.x;j++)if(actual[i][j]!="b"&&cells[i][j]=="f")cells[i][j]="x";
+		});
 		clearTimeout(flagTimeout);
-		diedTimeout=setTimeout(init,1000);
+		diedTimeout=setTimeout(init,1500);
 	}
 	if(checkIfWon()&&!firstPick){
 		firstPick=true;
-		setTimeout(init,100);
+		setTimeout(init,500);
 	}
 }
 function dig(x,y){
@@ -236,11 +238,12 @@ requestAnimationFrame(function update(){
 	ctx.clearRect(0,0,cvs.width,cvs.width);
 	let flagCount=0,bombCount=0;
 	for(let i=0,j;i<gridSize.y;i++)for(j=0;j<gridSize.x;j++){
+		if(cells[i][j]=="f"&&actual[i][j]=="0")cells[i][j]="0";
 		if(cells[i][j]=="f")flagCount++;
 		if(actual[i][j]=="b")bombCount++;
 		if(cells[i][j]=="0")digAdjacent(j,i);
 		let cell=cells[i][j],st=map[cell];
-		ctx.fillStyle=cell===""||cell=="f"?backgroundColors.bg1:backgroundColors.bg2;
+		ctx.fillStyle=cell===""||cell=="f"||cell=="x"?backgroundColors.bg1:backgroundColors.bg2;
 		ctx.fillRect(p*j,p*i,p,p);
 		if(st?.txt){
 			ctx.font=p+"px monospace";
