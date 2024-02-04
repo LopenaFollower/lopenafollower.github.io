@@ -21,40 +21,27 @@
 		<div id=flexbox>
 			<canvas id=cvs></canvas><br>
 			<fieldset>
+				<div id=bombsLeftd></div>
 				<button onclick='init()'>Restart</button>
 				<button onclick='clearFlags()'>Clear Flags</button>
-				<div id=bombsLeftd></div>
 				<div style='display:flex'>
 					<fieldset class=wrap>
 						<div id=gridArea></div>
 						Grid Size<br>
 						<input id=gdi type=range min=12 max=60 step=2 value=20 oninput='setVal("grid",parseFloat(this.value))'/><span id=gridSized>20</span><br>
 						Grouped Bomb %<br>
-						<input id=bnbi type=range min=0 max=.9 step=.05 value=.2 oninput='setVal("bnby",parseFloat(this.value))'/><span id=bombsNearbyd>20%</span><br>
+						<input id=bnbi type=range min=.05 max=.9 step=.05 value=.2 oninput='setVal("bnby",parseFloat(this.value))'/><span id=bombsNearbyd>20%</span><br>
 						Bomb Population<br>
-						<input id=bpci type=range min=.05 max=.6 step=.025 value=.15 oninput='setVal("bpc",parseFloat(this.value))'/><span id=bombPopulationd>30</span><br>
+						<input id=bpci type=range min=.05 max=.8 step=.025 value=.15 oninput='setVal("bpc",parseFloat(this.value))'/><span id=bombPopulationd>30</span><br>
 						<button onclick='reset()'>Default</button>
 					</fieldset>
 					<fieldset class=wrap id=clrs>
 						<table>
-							<tr>
-								<td>BG1</td>
-								<td><input class=clrin id=bgColor1In oninput='this.style.color=this.value;setVal("bgc1",this.style.color);'/></td>
-								<td>BG2</td>
-								<td><input class=clrin id=bgColor2In oninput='this.style.color=this.value;setVal("bgc2",this.style.color);'/></td>
-							</tr>
-							<tr>
-								<td>1</td><td><input class=clrin id=tile1In oninput='this.style.color=this.value;setVal("tile",this.style.color,"1");'/></td><td>2</td><td><input class=clrin id=tile2In oninput='this.style.color=this.value;setVal("tile",this.style.color,"2");'/></td>
-							</tr>
-							<tr>
-								<td>3</td><td><input class=clrin id=tile3In oninput='this.style.color=this.value;setVal("tile",this.style.color,"3");'/></td><td>4</td><td><input class=clrin id=tile4In oninput='this.style.color=this.value;setVal("tile",this.style.color,"4");'/></td>
-							</tr>
-							<tr>
-								<td>5</td><td><input class=clrin id=tile5In oninput='this.style.color=this.value;setVal("tile",this.style.color,"5");'/></td><td>6</td><td><input class=clrin id=tile6In oninput='this.style.color=this.value;setVal("tile",this.style.color,"6");'/></td>
-							</tr>
-							<tr>
-								<td>7</td><td><input class=clrin id=tile7In oninput='this.style.color=this.value;setVal("tile",this.style.color,"7");'/></td><td>8</td><td><input class=clrin id=tile8In oninput='this.style.color=this.value;setVal("tile",this.style.color,"8");'/></td>
-							</tr>
+							<tr><td>BG1</td><td><input class=clrin id=bgC1In oninput='this.style.color=this.value;setVal("bgc1",this.style.color)'/></td><td>BG2</td><td><input class=clrin id=bgC2In oninput='this.style.color=this.value;setVal("bgc2",this.style.color)'/></td></tr>
+							<tr><td>1</td><td><input class=clrin id=tile1In oninput='this.style.color=this.value;setVal("t",this.style.color,"1")'/></td><td>2</td><td><input class=clrin id=tile2In oninput='this.style.color=this.value;setVal("t",this.style.color,"2")'/></td></tr>
+							<tr><td>3</td><td><input class=clrin id=tile3In oninput='this.style.color=this.value;setVal("t",this.style.color,"3")'/></td><td>4</td><td><input class=clrin id=tile4In oninput='this.style.color=this.value;setVal("t",this.style.color,"4")'/></td></tr>
+							<tr><td>5</td><td><input class=clrin id=tile5In oninput='this.style.color=this.value;setVal("t",this.style.color,"5")'/></td><td>6</td><td><input class=clrin id=tile6In oninput='this.style.color=this.value;setVal("t",this.style.color,"6")'/></td></tr>
+							<tr><td>7</td><td><input class=clrin id=tile7In oninput='this.style.color=this.value;setVal("t",this.style.color,"7")'/></td><td>8</td><td><input class=clrin id=tile8In oninput='this.style.color=this.value;setVal("t",this.style.color,"8")'/></td></tr>
 						</table>
 						<button onclick='initMap()'>Default</button>
 					</fieldset>
@@ -63,45 +50,32 @@
 		</div>
 		<script>
 const ctx=cvs.getContext("2d");
-const keybinds={
-	multi:"",
-	flag:"",
-	dig:""
-}
-const backgroundColors={
-	bg1:"#555",
-	bg2:"#bbb"
-}
-const map={f:{sym:"f"},b:{sym:"b"},x:{txt:"red"}}
+const keybinds={multi:"",flag:"",dig:""};
+const backgroundColors={bg1:"#555",bg2:"#bbb"};
+const map={f:{sym:"f"},b:{sym:"b"},x:{txt:"red"}};
 const gridSize={x:20,y:10};
 const userMouse={x:0,y:0};
-let firstPick=true;
-let bpc=.15;
-let bnb=.2;
-let died=false;
+const rgb=(r=>{r={s:1,r:255,g:0,b:0,rg:0,gg:1,bg:0,rl:0,gl:0,bl:0};r.fetch=(f="",h)=>{h=_=>_.toString(16).padStart(2,0);return"#"+(f.length>2?h(r[f[0]])+h(r[f[1]])+h(r[f[2]]):h(r.r)+h(r.g)+h(r.b))};r.i=setInterval((m=255,A,B,C)=>{["g","l"].map((v,i)=>["r","g","b"].map(e=>r[e]==(i?-1:m+1)&&(r[e+v]=0,r[e]=i?0:m)));A=r.r==m;B=r.g==m;C=r.b==m;A&&!r.g&&!r.b&&(r.gg=1);A&&B&&!r.b&&(r.rl=1);!r.r&&B&&!r.b&&(r.bg=1);!r.r&&B&&C&&(r.gl=1);!r.r&&!r.g&&C&&(r.rg=1);A&&!r.g&&C&&(r.bl=1);["r","g","b"].map(e=>r[e+"g"]&&(r[e]+=r.s));["r","g","b"].map(e=>r[e+"l"]&&(r[e]-=r.s))});return r})();
 let cells=[];
 let actual=[];
 let immune=[];
+let bpc=.15;
+let bnb=.2;
+let died=false;
 let diedTimeout;
 let flagTimeout;
-let flagDelay=150;
+let flagDelay=200;
 let flagDebounce=false;
+let firstPick=true;
 function reset(){
 	setVal("grid",20);
 	setVal("bnby",.2);
 	setVal("bpc",.15);
 }
 function initMap(){
-	map["1"]={txt:tile1In.value=tile1In.style.color="#04f"};
-	map["2"]={txt:tile2In.value=tile2In.style.color="#194"};
-	map["3"]={txt:tile3In.value=tile3In.style.color="#f01"};
-	map["4"]={txt:tile4In.value=tile4In.style.color="#909"};
-	map["5"]={txt:tile5In.value=tile5In.style.color="#fd0"};
-	map["6"]={txt:tile6In.value=tile6In.style.color="#0af"};
-	map["7"]={txt:tile7In.value=tile7In.style.color="#777"};
-	map["8"]={txt:tile8In.value=tile8In.style.color="#eee"};
-	bgColor1In.value=bgColor1In.style.color=backgroundColors.bg1="#555";
-	bgColor2In.value=bgColor2In.style.color=backgroundColors.bg2="#bbb";
+	["#04f","#194","#f01","#909","#fd0","#0af","#777","#eee"].map((e,i)=>map[++i]={txt:document.getElementById(`tile${i}In`).value=document.getElementById(`tile${i}In`).style.color=e});
+	bgC1In.value=bgC1In.style.color=backgroundColors.bg1="#555";
+	bgC2In.value=bgC2In.style.color=backgroundColors.bg2="#bbb";
 }
 function setVal(n,v,i,t){
 	switch(n){
@@ -124,21 +98,18 @@ function setVal(n,v,i,t){
 		break;
 		case"bgc1":backgroundColors.bg1=v;break;
 		case"bgc2":backgroundColors.bg2=v;break;
-		case"tile":map[i].txt=v;break;
+		case"t":map[i].txt=v;break;
 	}
 }
 function init(){
-	clearTimeout(diedTimeout);
-	firstPick=true;died=false;
-	cells=[];actual=[];
-	for(let i=0,j;i<gridSize.y;i++)for(cells[i]=[],actual[i]=[],j=0;j<gridSize.x;j++){
-		cells[i][j]="";
-		actual[i][j]="";
-	}
+	clearTimeout(diedTimeout);clearTimeout(flagTimeout);
+	firstPick=true;died=false;flagDebounce=false;
+	cells=[];actual=[];immune=[];
+	for(let i=0,j;i<gridSize.y;i++)for(cells[i]=[],actual[i]=[],j=0;j<gridSize.x;j++)cells[i][j]=actual[i][j]="";
 }
 function getPS(){
 	let w=cvs.width,h=cvs.height,{x,y}=gridSize;
-	return(w<h?w/x-.125:h/y-.15);
+	return(w<h?w/x:h/y);
 }
 function bombDensity(p){
 	return gridSize.x*gridSize.y*p|0;
@@ -151,7 +122,7 @@ async function auto(ms,f){
 	}
 	for(let i=0,j;i<gridSize.y;i++)for(j=0;j<gridSize.x;j++){
 		if(cells[i][j]!="")continue;
-		if(actual[i][j]!="b")reveal(j,i);
+		if(actual[i][j]!="b")dig(j,i);
 		else if(f)placeFlag(j,i);
 		flagDebounce=false;
 		if(Math.random()>.8)await new Promise(r=>setTimeout(r,ms));
@@ -215,14 +186,20 @@ function reveal(x,y){
 	}
 }
 function dig(x,y){
+	x=Math.min(x,gridSize.x-1);
+	y=Math.min(y,gridSize.y-1);
 	if(cells[y][x]=="f")return;
 	if(symNearby(x,y,"b"))reveal(x,y);
 	else digAdjacent(x,y);
 }
 function digAdjacent(x,y,g){
 	if(cells[y][x]=="f")return;
-	let c=actual[y][x];
-	for(let i=(y-1<0)?y:y-1;i<=(y+1>=gridSize.y?y:y+1);i++)for(let j=(x-1<0?x:x-1);j<=(x+1>=gridSize.x?x:x+1);j++)if((actual[i][j]!="b"||g)&&cells[i][j]!="f")reveal(j,i);
+	let c=actual[y][x],z;
+	for(let i=(y-1<0)?y:y-1;i<=(y+1>=gridSize.y?y:y+1);i++)for(let j=(x-1<0?x:x-1);j<=(x+1>=gridSize.x?x:x+1);j++){
+		z=cells[i][j]=="";
+		if((actual[i][j]!="b"||g)&&cells[i][j]!="f")reveal(j,i);
+		if(actual[i][j]=="0"&&z)digAdjacent(j,i);
+	}
 }
 function multiDig(x,y){
 	let c=actual[y][x];
@@ -233,21 +210,25 @@ function multiDig(x,y){
 }
 function placeFlag(x,y){
 	flagDebounce=true;
+	x=Math.min(x,gridSize.x-1);
+	y=Math.min(y,gridSize.y-1);
 	if(cells[y][x]=="f")cells[y][x]="";
 	else if(cells[y][x]=="")cells[y][x]="f";
 	setTimeout(()=>flagDebounce=false,200);
 }
 requestAnimationFrame(function update(){
-	let p=getPS();
+	let p=getPS(),flagCount=0,bombCount=0;
+	for(let i=1;i<9;i++){
+		let el=document.getElementById(`tile${i}In`),v=el.value.replaceAll(/[^rgb]/g,"");
+		if(v.length==3)setVal("t",el.style.color=rgb.fetch(v),i+"");
+	}
 	ctx.clearRect(0,0,cvs.width,cvs.width);
-	let flagCount=0,bombCount=0;
 	for(let i=0,j;i<gridSize.y;i++)for(j=0;j<gridSize.x;j++){
 		let cell=cells[i][j],st=map[cell];
 		if(cell=="f")flagCount++;
 		if(actual[i][j]=="b")bombCount++;
-		if(cell=="0")digAdjacent(j,i);
 		ctx.fillStyle=cell===""||cell=="f"||cell=="x"?backgroundColors.bg1:backgroundColors.bg2;
-		ctx.fillRect(p*j,p*i,p,p);
+		ctx.fillRect(p*j,p*i,p-.15,p-.15);
 		if(st?.txt){
 			ctx.font=p+"px monospace";
 			ctx.fillStyle=st.txt;
@@ -268,16 +249,13 @@ requestAnimationFrame(function update(){
 		}
 	}
 	bombsLeftd.innerText="Flags: "+(bombCount-flagCount);
-	gridArea.innerText="Grid Area: "+gridSize.x*gridSize.y
+	gridArea.innerText="Grid Area: "+gridSize.x*gridSize.y;
 	requestAnimationFrame(update);
 });
 window.onresize=function(){
-	let w=(Math.min(screen.width,screen.height)*.995)|0;
-	let o=window.innerWidth<window.innerHeight;
-	let r=gridSize.x/gridSize.y;
+	let w=Math.min(screen.width,screen.height),o=window.innerWidth<window.innerHeight,r=gridSize.x/gridSize.y;
 	flexbox.style.display=o?"inline-block":"flex";
-	cvs.width=o?w:w*r*.8;
-	cvs.height=o?w/r:w*.8;
+	cvs.width=o?w:w*r;cvs.height=o?w/r:w;
 }
 window.onresize();
 cvs.addEventListener("click",e=>{
@@ -292,10 +270,10 @@ cvs.addEventListener("click",e=>{
 		generateBombs();
 		initNumberedCells();
 		digAdjacent(x,y);
-	}else{
-		dig(x,y);
-		multiDig(x,y);
+		clearFlags();
 	}
+	dig(x,y);
+	multiDig(x,y);
 });
 ["mouseup","touchend","touchcancel"].forEach(v=>cvs.addEventListener(v,e=>clearTimeout(flagTimeout)));
 ["touchmove","mousemove"].forEach((v,j)=>cvs.addEventListener(v,e=>{
