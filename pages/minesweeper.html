@@ -272,20 +272,14 @@ cvs.addEventListener("click",e=>{
 	userMouse.y=y;
 }));
 cvs.addEventListener("mousedown",e=>{
-	flagTimeout=setTimeout(()=>{
-		"vibrate"in navigator&&navigator.vibrate(100);
-		placeFlag(userMouse.x,userMouse.y)
-	},flagDelay);
+	flagTimeout=setTimeout(()=>placeFlag(userMouse.x,userMouse.y),flagDelay);
 });
 cvs.addEventListener("touchstart",e=>{
 	if(died)return;
 	let p=getPS(),t=e.targetTouches.length?e.targetTouches.item(0):e.touches.item(0);
 	userMouse.x=(t.pageX-cvs.offsetLeft)/p|0;
 	userMouse.y=(t.pageY-cvs.offsetTop)/p|0;
-	flagTimeout=setTimeout(()=>{
-		"vibrate"in navigator&&navigator.vibrate(100);
-		placeFlag(userMouse.x,userMouse.y)
-	},flagDelay);
+	flagTimeout=setTimeout(()=>placeFlag(userMouse.x,userMouse.y),flagDelay);
 });
 init();initMap();
 //add desktop counterparts later
