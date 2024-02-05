@@ -72,7 +72,7 @@ const rgb=(r=>{r={s:1,r:255,g:0,b:0,rg:0,gg:1,bg:0,rl:0,gl:0,bl:0};r.fetch=(f=""
 let cells=[],actual=[],immune=[];
 let bpc=.15,bnb=.2;
 let died=false;
-let diedTimeout,flagTimeout;
+let diedTimeout,flagTimeout,initTimeout;
 let flagDelay=200;
 let flagDebounce=false;
 let firstPick=true;
@@ -109,7 +109,7 @@ function setVal(n,v,i){
 	}
 }
 function init(){
-	clearTimeout(diedTimeout);clearTimeout(flagTimeout);
+	clearTimeout(diedTimeout);clearTimeout(flagTimeout);clearTimeout(initTimeout);
 	firstPick=true;died=flagDebounce=false;
 	cells=[];actual=[];immune=[];
 	for(let i=0,j;i<gridSize.y;i++)for(cells[i]=[],actual[i]=[],j=0;j<gridSize.x;j++)cells[i][j]=actual[i][j]="";
@@ -181,7 +181,7 @@ function reveal(x,y){
 	}
 	if(checkIfWon()&&!firstPick){
 		firstPick=true;
-		setTimeout(init,500);
+		initTimeout=setTimeout(init,500);
 	}
 }
 function dig(x,y){
@@ -256,7 +256,7 @@ requestAnimationFrame(function update(){
 	requestAnimationFrame(update);
 });
 window.onresize=function(){
-	let w=Math.min(screen.width,screen.height),o=window.innerWidth<window.innerHeight,r=gridSize.x/gridSize.y;
+	let w=Math.min(screen.width,screen.height),o=screen.orientation!="primary-portrait",r=gridSize.x/gridSize.y;
 	flexbox.style.display=o?"inline-block":"flex";
 	cvs.width=o?w:w*r;cvs.height=o?w/r:w;
 }
