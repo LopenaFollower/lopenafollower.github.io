@@ -198,7 +198,7 @@ function digAdjacent(x,y,g){
 	for(let i=(y-1<0)?y:y-1;i<=(y+1>=gridSize.y?y:y+1);i++)for(let j=(x-1<0?x:x-1);j<=(x+1>=gridSize.x?x:x+1);j++){
 		z=cells[i][j]=="";
 		if((actual[i][j]!="b"||g)&&cells[i][j]!="f")reveal(j,i);
-		if(actual[i][j]=="0"&&z)digAdjacent(j,i);
+		if(actual[i][j]=="0"&&z&&cells[i][j]=="0")digAdjacent(j,i);
 	}
 }
 function multiDig(x,y){
