@@ -52,18 +52,15 @@
 const ctx=cvs.getContext("2d");
 const keybinds={multi:"",flag:"",dig:""};
 const backgroundColors={bg1:"#555",bg2:"#bbb"};
-const map={f:{sym:"f"},b:{sym:"b"},x:{txt:"red"}};
+const map={f:{sym:"f"},b:{sym:"b"},X:{txt:"red"}};
 const gridSize={x:20,y:10};
 const userMouse={x:0,y:0};
+const getById=d=>document.getElementById(d);
 const rgb=(r=>{r={s:1,r:255,g:0,b:0,rg:0,gg:1,bg:0,rl:0,gl:0,bl:0};r.fetch=(f="",h)=>{h=_=>_.toString(16).padStart(2,0);return"#"+(f.length>2?h(r[f[0]])+h(r[f[1]])+h(r[f[2]]):h(r.r)+h(r.g)+h(r.b))};r.i=setInterval((m=255,A,B,C)=>{["g","l"].map((v,i)=>["r","g","b"].map(e=>r[e]==(i?-1:m+1)&&(r[e+v]=0,r[e]=i?0:m)));A=r.r==m;B=r.g==m;C=r.b==m;A&&!r.g&&!r.b&&(r.gg=1);A&&B&&!r.b&&(r.rl=1);!r.r&&B&&!r.b&&(r.bg=1);!r.r&&B&&C&&(r.gl=1);!r.r&&!r.g&&C&&(r.rg=1);A&&!r.g&&C&&(r.bl=1);["r","g","b"].map(e=>r[e+"g"]&&(r[e]+=r.s));["r","g","b"].map(e=>r[e+"l"]&&(r[e]-=r.s))});return r})();
-let cells=[];
-let actual=[];
-let immune=[];
-let bpc=.15;
-let bnb=.2;
+let cells=[],actual=[],immune=[];
+let bpc=.15,bnb=.2;
 let died=false;
-let diedTimeout;
-let flagTimeout;
+let diedTimeout,flagTimeout;
 let flagDelay=200;
 let flagDebounce=false;
 let firstPick=true;
@@ -73,16 +70,14 @@ function reset(){
 	setVal("bpc",.15);
 }
 function initMap(){
-	["#04f","#194","#f01","#909","#fd0","#0af","#777","#eee"].map((e,i)=>map[++i]={txt:document.getElementById(`tile${i}In`).value=document.getElementById(`tile${i}In`).style.color=e});
-	bgC1In.value=bgC1In.style.color=backgroundColors.bg1="#555";
-	bgC2In.value=bgC2In.style.color=backgroundColors.bg2="#bbb";
+	["#04f","#194","#f01","#909","#fd0","#0af","#777","#eee"].map((e,i)=>map[++i]={txt:getById(`tile${i}In`).value=getById(`tile${i}In`).style.color=e});
+	["#555","#bbb"].map((e,i)=>getById(`bgC${++i}In`).value=getById(`bgC${i}In`).style.color=backgroundColors["bg"+i]=e);
 }
-function setVal(n,v,i,t){
+function setVal(n,v,i){
 	switch(n){
 		case"grid":
-			gridSize.x=gdi.value=v;
+			gridSize.x=gdi.value=gridSized.innerText=v;
 			gridSize.y=v/2;
-			gridSized.innerText=v;
 			bombPopulationd.innerText=bombDensity(bpc);
 			init();
 		break;
@@ -103,7 +98,7 @@ function setVal(n,v,i,t){
 }
 function init(){
 	clearTimeout(diedTimeout);clearTimeout(flagTimeout);
-	firstPick=true;died=false;flagDebounce=false;
+	firstPick=true;died=flagDebounce=false;
 	cells=[];actual=[];immune=[];
 	for(let i=0,j;i<gridSize.y;i++)for(cells[i]=[],actual[i]=[],j=0;j<gridSize.x;j++)cells[i][j]=actual[i][j]="";
 }
@@ -133,40 +128,32 @@ function clearFlags(){
 }
 function symNearby(x,y,s){
 	let n=false;
-	for(let i=(y-1<0)?y:y-1;i<=(y+1>=gridSize.y?y:y+1);i++)for(let j=(x-1<0?x:x-1);j<=(x+1>=gridSize.x?x:x+1);j++)if(actual[i][j]==s)n=true;
+	for(let i=!y?y:y-1;i<=(y+1>=gridSize.y?y:y+1);i++)for(let j=!x?x:x-1;j<=(x+1>=gridSize.x?x:x+1);j++)if(actual[i][j]==s)n=true;
 	return n;
 }
 function checkIfWon(){
 	let won=true;
-	for(let i=0,j;i<gridSize.y;i++)for(j=0;j<gridSize.x;j++){
-		if(cells[i][j]=="f"&&actual[i][j]!="b")won=false;
-		else if(cells[i][j]==""&&actual[i][j]!="b")won=false;
-	}
+	for(let i=0,j;i<gridSize.y;i++)for(j=0;j<gridSize.x;j++)if(cells[i][j]=="f"&&actual[i][j]!="b"||cells[i][j]==""&&actual[i][j]!="b")won=false;
 	return won;
 }
 function generateBombs(){
-	const total=bombDensity(bpc);
-	let count=0,tries=0;
-	while(count<total&&count<gridSize.x*gridSize.y-9){
-		let x=Math.random()*gridSize.x|0;
-		let y=Math.random()*gridSize.y|0;
-		let spwnchn=symNearby(x,y,"b")?1-bnb:bnb;
-		if(immune.indexOf(x+","+y)<0&&actual[y][x]!="b"&&Math.random()>spwnchn){
-			actual[y][x]="b";
-			count++;
-		}else tries++;
-		if(tries>1e6&&count>0)break;
+	const N=bombDensity(bpc);
+	let n=0,t=0;
+	while(n<N&&n<gridSize.x*gridSize.y-9){
+		let x=Math.random()*gridSize.x|0,y=Math.random()*gridSize.y|0;
+		let s=symNearby(x,y,"b")?1-bnb:bnb;
+		if(immune.indexOf(x+","+y)<0&&actual[y][x]!="b"&&Math.random()>s){
+			actual[y][x]="b";n++;
+		}else t++;
+		if(t>1e6&&n>0)break;
 	}
 }
 function initNumberedCells(){
 	for(let i=0,j;i<gridSize.y;i++)for(j=0;j<gridSize.x;j++){
-		if(actual[i][j]===""){
-			let bombCount=0;
-			for(let y=(i-1<0)?i:i-1;y<=(i+1>=gridSize.y?i:i+1);y++)for(let x=(j-1<0?j:j-1);x<=(j+1>=gridSize.x?j:j+1);x++){
-				if(actual[y][x]=="b")bombCount++;
-			}
-			actual[i][j]=bombCount+"";
-		}
+		if(actual[i][j]=="b")continue;
+		let bombCount=0;
+		for(let y=!i?i:i-1;y<=(i+1>=gridSize.y?i:i+1);y++)for(let x=!j?j:j-1;x<=(j+1>=gridSize.x?j:j+1);x++)if(actual[y][x]=="b")bombCount++;
+		actual[i][j]=bombCount+"";
 	}
 }
 function reveal(x,y){
@@ -175,7 +162,7 @@ function reveal(x,y){
 	if(cells[y][x]=="b"){
 		died=true;
 		setTimeout(()=>{
-			for(let i=0,j;i<gridSize.y;i++)for(j=0;j<gridSize.x;j++)if(actual[i][j]!="b"&&cells[i][j]=="f")cells[i][j]="x";
+			for(let i=0,j;i<gridSize.y;i++)for(j=0;j<gridSize.x;j++)if(actual[i][j]!="b"&&cells[i][j]=="f")cells[i][j]="X";
 		},5);
 		clearTimeout(flagTimeout);
 		diedTimeout=setTimeout(init,1500);
@@ -210,6 +197,7 @@ function multiDig(x,y){
 }
 function placeFlag(x,y){
 	flagDebounce=true;
+	"vibrate"in navigator&&navigator.vibrate(100);
 	x=Math.min(x,gridSize.x-1);
 	y=Math.min(y,gridSize.y-1);
 	if(cells[y][x]=="f")cells[y][x]="";
@@ -219,18 +207,18 @@ function placeFlag(x,y){
 requestAnimationFrame(function update(){
 	let p=getPS(),flagCount=0,bombCount=0;
 	for(let i=1;i<9;i++){
-		let el=document.getElementById(`tile${i}In`),v=el.value.replaceAll(/[^rgb]/g,"");
-		if(v.length==3)setVal("t",el.style.color=rgb.fetch(v),i+"");
+		let e=getById(`tile${i}In`),v=e.value.replaceAll(/[^rgb]/g,"");
+		if(v.length==3)setVal("t",e.style.color=rgb.fetch(v),i+"");
 	}
 	ctx.clearRect(0,0,cvs.width,cvs.width);
 	for(let i=0,j;i<gridSize.y;i++)for(j=0;j<gridSize.x;j++){
 		let cell=cells[i][j],st=map[cell];
 		if(cell=="f")flagCount++;
 		if(actual[i][j]=="b")bombCount++;
-		ctx.fillStyle=cell===""||cell=="f"||cell=="x"?backgroundColors.bg1:backgroundColors.bg2;
+		ctx.fillStyle=cell===""||cell=="f"||cell=="X"?backgroundColors.bg1:backgroundColors.bg2;
 		ctx.fillRect(p*j,p*i,p-.15,p-.15);
 		if(st?.txt){
-			ctx.font=p+"px monospace";
+			ctx.font=p+"px sans-serif";
 			ctx.fillStyle=st.txt;
 			ctx.fillText(cell,p*j+p/5,p*i+p/1.17);
 		}else if(st?.sym){
@@ -240,7 +228,7 @@ requestAnimationFrame(function update(){
 				ctx.moveTo(p*j+p/3,p*i+p/12);
 				ctx.lineTo(p*j+p*8/9,p*i+p*33/80);
 				ctx.lineTo(p*j+p/3,p*i+p*97/136);
-				ctx.rect(p*j+p/3,p*i+p/12,-p/12,p*33/40);
+				ctx.fillRect(p*j+p/3,p*i+p/12,-p/12,p*33/40);
 				ctx.fill();
 			}else{
 				ctx.font=p*.75+"px monospace";
@@ -261,16 +249,16 @@ window.onresize();
 cvs.addEventListener("click",e=>{
 	if(died)return;
 	let p=getPS();
-	userMouse.x=(e.pageX-cvs.offsetLeft)/p|0;
-	userMouse.y=(e.pageY-cvs.offsetTop)/p|0;
 	let x=(e.pageX-cvs.offsetLeft)/p|0,y=(e.pageY-cvs.offsetTop)/p|0;
+	userMouse.x=x;
+	userMouse.y=y;
 	if(firstPick){
 		firstPick=false;
 		for(let i=y-1;i<y+2;i++)for(let j=x-1;j<x+2;j++)immune.push(j+","+i);
 		generateBombs();
 		initNumberedCells();
-		digAdjacent(x,y);
 		clearFlags();
+		digAdjacent(x,y);
 	}
 	dig(x,y);
 	multiDig(x,y);
