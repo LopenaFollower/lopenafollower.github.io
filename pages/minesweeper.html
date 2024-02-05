@@ -10,11 +10,15 @@
 				overflow:hidden;
 			}
 			fieldset.wrap{width:fit-content}
+			input.kbin{
+				width:40px;
+			}
 			input.clrin{
 				width:60px;
 				text-shadow:0 0 1px #000;
 			}
 			td{text-align:right}
+			#shortcutkeys{display:none}
 		</style>
 	</head>
 	<body>
@@ -35,7 +39,7 @@
 						<input id=bpci type=range min=.05 max=.8 step=.025 value=.15 oninput='setVal("bpc",parseFloat(this.value))'/><span id=bombPopulationd>30</span><br>
 						<button onclick='reset()'>Default</button>
 					</fieldset>
-					<fieldset class=wrap id=clrs>
+					<fieldset class=wrap>
 						<table>
 							<tr><td>BG1</td><td><input class=clrin id=bgC1In oninput='this.style.color=this.value;setVal("bgc1",this.style.color)'/></td><td>BG2</td><td><input class=clrin id=bgC2In oninput='this.style.color=this.value;setVal("bgc2",this.style.color)'/></td></tr>
 							<tr><td>1</td><td><input class=clrin id=tile1In oninput='this.style.color=this.value;setVal("t",this.style.color,"1")'/></td><td>2</td><td><input class=clrin id=tile2In oninput='this.style.color=this.value;setVal("t",this.style.color,"2")'/></td></tr>
@@ -46,11 +50,19 @@
 						<button onclick='initMap()'>Default</button>
 					</fieldset>
 				</div>
+				<br>
+				<fieldset class=wrap id=shortcutkeys>
+					<table>
+						<tr><td>Restart</td><td><input class=kbin id=restartkb ondblclick='this.readOnly=false;this.value=""'oninput='this.readOnly=true;recordKeyBind("restart")'/></td></tr>
+						<tr><td>Flag</td><td><input class=kbin id=flagkb ondblclick='this.readOnly=false;this.value=""'oninput='this.readOnly=true;recordKeyBind("flag")'/></td></tr>
+						<tr><td>Dig</td><td><input class=kbin id=digkb ondblclick='this.readOnly=false;this.value=""'oninput='this.readOnly=true;recordKeyBind("dig")'/></td></tr>
+					</table>
+				</fieldset>
 			</fieldset>
 		</div>
 		<script>
 const ctx=cvs.getContext("2d");
-const keybinds={multi:"",flag:"",dig:""};
+const keybinds={restart:"",flag:"",dig:""};
 const backgroundColors={bg1:"#555",bg2:"#bbb"};
 const map={f:{sym:"f"},b:{sym:"b"},X:{txt:"red"}};
 const gridSize={x:20,y:10};
@@ -180,6 +192,8 @@ function dig(x,y){
 	else digAdjacent(x,y);
 }
 function digAdjacent(x,y,g){
+	x=Math.min(x,gridSize.x-1);
+	y=Math.min(y,gridSize.y-1);
 	if(cells[y][x]=="f")return;
 	let c=actual[y][x],z;
 	for(let i=(y-1<0)?y:y-1;i<=(y+1>=gridSize.y?y:y+1);i++)for(let j=(x-1<0?x:x-1);j<=(x+1>=gridSize.x?x:x+1);j++){
@@ -189,6 +203,8 @@ function digAdjacent(x,y,g){
 	}
 }
 function multiDig(x,y){
+	x=Math.min(x,gridSize.x-1);
+	y=Math.min(y,gridSize.y-1);
 	let c=actual[y][x];
 	if(isNaN(c)||c==="0")return;
 	let flags=0;
@@ -272,7 +288,10 @@ cvs.addEventListener("click",e=>{
 	userMouse.y=y;
 }));
 cvs.addEventListener("mousedown",e=>{
-	flagTimeout=setTimeout(()=>placeFlag(userMouse.x,userMouse.y),flagDelay);
+	if(e.button==2){
+		placeFlag(userMouse.x,userMouse.y);
+		flatDebounce=false;
+	}
 });
 cvs.addEventListener("touchstart",e=>{
 	if(died)return;
@@ -281,8 +300,43 @@ cvs.addEventListener("touchstart",e=>{
 	userMouse.y=(t.pageY-cvs.offsetTop)/p|0;
 	flagTimeout=setTimeout(()=>placeFlag(userMouse.x,userMouse.y),flagDelay);
 });
+let recentKey;
+function recordKeyBind(t){
+	const l={restart:["flag","dig"],dig:["flag","restart"],flag:["restart","dig"]}
+	let o=l[t];
+	if(keybinds[o[0]]==recentKey||keybinds[o[1]]==recentKey){
+		let e=getById(t+"kb")
+		e.value="";
+		e.readOnly=false;
+		return alert("key taken");
+	}
+	keybinds[t]=recentKey;
+}
+document.addEventListener("keydown",e=>{
+	if(!e.isTrusted)return;
+	if(e.keyCode==17)return shortcutkeys.style.display=shortcutkeys.style.display=="none"?"block":"none";
+	let kC=recentKey=e.keyCode;
+	let{x,y}=userMouse;
+	if(kC==keybinds.restart){
+		init();
+	}else if(kC==keybinds.flag){
+		placeFlag(x,y);
+		flatDebounce=false;
+	}else if(kC==keybinds.dig){
+		if(firstPick){
+			firstPick=false;
+			for(let i=y-1;i<y+2;i++)for(let j=x-1;j<x+2;j++)immune.push(j+","+i);
+			generateBombs();
+			initNumberedCells();
+			clearFlags();
+			digAdjacent(x,y);
+		}
+		dig(x,y);
+		multiDig(x,y);
+	}
+});
 init();initMap();
-//add desktop counterparts later
+//keybinds are still in beta since im testing them on a phone
 		</script>
 	</body>
 </html>
