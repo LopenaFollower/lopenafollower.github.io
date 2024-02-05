@@ -256,7 +256,7 @@ requestAnimationFrame(function update(){
 	requestAnimationFrame(update);
 });
 window.onresize=function(){
-	let w=Math.min(screen.width,screen.height),o=screen.orientation!="primary-portrait",r=gridSize.x/gridSize.y;
+	let w=Math.min(screen.width,screen.height),o=window.innerWidth<window.innerHeight,r=gridSize.x/gridSize.y;
 	flexbox.style.display=o?"inline-block":"flex";
 	cvs.width=o?w:w*r;cvs.height=o?w/r:w;
 }
