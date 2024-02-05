@@ -197,7 +197,6 @@ function multiDig(x,y){
 }
 function placeFlag(x,y){
 	flagDebounce=true;
-	"vibrate"in navigator&&navigator.vibrate(100);
 	x=Math.min(x,gridSize.x-1);
 	y=Math.min(y,gridSize.y-1);
 	if(cells[y][x]=="f")cells[y][x]="";
@@ -273,7 +272,10 @@ cvs.addEventListener("click",e=>{
 	userMouse.y=y;
 }));
 cvs.addEventListener("mousedown",e=>{
-	flagTimeout=setTimeout(()=>placeFlag(userMouse.x,userMouse.y),flagDelay);
+	flagTimeout=setTimeout(()=>{
+		"vibrate"in navigator&&navigator.vibrate(100);
+		placeFlag(userMouse.x,userMouse.y)
+	},flagDelay);
 });
 cvs.addEventListener("touchstart",e=>{
 	if(died)return;
@@ -281,6 +283,7 @@ cvs.addEventListener("touchstart",e=>{
 	userMouse.x=(t.pageX-cvs.offsetLeft)/p|0;
 	userMouse.y=(t.pageY-cvs.offsetTop)/p|0;
 	flagTimeout=setTimeout(()=>{
+		"vibrate"in navigator&&navigator.vibrate(100);
 		placeFlag(userMouse.x,userMouse.y)
 	},flagDelay);
 });
