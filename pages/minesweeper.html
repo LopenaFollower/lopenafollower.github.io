@@ -19,7 +19,12 @@
 			}
 			td{text-align:right}
 			#shortcutkeys{display:none}
-			#cvs{user-select:none}
+			#cvs{
+				user-select:none;
+				-webkit-user-select:none;
+				-moz-user-select:none;
+				touch-action:pinch-zoom;
+			}
 		</style>
 	</head>
 	<body>
@@ -35,7 +40,7 @@
 						Grid Size<br>
 						<input id=gdi type=range min=12 max=60 step=2 value=20 oninput='setVal("grid",parseFloat(this.value))'/><span id=gridSized>20</span><br>
 						Grouped Bomb %<br>
-						<input id=bnbi type=range min=.05 max=.9 step=.05 value=.2 oninput='setVal("bnby",parseFloat(this.value))'/><span id=bombsNearbyd>20%</span><br>
+						<input id=bnbi type=range min=.05 max=.9 step=.05 value=.25 oninput='setVal("bnby",parseFloat(this.value))'/><span id=bombsNearbyd>20%</span><br>
 						Bomb Population<br>
 						<input id=bpci type=range min=.05 max=.8 step=.025 value=.15 oninput='setVal("bpc",parseFloat(this.value))'/><span id=bombPopulationd>30</span><br>
 						<button onclick='reset()'>Default</button>
