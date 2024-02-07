@@ -19,6 +19,7 @@
 			}
 			td{text-align:right}
 			#shortcutkeys{display:none}
+			#cvs{user-select:none}
 		</style>
 	</head>
 	<body>
@@ -53,290 +54,294 @@
 				<br>
 				<fieldset class=wrap id=shortcutkeys>
 					<table>
-						<tr><td>Restart</td><td><input class=kbin id=restartkb ondblclick='this.readOnly=false;this.value=""'oninput='this.readOnly=true;recordKeyBind("restart")'/></td></tr>
-						<tr><td>Flag</td><td><input class=kbin id=flagkb ondblclick='this.readOnly=false;this.value=""'oninput='this.readOnly=true;recordKeyBind("flag")'/></td></tr>
-						<tr><td>Dig</td><td><input class=kbin id=digkb ondblclick='this.readOnly=false;this.value=""'oninput='this.readOnly=true;recordKeyBind("dig")'/></td></tr>
+						<tr><td>Restart</td><td><input class=kbin id=restartkb ondblclick='this.readOnly=false;this.value=""'oninput='this.readOnly=true;recordKeybind("restart")'/></td></tr>
+						<tr><td>Flag</td><td><input class=kbin id=flagkb ondblclick='this.readOnly=false;this.value=""'oninput='this.readOnly=true;recordKeybind("flag")'/></td></tr>
+						<tr><td>Dig</td><td><input class=kbin id=digkb ondblclick='this.readOnly=false;this.value=""'oninput='this.readOnly=true;recordKeybind("dig")'/></td></tr>
 					</table>
 				</fieldset>
 			</fieldset>
 		</div>
 		<script>
-const ctx=cvs.getContext("2d");
-const keybinds={restart:"",flag:"",dig:""};
-const backgroundColors={bg1:"#555",bg2:"#bbb"};
-const map={f:{sym:"f"},b:{sym:"b"},X:{txt:"red"}};
-const gridSize={x:20,y:10};
-const userMouse={x:0,y:0};
-const getById=d=>document.getElementById(d);
-const rgb=(r=>{r={s:1,r:255,g:0,b:0,rg:0,gg:1,bg:0,rl:0,gl:0,bl:0};r.fetch=(f="",h)=>{h=_=>_.toString(16).padStart(2,0);return"#"+(f.length>2?h(r[f[0]])+h(r[f[1]])+h(r[f[2]]):h(r.r)+h(r.g)+h(r.b))};r.i=setInterval((m=255,A,B,C)=>{["g","l"].map((v,i)=>["r","g","b"].map(e=>r[e]==(i?-1:m+1)&&(r[e+v]=0,r[e]=i?0:m)));A=r.r==m;B=r.g==m;C=r.b==m;A&&!r.g&&!r.b&&(r.gg=1);A&&B&&!r.b&&(r.rl=1);!r.r&&B&&!r.b&&(r.bg=1);!r.r&&B&&C&&(r.gl=1);!r.r&&!r.g&&C&&(r.rg=1);A&&!r.g&&C&&(r.bl=1);["r","g","b"].map(e=>r[e+"g"]&&(r[e]+=r.s));["r","g","b"].map(e=>r[e+"l"]&&(r[e]-=r.s))});return r})();
-let cells=[],actual=[],immune=[];
-let bpc=.15,bnb=.2;
-let died=false;
-let diedTimeout,flagTimeout,initTimeout;
-let flagDelay=200;
-let flagDebounce=false;
-let firstPick=true;
-function reset(){
-	setVal("grid",20);
-	setVal("bnby",.2);
-	setVal("bpc",.15);
-}
-function initMap(){
-	["#04f","#194","#f01","#909","#fd0","#0af","#777","#eee"].map((e,i)=>map[++i]={txt:getById(`tile${i}In`).value=getById(`tile${i}In`).style.color=e});
-	["#555","#bbb"].map((e,i)=>getById(`bgC${++i}In`).value=getById(`bgC${i}In`).style.color=backgroundColors["bg"+i]=e);
-}
-function setVal(n,v,i){
-	switch(n){
-		case"grid":
-			gridSize.x=gdi.value=gridSized.innerText=v;
-			gridSize.y=v/2;
-			bombPopulationd.innerText=bombDensity(bpc);
-			init();
-		break;
-		case"bnby":
-			bombsNearbyd.innerText=(v*100).toFixed()+"%";
-			bnb=bnbi.value=v;
-			init();
-		break;
-		case"bpc":
-			bombPopulationd.innerText=bombDensity(v).toFixed();
-			bpc=bpci.value=v;
-			init();
-		break;
-		case"bgc1":backgroundColors.bg1=v;break;
-		case"bgc2":backgroundColors.bg2=v;break;
-		case"t":map[i].txt=v;break;
+const{init,initMap,reset,setVal,clearFlags,recordKeybind}=(function(){
+	const ctx=cvs.getContext("2d");
+	const keybinds={restart:"",flag:"",dig:""};
+	const bgColors={bg1:"#555",bg2:"#bbb"};
+	const map={f:{sym:"f"},b:{sym:"b"},X:{txt:"red"}};
+	const gridSize={x:20,y:10};
+	const userMouse={x:0,y:0};
+	const getById=d=>document.getElementById(d);
+	const rgb=(r=>{r={s:1,r:255,g:0,b:0,rg:0,gg:1,bg:0,rl:0,gl:0,bl:0};r.fetch=(f="",h)=>{h=_=>_.toString(16).padStart(2,0);return"#"+(f.length>2?h(r[f[0]])+h(r[f[1]])+h(r[f[2]]):h(r.r)+h(r.g)+h(r.b))};r.i=setInterval((m=255,A,B,C)=>{["g","l"].map((v,i)=>["r","g","b"].map(e=>r[e]==(i?-1:m+1)&&(r[e+v]=0,r[e]=i?0:m)));A=r.r==m;B=r.g==m;C=r.b==m;A&&!r.g&&!r.b&&(r.gg=1);A&&B&&!r.b&&(r.rl=1);!r.r&&B&&!r.b&&(r.bg=1);!r.r&&B&&C&&(r.gl=1);!r.r&&!r.g&&C&&(r.rg=1);A&&!r.g&&C&&(r.bl=1);["r","g","b"].map(e=>r[e+"g"]&&(r[e]+=r.s));["r","g","b"].map(e=>r[e+"l"]&&(r[e]-=r.s))});return r})();
+	let cells=[],actual=[],immune=[];
+	let bpc=.15,bnb=.2;
+	let diedTimeout,flagTimeout,initTimeout,recentKey;
+	let flagDelay=200;
+	let flagDebounce=false;
+	let firstPick=true,died=false;
+	function reset(){
+		setVal("grid",20);
+		setVal("bnby",.2);
+		setVal("bpc",.15);
 	}
-}
-function init(){
-	clearTimeout(diedTimeout);clearTimeout(flagTimeout);clearTimeout(initTimeout);
-	firstPick=true;died=flagDebounce=false;
-	cells=[];actual=[];immune=[];
-	for(let i=0,j;i<gridSize.y;i++)for(cells[i]=[],actual[i]=[],j=0;j<gridSize.x;j++)cells[i][j]=actual[i][j]="";
-}
-function getPS(){
-	let w=cvs.width,h=cvs.height,{x,y}=gridSize;
-	return(w<h?w/x:h/y);
-}
-function bombDensity(p){
-	return gridSize.x*gridSize.y*p|0;
-}
-async function auto(ms,f){
-	if(firstPick){
-		firstPick=false;
-		generateBombs();
-		initNumberedCells();
+	function initMap(){
+		["#04f","#194","#f01","#909","#fd0","#0af","#777","#eee"].map((e,i)=>map[++i]={txt:getById(`tile${i}In`).value=getById(`tile${i}In`).style.color=e});
+		["#555","#bbb"].map((e,i)=>getById(`bgC${++i}In`).value=getById(`bgC${i}In`).style.color=bgColors["bg"+i]=e);
 	}
-	for(let i=0,j;i<gridSize.y;i++)for(j=0;j<gridSize.x;j++){
-		if(cells[i][j]!="")continue;
-		if(actual[i][j]!="b")dig(j,i);
-		else if(f)placeFlag(j,i);
-		flagDebounce=false;
-		if(Math.random()>.8)await new Promise(r=>setTimeout(r,ms));
-	}
-}
-function clearFlags(){
-	for(let i=0,j;i<gridSize.y;i++)for(j=0;j<gridSize.x;j++)if(cells[i][j]=="f")cells[i][j]="";
-}
-function symNearby(x,y,s){
-	let n=false;
-	for(let i=!y?y:y-1;i<=(y+1>=gridSize.y?y:y+1);i++)for(let j=!x?x:x-1;j<=(x+1>=gridSize.x?x:x+1);j++)if(actual[i][j]==s)n=true;
-	return n;
-}
-function checkIfWon(){
-	let won=true;
-	for(let i=0,j;i<gridSize.y;i++)for(j=0;j<gridSize.x;j++)if(cells[i][j]=="f"&&actual[i][j]!="b"||cells[i][j]==""&&actual[i][j]!="b")won=false;
-	return won;
-}
-function generateBombs(){
-	const N=bombDensity(bpc);
-	let n=0,t=0;
-	while(n<N&&n<gridSize.x*gridSize.y-9){
-		let x=Math.random()*gridSize.x|0,y=Math.random()*gridSize.y|0;
-		let s=symNearby(x,y,"b")?1-bnb:bnb;
-		if(immune.indexOf(x+","+y)<0&&actual[y][x]!="b"&&Math.random()>s){
-			actual[y][x]="b";n++;
-		}else t++;
-		if(t>1e6&&n>0)break;
-	}
-}
-function initNumberedCells(){
-	for(let i=0,j;i<gridSize.y;i++)for(j=0;j<gridSize.x;j++){
-		if(actual[i][j]=="b")continue;
-		let bombCount=0;
-		for(let y=!i?i:i-1;y<=(i+1>=gridSize.y?i:i+1);y++)for(let x=!j?j:j-1;x<=(j+1>=gridSize.x?j:j+1);x++)if(actual[y][x]=="b")bombCount++;
-		actual[i][j]=bombCount+"";
-	}
-}
-function reveal(x,y){
-	if(flagDebounce)return;
-	cells[y][x]=actual[y][x];
-	if(cells[y][x]=="b"){
-		died=true;
-		setTimeout(()=>{
-			for(let i=0,j;i<gridSize.y;i++)for(j=0;j<gridSize.x;j++)if(actual[i][j]!="b"&&cells[i][j]=="f")cells[i][j]="X";
-		},5);
-		clearTimeout(flagTimeout);
-		diedTimeout=setTimeout(init,1500);
-	}
-	if(checkIfWon()&&!firstPick){
-		firstPick=true;
-		initTimeout=setTimeout(init,500);
-	}
-}
-function dig(x,y){
-	x=Math.min(x,gridSize.x-1);
-	y=Math.min(y,gridSize.y-1);
-	if(cells[y][x]=="f")return;
-	if(symNearby(x,y,"b"))reveal(x,y);
-	else digAdjacent(x,y);
-}
-function digAdjacent(x,y,g){
-	x=Math.min(x,gridSize.x-1);
-	y=Math.min(y,gridSize.y-1);
-	if(cells[y][x]=="f")return;
-	let c=actual[y][x],z;
-	for(let i=(y-1<0)?y:y-1;i<=(y+1>=gridSize.y?y:y+1);i++)for(let j=(x-1<0?x:x-1);j<=(x+1>=gridSize.x?x:x+1);j++){
-		z=cells[i][j]=="";
-		if((actual[i][j]!="b"||g)&&cells[i][j]!="f")reveal(j,i);
-		if(actual[i][j]=="0"&&z&&cells[i][j]=="0")digAdjacent(j,i);
-	}
-}
-function multiDig(x,y){
-	x=Math.min(x,gridSize.x-1);
-	y=Math.min(y,gridSize.y-1);
-	let c=actual[y][x];
-	if(isNaN(c)||c==="0")return;
-	let flags=0;
-	for(let i=(y-1<0)?y:y-1;i<=(y+1>=gridSize.y?y:y+1);i++)for(let j=(x-1<0?x:x-1);j<=(x+1>=gridSize.x?x:x+1);j++)if(cells[i][j]=="f")flags++;
-	if(flags+""==c)digAdjacent(x,y,1);
-}
-function placeFlag(x,y){
-	flagDebounce=true;
-	x=Math.min(x,gridSize.x-1);
-	y=Math.min(y,gridSize.y-1);
-	if(cells[y][x]=="f")cells[y][x]="";
-	else if(cells[y][x]=="")cells[y][x]="f";
-	setTimeout(()=>flagDebounce=false,200);
-}
-requestAnimationFrame(function update(){
-	let p=getPS(),flagCount=0,bombCount=0;
-	for(let i=1;i<9;i++){
-		let e=getById(`tile${i}In`),v=e.value.replaceAll(/[^rgb]/g,"");
-		if(v.length==3)setVal("t",e.style.color=rgb.fetch(v),i+"");
-	}
-	ctx.clearRect(0,0,cvs.width,cvs.width);
-	for(let i=0,j;i<gridSize.y;i++)for(j=0;j<gridSize.x;j++){
-		let cell=cells[i][j],st=map[cell];
-		if(cell=="f")flagCount++;
-		if(actual[i][j]=="b")bombCount++;
-		ctx.fillStyle=cell===""||cell=="f"||cell=="X"?backgroundColors.bg1:backgroundColors.bg2;
-		ctx.fillRect(p*j,p*i,p-.15,p-.15);
-		if(st?.txt){
-			ctx.font=p+"px sans-serif";
-			ctx.fillStyle=st.txt;
-			ctx.fillText(cell,p*j+p/5,p*i+p/1.17);
-		}else if(st?.sym){
-			if(st.sym=="f"){
-				ctx.beginPath();
-				ctx.fillStyle="red";
-				ctx.moveTo(p*j+p/3,p*i+p/12);
-				ctx.lineTo(p*j+p*8/9,p*i+p*33/80);
-				ctx.lineTo(p*j+p/3,p*i+p*97/136);
-				ctx.fillRect(p*j+p/3,p*i+p/12,-p/12,p*33/40);
-				ctx.fill();
-			}else{
-				ctx.font=p*.75+"px monospace";
-				ctx.fillText(String.fromCharCode(55357,56485),p*j,p*i+p/1.35);
-			}
+	function setVal(n,v,i){
+		switch(n){
+			case"grid":
+				gridSize.x=gdi.value=gridSized.innerText=v;
+				gridSize.y=v/2;
+				bombPopulationd.innerText=bombDensity(bpc);
+				init();
+			break;
+			case"bnby":
+				bombsNearbyd.innerText=(v*100).toFixed()+"%";
+				bnb=bnbi.value=v;
+				init();
+			break;
+			case"bpc":
+				bombPopulationd.innerText=bombDensity(v).toFixed();
+				bpc=bpci.value=v;
+				init();
+			break;
+			case"bgc1":bgColors.bg1=v;break;
+			case"bgc2":bgColors.bg2=v;break;
+			case"t":map[i].txt=v;break;
 		}
 	}
-	bombsLeftd.innerText="Flags: "+(bombCount-flagCount);
-	gridArea.innerText="Grid Area: "+gridSize.x*gridSize.y;
-	requestAnimationFrame(update);
-});
-window.onresize=function(){
-	let w=Math.min(screen.width,screen.height),o=window.innerWidth<window.innerHeight,r=gridSize.x/gridSize.y;
-	flexbox.style.display=o?"inline-block":"flex";
-	cvs.width=o?w:w*r;cvs.height=o?w/r:w;
-}
-window.onresize();
-cvs.addEventListener("click",e=>{
-	if(died)return;
-	let p=getPS();
-	let x=(e.pageX-cvs.offsetLeft)/p|0,y=(e.pageY-cvs.offsetTop)/p|0;
-	userMouse.x=x;
-	userMouse.y=y;
-	if(firstPick){
-		firstPick=false;
-		for(let i=y-1;i<y+2;i++)for(let j=x-1;j<x+2;j++)immune.push(j+","+i);
-		generateBombs();
-		initNumberedCells();
-		clearFlags();
-		digAdjacent(x,y);
+	function init(){
+		clearTimeout(diedTimeout);clearTimeout(flagTimeout);clearTimeout(initTimeout);
+		firstPick=true;died=flagDebounce=false;
+		cells=[];actual=[];immune=[];
+		for(let i=0,j;i<gridSize.y;i++)for(cells[i]=[],actual[i]=[],j=0;j<gridSize.x;j++)cells[i][j]=actual[i][j]="";
 	}
-	dig(x,y);
-	multiDig(x,y);
-});
-["mouseup","touchend","touchcancel"].forEach(v=>cvs.addEventListener(v,e=>clearTimeout(flagTimeout)));
-["touchmove","mousemove"].forEach((v,j)=>cvs.addEventListener(v,e=>{
-	let p=getPS(),t=e.targetTouches&&e.targetTouches.item(0);
-	let x=((j?e:t).pageX-cvs.offsetLeft)/p|0,y=((j?e:t).pageY-cvs.offsetTop)/p|0;
-	if(x!=userMouse.x||y!=userMouse.y)clearTimeout(flagTimeout);
-	if(died)return;
-	userMouse.x=x;
-	userMouse.y=y;
-}));
-cvs.addEventListener("mousedown",e=>{
-	if(e.button==2){
-		placeFlag(userMouse.x,userMouse.y);
-		flatDebounce=false;
+	function getPS(){
+		let w=cvs.width,h=cvs.height,{x,y}=gridSize;
+		return(w<h?w/x:h/y);
 	}
-});
-cvs.addEventListener("touchstart",e=>{
-	if(died)return;
-	let p=getPS(),t=e.targetTouches.length?e.targetTouches.item(0):e.touches.item(0);
-	userMouse.x=(t.pageX-cvs.offsetLeft)/p|0;
-	userMouse.y=(t.pageY-cvs.offsetTop)/p|0;
-	flagTimeout=setTimeout(()=>placeFlag(userMouse.x,userMouse.y),flagDelay);
-});
-let recentKey;
-function recordKeyBind(t){
-	const l={restart:["flag","dig"],dig:["flag","restart"],flag:["restart","dig"]}
-	let o=l[t];
-	if(keybinds[o[0]]==recentKey||keybinds[o[1]]==recentKey){
-		let e=getById(t+"kb")
-		e.value="";
-		e.readOnly=false;
-		return alert("key taken");
+	function bombDensity(p){
+		return gridSize.x*gridSize.y*p|0;
 	}
-	keybinds[t]=recentKey;
-}
-document.addEventListener("keydown",e=>{
-	if(!e.isTrusted)return;
-	if(e.keyCode==17)return shortcutkeys.style.display=shortcutkeys.style.display=="none"?"block":"none";
-	let kC=recentKey=e.keyCode;
-	let{x,y}=userMouse;
-	if(kC==keybinds.restart){
-		init();
-	}else if(kC==keybinds.flag){
-		placeFlag(x,y);
-		flatDebounce=false;
-	}else if(kC==keybinds.dig){
+	async function auto(ms,f){
+		if(firstPick){
+			firstPick=false;
+			generateBombs();
+			initNumberedCells();
+		}
+		for(let i=0,j;i<gridSize.y;i++)for(j=0;j<gridSize.x;j++){
+			if(cells[i][j]!="")continue;
+			if(actual[i][j]!="b")dig(j,i);
+			else if(f)placeFlag(j,i);
+			flagDebounce=false;
+			if(Math.random()>.8)await new Promise(r=>setTimeout(r,ms));
+		}
+	}
+	function clearFlags(d){
+		for(let i=0,j;i<gridSize.y;i++)for(j=0;j<gridSize.x;j++)if(cells[i][j]=="f"){
+			cells[i][j]="";
+			if(d)dig(j,i);
+		}
+	}
+	function symNearby(x,y,s){
+		let n=false;
+		for(let i=!y?y:y-1;i<=(y+1>=gridSize.y?y:y+1);i++)for(let j=!x?x:x-1;j<=(x+1>=gridSize.x?x:x+1);j++)if(actual[i][j]==s)n=true;
+		return n;
+	}
+	function checkIfWon(){
+		let won=true;
+		for(let i=0,j;i<gridSize.y;i++)for(j=0;j<gridSize.x;j++)if(cells[i][j]=="f"&&actual[i][j]!="b"||cells[i][j]==""&&actual[i][j]!="b")won=false;
+		return won;
+	}
+	function generateBombs(){
+		const N=bombDensity(bpc);
+		let n=0,t=0;
+		while(n<N&&n<gridSize.x*gridSize.y-9){
+			let x=Math.random()*gridSize.x|0,y=Math.random()*gridSize.y|0;
+			let s=symNearby(x,y,"b")?1-bnb:bnb;
+			if(immune.indexOf(x+","+y)<0&&actual[y][x]!="b"&&Math.random()>s){
+				actual[y][x]="b";n++;
+			}else t++;
+			if(t>1e6&&n>0)break;
+		}
+	}
+	function initNumberedCells(){
+		for(let i=0,j;i<gridSize.y;i++)for(j=0;j<gridSize.x;j++){
+			if(actual[i][j]=="b")continue;
+			let bombCount=0;
+			for(let y=!i?i:i-1;y<=(i+1>=gridSize.y?i:i+1);y++)for(let x=!j?j:j-1;x<=(j+1>=gridSize.x?j:j+1);x++)if(actual[y][x]=="b")bombCount++;
+			actual[i][j]=bombCount+"";
+		}
+	}
+	function reveal(x,y){
+		if(flagDebounce)return;
+		cells[y][x]=actual[y][x];
+		if(cells[y][x]=="b"){
+			died=true;
+			setTimeout(()=>{
+				for(let i=0,j;i<gridSize.y;i++)for(j=0;j<gridSize.x;j++)if(actual[i][j]!="b"&&cells[i][j]=="f")cells[i][j]="X";
+			},5);
+			clearTimeout(flagTimeout);
+			diedTimeout=setTimeout(init,1500);
+		}
+		if(checkIfWon()&&!firstPick){
+			firstPick=true;
+			initTimeout=setTimeout(init,500);
+		}
+	}
+	function dig(x,y){
+		x=Math.min(x,gridSize.x-1);
+		y=Math.min(y,gridSize.y-1);
+		if(cells[y][x]=="f")return;
+		if(symNearby(x,y,"b"))reveal(x,y);
+		else digAdjacent(x,y);
+	}
+	function digAdjacent(x,y,g){
+		x=Math.min(x,gridSize.x-1);
+		y=Math.min(y,gridSize.y-1);
+		if(cells[y][x]=="f")return;
+		let c=actual[y][x],z;
+		for(let i=(y-1<0)?y:y-1;i<=(y+1>=gridSize.y?y:y+1);i++)for(let j=(x-1<0?x:x-1);j<=(x+1>=gridSize.x?x:x+1);j++){
+			z=cells[i][j]=="";
+			if((actual[i][j]!="b"||g)&&cells[i][j]!="f")reveal(j,i);
+			if(actual[i][j]=="0"&&z&&cells[i][j]=="0")digAdjacent(j,i);
+		}
+	}
+	function multiDig(x,y){
+		x=Math.min(x,gridSize.x-1);
+		y=Math.min(y,gridSize.y-1);
+		let c=actual[y][x];
+		if(isNaN(c)||c==="0")return;
+		let flags=0;
+		for(let i=(y-1<0)?y:y-1;i<=(y+1>=gridSize.y?y:y+1);i++)for(let j=(x-1<0?x:x-1);j<=(x+1>=gridSize.x?x:x+1);j++)if(cells[i][j]=="f")flags++;
+		if(flags+""==c)digAdjacent(x,y,1);
+	}
+	function placeFlag(x,y){
+		flagDebounce=true;
+		x=Math.min(x,gridSize.x-1);
+		y=Math.min(y,gridSize.y-1);
+		if(cells[y][x]=="f")cells[y][x]="";
+		else if(cells[y][x]=="")cells[y][x]="f";
+		setTimeout(()=>flagDebounce=false,200);
+	}
+	requestAnimationFrame(function update(){
+		let p=getPS(),flagCount=0,bombCount=0;
+		for(let i=1;i<9;i++){
+			let e=getById(`tile${i}In`),v=e.value.replaceAll(/[^rgb]/g,"");
+			if(v.length==3)setVal("t",e.style.color=rgb.fetch(v),i+"");
+		}
+		ctx.clearRect(0,0,cvs.width,cvs.width);
+		for(let i=0,j;i<gridSize.y;i++)for(j=0;j<gridSize.x;j++){
+			let cell=cells[i][j],st=map[cell];
+			if(cell=="f")flagCount++;
+			if(actual[i][j]=="b")bombCount++;
+			ctx.fillStyle=cell===""||cell=="f"||cell=="X"?bgColors.bg1:bgColors.bg2;
+			ctx.fillRect(p*j,p*i,p-.15,p-.15);
+			if(st?.txt){
+				ctx.font=p+"px sans-serif";
+				ctx.fillStyle=st.txt;
+				ctx.fillText(cell,p*j+p/5,p*i+p/1.17);
+			}else if(st?.sym){
+				if(st.sym=="f"){
+					ctx.beginPath();
+					ctx.fillStyle="red";
+					ctx.moveTo(p*j+p/3,p*i+p/12);
+					ctx.lineTo(p*j+p*8/9,p*i+p*33/80);
+					ctx.lineTo(p*j+p/3,p*i+p*97/136);
+					ctx.fillRect(p*j+p/3,p*i+p/12,-p/12,p*33/40);
+					ctx.fill();
+				}else{
+					ctx.font=p*.75+"px monospace";
+					ctx.fillText(String.fromCharCode(55357,56485),p*j,p*i+p/1.35);
+				}
+			}
+		}
+		bombsLeftd.innerText="Flags: "+(bombCount-flagCount);
+		gridArea.innerText="Grid Area: "+gridSize.x*gridSize.y;
+		requestAnimationFrame(update);
+	});
+	window.onresize=function(){
+		let w=Math.min(screen.width,screen.height),o=window.innerWidth<window.innerHeight,r=gridSize.x/gridSize.y;
+		flexbox.style.display=o?"inline-block":"flex";
+		cvs.width=o?w:w*r;cvs.height=o?w/r:w;
+	}
+	window.onresize();
+	cvs.addEventListener("click",e=>{
+		if(died)return;
+		let p=getPS();
+		let x=(e.pageX-cvs.offsetLeft)/p|0,y=(e.pageY-cvs.offsetTop)/p|0;
+		userMouse.x=x;
+		userMouse.y=y;
 		if(firstPick){
 			firstPick=false;
 			for(let i=y-1;i<y+2;i++)for(let j=x-1;j<x+2;j++)immune.push(j+","+i);
 			generateBombs();
 			initNumberedCells();
-			clearFlags();
+			clearFlags(true);
 			digAdjacent(x,y);
 		}
 		dig(x,y);
 		multiDig(x,y);
+	});
+	["mouseup","touchend","touchcancel"].forEach(v=>cvs.addEventListener(v,e=>clearTimeout(flagTimeout)));
+	["touchmove","mousemove"].forEach((v,j)=>cvs.addEventListener(v,e=>{
+		let p=getPS(),t=e.targetTouches&&e.targetTouches.item(0);
+		let x=((j?e:t).pageX-cvs.offsetLeft)/p|0,y=((j?e:t).pageY-cvs.offsetTop)/p|0;
+		if(x!=userMouse.x||y!=userMouse.y)clearTimeout(flagTimeout);
+		if(died)return;
+		userMouse.x=x;
+		userMouse.y=y;
+	}));
+	cvs.addEventListener("mousedown",e=>{
+		if(e.button==2){
+			placeFlag(userMouse.x,userMouse.y);
+			flatDebounce=false;
+		}
+	});
+	cvs.addEventListener("touchstart",e=>{
+		if(died)return;
+		let p=getPS(),t=e.targetTouches.length?e.targetTouches.item(0):e.touches.item(0);
+		userMouse.x=(t.pageX-cvs.offsetLeft)/p|0;
+		userMouse.y=(t.pageY-cvs.offsetTop)/p|0;
+		flagTimeout=setTimeout(()=>placeFlag(userMouse.x,userMouse.y),flagDelay);
+	});
+	function recordKeybind(t){
+		const l={restart:["flag","dig"],dig:["flag","restart"],flag:["restart","dig"]}
+		let o=l[t];
+		if(keybinds[o[0]]==recentKey||keybinds[o[1]]==recentKey){
+			let e=getById(t+"kb")
+			e.value="";
+			e.readOnly=false;
+			return alert("key in use");
+		}
+		keybinds[t]=recentKey;
 	}
-});
+	document.addEventListener("keydown",e=>{
+		if(!e.isTrusted)return;
+		if(e.keyCode==17)return shortcutkeys.style.display=shortcutkeys.style.display=="none"?"block":"none";
+		let kC=recentKey=e.keyCode;
+		let{x,y}=userMouse;
+		if(kC==keybinds.restart){
+			init();
+		}else if(kC==keybinds.flag){
+			placeFlag(x,y);
+			flatDebounce=false;
+		}else if(kC==keybinds.dig){
+			if(firstPick){
+				firstPick=false;
+				for(let i=y-1;i<y+2;i++)for(let j=x-1;j<x+2;j++)immune.push(j+","+i);
+				generateBombs();
+				initNumberedCells();
+				clearFlags(true);
+				digAdjacent(x,y);
+			}
+			dig(x,y);
+			multiDig(x,y);
+		}
+	});
+	return{init:init,initMap:initMap,reset:reset,setVal:setVal,clearFlags:clearFlags,recordKeybind:recordKeybind};
+})();
 init();initMap();
-//keybinds are still in beta since im testing them on a phone
+//keybinds are still in beta since im testing them on a phone using keymapper
 		</script>
 	</body>
 </html>
