@@ -4,10 +4,18 @@
 		<title>Conway's Game of Life</title>
 		<meta name="viewport"content="width=device-width,initial-scale=1">
 		<style>
+			*{
+				user-select:none;
+				-webkit-user-select:none;
+				-moz-user-select:none;
+			}
 			body{margin:0 0}
 			@media(orientation:landscape){#cvs{width:auto}}
 			@media(orientation:portrait){#cvs{width:100%}}
-			#cvs{background:#000}
+			#cvs{
+				background:#000;
+				touch-action:pinch-zoom;
+			}
 			input[type=text]{width:60px}
 			#cont{vertical-align:top}
 			div.holder{display:flex}
@@ -61,6 +69,10 @@
 						<td><input type=checkbox id=stbtn oninput='toggle(this.checked);window.onresize()'/></td>
 					</tr>
 					<tr>
+						<td>Draw</td>
+						<td><input type=checkbox id=drwbtn /></td>
+					</tr>
+					<tr>
 						<td align=right><button onclick="reload()">Clear</button></td>
 						<td><button onclick='toggle(settings.running,1)'>Step</button></td>
 					</tr>
@@ -96,9 +108,19 @@ const settings={
 	bounds:{x:50,y:50,X:0,Y:0},
 	color:"#fff"
 }
+const userMouse={x:0,y:0};
+function save(x,y){
+	if(x<0||y<0||x>=settings.gridSize||y>=settings.gridSize)return;
+	userMouse.x=isNaN(x)?userMouse.x:parseInt(x);
+	userMouse.y=isNaN(y)?userMouse.y:parseInt(y);
+	let nX=settings.bounds.x,nY=settings.bounds.y,mX=settings.bounds.X,mY=settings.bounds.Y;
+	if(userMouse.x<nX)nX=userMouse.x;if(userMouse.x>mX)mX=userMouse.x;
+	if(userMouse.y<nY)nY=userMouse.y;if(userMouse.y>mY)mY=userMouse.y;
+	updateBounds(nX,nY,mX,mY);
+}
 const Cell=function(x,y,s){this.x=x;this.y=y;this.s=s}
 const ctx=cvs.getContext("2d");
-let cells=[],gens=0;
+let cells=[],gens=0,placing;
 for(let i=0,j;i<settings.gridSize;i++)for(cells[i]=[],j=0;j<settings.gridSize;j++)cells[i][j]=0;
 function rgb(){
 	const g100=_=>Math.random()*156+100|0;
@@ -242,22 +264,37 @@ function updateCell(x,y,s){
 	ctx.fillStyle=s?settings.color=="rndm"?rgb():settings.color:"#000";
 	ctx.fillRect(p*x,p*y,p,p);
 }
+["touchstart","mousedown"].forEach((v,j)=>cvs.addEventListener(v,e=>{
+	let p=cvs.width/settings.gridSize,t=e.targetTouches&&e.targetTouches.item(0);
+	let x=((j?e:t).pageX-cvs.offsetLeft)/p|0,y=((j?e:t).pageY-cvs.offsetTop)/p|0;
+	save(x,y);
+	placing=true;
+}));
+["mouseup","touchend","touchcancel"].forEach(v=>cvs.addEventListener(v,e=>setTimeout(()=>placing=false,100)));
 cvs.addEventListener("click",e=>{
-	//settings.running=false;
 	let p=cvs.width/settings.gridSize;
 	let x=(e.pageX-cvs.offsetLeft)/p|0,y=(e.pageY-cvs.offsetTop)/p|0;
+	save(x,y);
 	updateCell(x,y,(cells[y][x]+1)%2);
+});
+cvs.addEventListener("touchmove",e=>{
+	let p=cvs.width/settings.gridSize,t=e.targetTouches.length?e.targetTouches.item(0):e.touches.item(0);
+	let x=(t.pageX-cvs.offsetLeft)/p|0;
+	let y=(t.pageY-cvs.offsetTop)/p|0
+	save(x,y);
 });
 cvs.addEventListener("mousemove",e=>{
 	let p=cvs.width/settings.gridSize;
 	let x=(e.pageX-cvs.offsetLeft)/p|0,y=(e.pageY-cvs.offsetTop)/p|0;
+	save(x,y);
 	coords.innerText=x+", "+y;
-})
+});
 requestAnimationFrame(function update(){
 	flexbox.style.display=window.innerWidth<window.innerHeight?"inline-block":"flex";
 	gensps.innerText=gens;
+	if(drwbtn.checked&&placing)updateCell(userMouse.x,userMouse.y,1);
 	requestAnimationFrame(update);
-})
+});
 window.onresize=function(){
 	if(cells.length!=settings.gridSize)reload();
 	cvs.width=cvs.height=Math.min(window.innerWidth,window.innerHeight)|0;
@@ -268,7 +305,8 @@ window.onresize=function(){
 window.onresize();
 function running(){
 	stbtn.checked=settings.running;
-	if(settings.running)for(let i=0;i<settings.generationsPerTick;i++)step();
+	let s=drwbtn.checked&&placing;
+	if(settings.running&&!s)for(let i=0;i<settings.generationsPerTick&&!s;i++)step();
 	setTimeout(running,settings.tickDelay);
 }
 running();
