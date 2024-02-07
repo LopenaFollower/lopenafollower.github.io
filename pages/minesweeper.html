@@ -10,20 +10,19 @@
 				overflow:hidden;
 			}
 			fieldset.wrap{width:fit-content}
-			input.kbin{
-				width:40px;
-			}
+			input.kbin{width:40px}
 			input.clrin{
 				width:60px;
 				text-shadow:0 0 1px #000;
 			}
 			td{text-align:right}
+			table.l>tbody>tr>td{text-align:left}
 			#shortcutkeys{display:none}
 			#cvs{
+				touch-action:pinch-zoom;
 				user-select:none;
 				-webkit-user-select:none;
 				-moz-user-select:none;
-				touch-action:pinch-zoom;
 			}
 		</style>
 	</head>
@@ -36,13 +35,14 @@
 				<button onclick='clearFlags()'>Clear Flags</button>
 				<div style='display:flex'>
 					<fieldset class=wrap>
-						<div id=gridArea></div>
-						Grid Size<br>
-						<input id=gdi type=range min=12 max=60 step=2 value=20 oninput='setVal("grid",parseFloat(this.value))'/><span id=gridSized>20</span><br>
-						Grouped Bomb %<br>
-						<input id=bnbi type=range min=.05 max=.9 step=.05 value=.25 oninput='setVal("bnby",parseFloat(this.value))'/><span id=bombsNearbyd>20%</span><br>
-						Bomb Population<br>
-						<input id=bpci type=range min=.05 max=.8 step=.025 value=.15 oninput='setVal("bpc",parseFloat(this.value))'/><span id=bombPopulationd>30</span><br>
+						<table class=l>
+							<tr><td colspan=3>Grid Size</td></tr>
+							<tr><td><input id=gdi type=range min=12 max=60 step=2 value=20 oninput='setVal("grid",parseFloat(this.value))'/></td><td id=gridSized>20</td></tr>
+							<tr><td colspan=3>Grouped Bomb %</td></tr>
+							<tr><td><input id=bnbi type=range min=.05 max=.9 step=.05 value=.25 oninput='setVal("bnby",parseFloat(this.value))'/></td><td id=bombsNearbyd>20%</td></tr>
+							<tr><td colspan=3>Bomb Population</td></tr>
+							<tr><td><input id=bpci type=range min=.05 max=.8 step=.025 value=.15 oninput='setVal("bpc",parseFloat(this.value))'/></td><td id=bombPopulationd>30</td></tr>
+						</table>
 						<button onclick='reset()'>Default</button>
 					</fieldset>
 					<fieldset class=wrap>
@@ -261,7 +261,6 @@ const{init,initMap,reset,setVal,clearFlags,recordKeybind}=(function(){
 			}
 		}
 		bombsLeftd.innerText="Flags: "+(bombCount-flagCount);
-		gridArea.innerText="Grid Area: "+gridSize.x*gridSize.y;
 		requestAnimationFrame(update);
 	});
 	window.onresize=function(){
