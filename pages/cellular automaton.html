@@ -17,7 +17,7 @@
 				toggle<input id=tgg type=checkbox oninput='tog(this.checked)'/><br>
 				wrap edges<input id=edge type=checkbox /><br>
 				<button onclick='reset()'>reset</button><br>
-				<input placeholder='0-255'value=0 oninput='rule(parseInt(this.value))'/>
+				<input placeholder='0-255'value=30 oninput='rule(parseInt(this.value))'/>
 			</fieldset>
 		</div>
 		<script>
@@ -36,6 +36,7 @@ function rule(n){
 	let bin=n.toString(2).padStart(8,0);
 	for(let i=0;i<8;i++)states[stv[i]]=bin[i];
 }
+rule(30);
 let pattern;setPattern("00000000000000000000000000000000000000000000000001");
 function setPattern(p){
 	let pa=p.match(/0|1/g)||[];
