@@ -269,6 +269,7 @@ const{init,initMap,reset,setVal,clearFlags,recordKeybind}=(function(){
 		cvs.width=o?w:w*r;cvs.height=o?w/r:w;
 	}
 	window.onresize();
+	cvs.addEventListener("contextmenu",e=>e.preventDefault());
 	cvs.addEventListener("click",e=>{
 		if(died)return;
 		let p=getPS();
