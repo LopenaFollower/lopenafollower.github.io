@@ -19,7 +19,6 @@
 			table.l>tbody>tr>td{text-align:left}
 			#shortcutkeys{display:none}
 			#cvs{
-				touch-action:pinch-zoom;
 				user-select:none;
 				-webkit-user-select:none;
 				-moz-user-select:none;
@@ -81,7 +80,8 @@ const{init,initMap,reset,setVal,clearFlags,recordKeybind}=(function(){
 	let diedTimeout,flagTimeout,initTimeout,recentKey;
 	let flagDelay=200;
 	let flagDebounce=false;
-	let firstPick=true,died=false;
+	let canPlace=true,firstPick=true;
+	let ctrlPressed=false;
 	function reset(){
 		setVal("grid",20);
 		setVal("bnby",.2);
@@ -116,7 +116,7 @@ const{init,initMap,reset,setVal,clearFlags,recordKeybind}=(function(){
 	}
 	function init(){
 		clearTimeout(diedTimeout);clearTimeout(flagTimeout);clearTimeout(initTimeout);
-		firstPick=true;died=flagDebounce=false;
+		firstPick=canPlace=true;flagDebounce=false;
 		cells=[];actual=[];immune=[];
 		for(let i=0,j;i<gridSize.y;i++)for(cells[i]=[],actual[i]=[],j=0;j<gridSize.x;j++)cells[i][j]=actual[i][j]="";
 	}
@@ -181,7 +181,7 @@ const{init,initMap,reset,setVal,clearFlags,recordKeybind}=(function(){
 		if(flagDebounce)return;
 		cells[y][x]=actual[y][x];
 		if(cells[y][x]=="b"){
-			died=true;
+			canPlace=false;
 			setTimeout(()=>{
 				for(let i=0,j;i<gridSize.y;i++)for(j=0;j<gridSize.x;j++)if(actual[i][j]!="b"&&cells[i][j]=="f")cells[i][j]="X";
 			},5);
@@ -189,7 +189,7 @@ const{init,initMap,reset,setVal,clearFlags,recordKeybind}=(function(){
 			diedTimeout=setTimeout(init,1500);
 		}
 		if(checkIfWon()&&!firstPick){
-			firstPick=true;
+			firstPick=true;canPlace=false;
 			initTimeout=setTimeout(init,500);
 		}
 	}
@@ -234,6 +234,10 @@ const{init,initMap,reset,setVal,clearFlags,recordKeybind}=(function(){
 			let e=getById(`tile${i}In`),v=e.value.replaceAll(/[^rgb]/g,"");
 			if(v.length==3)setVal("t",e.style.color=rgb.fetch(v),i+"");
 		}
+		for(let i=1;i<3;i++){
+			let e=getById(`bgC${i}In`),v=e.value.replaceAll(/[^rgb#]/g,"");
+			if(v.length==3&&v.indexOf("#")<0)setVal("bgc"+i,e.style.color=rgb.fetch(v));
+		}
 		ctx.clearRect(0,0,cvs.width,cvs.width);
 		for(let i=0,j;i<gridSize.y;i++)for(j=0;j<gridSize.x;j++){
 			let cell=cells[i][j],st=map[cell];
@@ -271,7 +275,7 @@ const{init,initMap,reset,setVal,clearFlags,recordKeybind}=(function(){
 	window.onresize();
 	cvs.addEventListener("contextmenu",e=>e.preventDefault());
 	cvs.addEventListener("click",e=>{
-		if(died)return;
+		if(!canPlace)return;
 		let p=getPS();
 		let x=(e.pageX-cvs.offsetLeft)/p|0,y=(e.pageY-cvs.offsetTop)/p|0;
 		userMouse.x=x;
@@ -292,7 +296,7 @@ const{init,initMap,reset,setVal,clearFlags,recordKeybind}=(function(){
 		let p=getPS(),t=e.targetTouches&&e.targetTouches.item(0);
 		let x=((j?e:t).pageX-cvs.offsetLeft)/p|0,y=((j?e:t).pageY-cvs.offsetTop)/p|0;
 		if(x!=userMouse.x||y!=userMouse.y)clearTimeout(flagTimeout);
-		if(died)return;
+		if(!canPlace)return;
 		userMouse.x=x;
 		userMouse.y=y;
 	}));
@@ -303,7 +307,7 @@ const{init,initMap,reset,setVal,clearFlags,recordKeybind}=(function(){
 		}
 	});
 	cvs.addEventListener("touchstart",e=>{
-		if(died)return;
+		if(!canPlace)return;
 		let p=getPS(),t=e.targetTouches.length?e.targetTouches.item(0):e.touches.item(0);
 		userMouse.x=(t.pageX-cvs.offsetLeft)/p|0;
 		userMouse.y=(t.pageY-cvs.offsetTop)/p|0;
@@ -322,7 +326,10 @@ const{init,initMap,reset,setVal,clearFlags,recordKeybind}=(function(){
 	}
 	document.addEventListener("keydown",e=>{
 		if(!e.isTrusted)return;
-		if(e.keyCode==17)return shortcutkeys.style.display=shortcutkeys.style.display=="none"?"block":"none";
+		if(e.keyCode==17&&!ctrlPressed){
+			ctrlPressed=true;
+			return shortcutkeys.style.display=shortcutkeys.style.display=="none"?"block":"none";
+		}
 		let kC=recentKey=e.keyCode;
 		let{x,y}=userMouse;
 		if(kC==keybinds.restart){
@@ -343,10 +350,12 @@ const{init,initMap,reset,setVal,clearFlags,recordKeybind}=(function(){
 			multiDig(x,y);
 		}
 	});
+	document.addEventListener("keyup",e=>{
+		if(e.keyCode==17)ctrlPressed=false;
+	});
 	return{init:init,initMap:initMap,reset:reset,setVal:setVal,clearFlags:clearFlags,recordKeybind:recordKeybind};
 })();
 init();initMap();
-//keybinds are still in beta since im testing them on a phone using keymapper
 		</script>
 	</body>
 </html>
