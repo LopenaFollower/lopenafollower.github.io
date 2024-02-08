@@ -116,7 +116,7 @@ function save(x,y){
 	let nX=settings.bounds.x,nY=settings.bounds.y,mX=settings.bounds.X,mY=settings.bounds.Y;
 	if(userMouse.x<nX)nX=userMouse.x;if(userMouse.x>mX)mX=userMouse.x;
 	if(userMouse.y<nY)nY=userMouse.y;if(userMouse.y>mY)mY=userMouse.y;
-	updateBounds(nX,nY,mX,mY);
+	updateBounds(nX,nY,mX,mY);gens--;
 }
 const Cell=function(x,y,s){this.x=x;this.y=y;this.s=s}
 const ctx=cvs.getContext("2d");
