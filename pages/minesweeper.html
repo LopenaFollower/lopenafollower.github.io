@@ -19,17 +19,64 @@
 			table.l>tbody>tr>td{text-align:left}
 			#shortcutkeys{display:none}
 			#cvs{
-				user-select:none;
-				-webkit-user-select:none;
 				-moz-user-select:none;
+				-ms-user-select:none;
+				-o-user-select:none;
+				-webkit-user-select:none;
+				user-select:none;
+				z-index:0;
+			}
+			#result_bg{
+				background:#0009;
+				position:fixed;
+				z-index:1;
+				display:flex;
+				backdrop-filter:blur(1px);
+				-moz-transition-timing-function:linear;
+				-ms-transition-timing-function:linear;
+				-o-transition-timing-function:linear;
+				-webkit-transition-timing-function:linear;
+				transition-timing-function:linear;
+				-moz-transition-duration:.5s;
+				-ms-transition-duration:.5s;
+				-o-transition-duration:.5s;
+				-webkit-transition-duration:.5s;
+				transition-duration:.5s;
+			}
+			#result{
+				background:#ccc;
+				padding:5px;
+				margin:auto;
+				-mos-border-radius:3.5px;
+				-ms-border-radius:3.5px;
+				-o-border-radius:3.5px;
+				-webkit-border-radius:3.5px;
+				border-radius:3.5px;
+				display:flex;
+				-mos-flex-direction:column;
+				-ms-flex-direction:column;
+				-o-flex-direction:column;
+				-webkit-flex-direction:column;
+				flex-direction:column;
+			}
+			#resultTxt{
+				font-size:125%;
+				margin:0 auto;
 			}
 		</style>
 	</head>
 	<body>
 		<div id=flexbox>
-			<canvas id=cvs></canvas><br>
+			<canvas id=cvs></canvas>
+			<div id=result_bg>
+				<div id=result>
+					<b id=resultTxt></b>
+					<div id=timed></div>
+					<button style='margin-top:auto'onclick='init()'>Retry</button>
+				</div>
+			</div>
 			<fieldset>
-				<div id=bombsLeftd></div>
+				<div id=bombsLeftd></div><div id=timee></div>
 				<button onclick='init()'>Restart</button>
 				<button onclick='clearFlags()'>Clear Flags</button>
 				<div style='display:flex'>
@@ -47,10 +94,10 @@
 					<fieldset class=wrap>
 						<table>
 							<tr><td>BG1</td><td><input class=clrin id=bgC1In oninput='this.style.color=this.value;setVal("bgc1",this.style.color)'/></td><td>BG2</td><td><input class=clrin id=bgC2In oninput='this.style.color=this.value;setVal("bgc2",this.style.color)'/></td></tr>
-							<tr><td>1</td><td><input class=clrin id=tile1In oninput='this.style.color=this.value;setVal("t",this.style.color,"1")'/></td><td>2</td><td><input class=clrin id=tile2In oninput='this.style.color=this.value;setVal("t",this.style.color,"2")'/></td></tr>
-							<tr><td>3</td><td><input class=clrin id=tile3In oninput='this.style.color=this.value;setVal("t",this.style.color,"3")'/></td><td>4</td><td><input class=clrin id=tile4In oninput='this.style.color=this.value;setVal("t",this.style.color,"4")'/></td></tr>
-							<tr><td>5</td><td><input class=clrin id=tile5In oninput='this.style.color=this.value;setVal("t",this.style.color,"5")'/></td><td>6</td><td><input class=clrin id=tile6In oninput='this.style.color=this.value;setVal("t",this.style.color,"6")'/></td></tr>
-							<tr><td>7</td><td><input class=clrin id=tile7In oninput='this.style.color=this.value;setVal("t",this.style.color,"7")'/></td><td>8</td><td><input class=clrin id=tile8In oninput='this.style.color=this.value;setVal("t",this.style.color,"8")'/></td></tr>
+							<tr><td>1</td><td><input class=clrin id=tile1In oninput='this.style.color=this.value;setVal("t",this.style.color,1)'/></td><td>2</td><td><input class=clrin id=tile2In oninput='this.style.color=this.value;setVal("t",this.style.color,2)'/></td></tr>
+							<tr><td>3</td><td><input class=clrin id=tile3In oninput='this.style.color=this.value;setVal("t",this.style.color,3)'/></td><td>4</td><td><input class=clrin id=tile4In oninput='this.style.color=this.value;setVal("t",this.style.color,4)'/></td></tr>
+							<tr><td>5</td><td><input class=clrin id=tile5In oninput='this.style.color=this.value;setVal("t",this.style.color,5)'/></td><td>6</td><td><input class=clrin id=tile6In oninput='this.style.color=this.value;setVal("t",this.style.color,6)'/></td></tr>
+							<tr><td>7</td><td><input class=clrin id=tile7In oninput='this.style.color=this.value;setVal("t",this.style.color,7)'/></td><td>8</td><td><input class=clrin id=tile8In oninput='this.style.color=this.value;setVal("t",this.style.color,8)'/></td></tr>
 						</table>
 						<button onclick='initMap()'>Default</button>
 					</fieldset>
@@ -68,20 +115,13 @@
 		<script>
 const{init,initMap,reset,setVal,clearFlags,recordKeybind}=(function(){
 	const ctx=cvs.getContext("2d");
-	const keybinds={restart:"",flag:"",dig:""};
-	const bgColors={bg1:"#555",bg2:"#bbb"};
-	const map={f:{sym:"f"},b:{sym:"b"},X:{txt:"red"}};
-	const gridSize={x:20,y:10};
-	const userMouse={x:0,y:0};
-	const getById=d=>document.getElementById(d);
-	const rgb=(r=>{r={s:1,r:255,g:0,b:0,rg:0,gg:1,bg:0,rl:0,gl:0,bl:0};r.fetch=(f="",h)=>{h=_=>_.toString(16).padStart(2,0);return"#"+(f.length>2?h(r[f[0]])+h(r[f[1]])+h(r[f[2]]):h(r.r)+h(r.g)+h(r.b))};r.i=setInterval((m=255,A,B,C)=>{["g","l"].map((v,i)=>["r","g","b"].map(e=>r[e]==(i?-1:m+1)&&(r[e+v]=0,r[e]=i?0:m)));A=r.r==m;B=r.g==m;C=r.b==m;A&&!r.g&&!r.b&&(r.gg=1);A&&B&&!r.b&&(r.rl=1);!r.r&&B&&!r.b&&(r.bg=1);!r.r&&B&&C&&(r.gl=1);!r.r&&!r.g&&C&&(r.rg=1);A&&!r.g&&C&&(r.bl=1);["r","g","b"].map(e=>r[e+"g"]&&(r[e]+=r.s));["r","g","b"].map(e=>r[e+"l"]&&(r[e]-=r.s))});return r})();
+	const keybinds={restart:"",flag:"",dig:""},bgColors={bg1:"#555",bg2:"#bbb"},map={f:{sym:"f"},b:{sym:"b"},X:{txt:"red"}};
+	const gridSize={x:20,y:10},userMouse={x:0,y:0};
+	const getById=d=>document.getElementById(d),rgb=(r=>{r={s:1,r:255,g:0,b:0,rg:0,gg:1,bg:0,rl:0,gl:0,bl:0};r.fetch=(f="",h)=>{h=_=>_.toString(16).padStart(2,0);return"#"+(f.length>2?h(r[f[0]])+h(r[f[1]])+h(r[f[2]]):h(r.r)+h(r.g)+h(r.b))};r.i=setInterval((m=255,A,B,C)=>{["g","l"].map((v,i)=>["r","g","b"].map(e=>r[e]==(i?-1:m+1)&&(r[e+v]=0,r[e]=i?0:m)));A=r.r==m;B=r.g==m;C=r.b==m;A&&!r.g&&!r.b&&(r.gg=1);A&&B&&!r.b&&(r.rl=1);!r.r&&B&&!r.b&&(r.bg=1);!r.r&&B&&C&&(r.gl=1);!r.r&&!r.g&&C&&(r.rg=1);A&&!r.g&&C&&(r.bl=1);["r","g","b"].map(e=>r[e+"g"]&&(r[e]+=r.s));["r","g","b"].map(e=>r[e+"l"]&&(r[e]-=r.s))});return r})();
 	let cells=[],actual=[],immune=[];
-	let bpc=.15,bnb=.2;
-	let diedTimeout,flagTimeout,initTimeout,recentKey;
-	let flagDelay=200;
-	let flagDebounce=false;
-	let canPlace=true,firstPick=true;
-	let ctrlPressed=false;
+	let bpc=.15,bnb=.2,flagDelay=200;
+	let diedTimeout,flagTimeout,initTimeout,recentKey,time;
+	let flagDebounce=false,canPlace=true,firstPick=true,ctrlPressed=false;
 	function reset(){
 		setVal("grid",20);
 		setVal("bnby",.2);
@@ -90,6 +130,9 @@ const{init,initMap,reset,setVal,clearFlags,recordKeybind}=(function(){
 	function initMap(){
 		["#04f","#194","#f01","#909","#fd0","#0af","#777","#eee"].map((e,i)=>map[++i]={txt:getById(`tile${i}In`).value=getById(`tile${i}In`).style.color=e});
 		["#555","#bbb"].map((e,i)=>getById(`bgC${++i}In`).value=getById(`bgC${i}In`).style.color=bgColors["bg"+i]=e);
+	}
+	function bombDensity(p){
+		return gridSize.x*gridSize.y*p|0;
 	}
 	function setVal(n,v,i){
 		switch(n){
@@ -105,7 +148,7 @@ const{init,initMap,reset,setVal,clearFlags,recordKeybind}=(function(){
 				init();
 			break;
 			case"bpc":
-				bombPopulationd.innerText=bombDensity(v).toFixed();
+				bombPopulationd.innerText=bombDensity(v);
 				bpc=bpci.value=v;
 				init();
 			break;
@@ -115,17 +158,22 @@ const{init,initMap,reset,setVal,clearFlags,recordKeybind}=(function(){
 		}
 	}
 	function init(){
+		result_bg.style.display="none";
+		["-moz-","-ms-","-o-","-webkit-",""].forEach(e=>{
+			result_bg.style[e+"opacity"]=0;
+		});
 		clearTimeout(diedTimeout);clearTimeout(flagTimeout);clearTimeout(initTimeout);
 		firstPick=canPlace=true;flagDebounce=false;
 		cells=[];actual=[];immune=[];
 		for(let i=0,j;i<gridSize.y;i++)for(cells[i]=[],actual[i]=[],j=0;j<gridSize.x;j++)cells[i][j]=actual[i][j]="";
 	}
+	function getTime(ms){
+		let s=ms/1e3|0;ms%=1e3;
+		return s+"."+(ms+"").substr(0,2);
+	}
 	function getPS(){
 		let w=cvs.width,h=cvs.height,{x,y}=gridSize;
 		return(w<h?w/x:h/y);
-	}
-	function bombDensity(p){
-		return gridSize.x*gridSize.y*p|0;
 	}
 	async function auto(ms,f){
 		if(firstPick){
@@ -140,6 +188,9 @@ const{init,initMap,reset,setVal,clearFlags,recordKeybind}=(function(){
 			flagDebounce=false;
 			if(Math.random()>.8)await new Promise(r=>setTimeout(r,ms));
 		}
+	}
+	function bound(x,y){
+		return{x:Math.min(x,gridSize.x-1),y:Math.min(y,gridSize.y-1)};
 	}
 	function clearFlags(d){
 		for(let i=0,j;i<gridSize.y;i++)for(j=0;j<gridSize.x;j++)if(cells[i][j]=="f"){
@@ -179,51 +230,49 @@ const{init,initMap,reset,setVal,clearFlags,recordKeybind}=(function(){
 	}
 	function reveal(x,y){
 		if(flagDebounce)return;
-		cells[y][x]=actual[y][x];
-		if(cells[y][x]=="b"){
-			canPlace=false;
-			setTimeout(()=>{
+		let b=(cells[y][x]=actual[y][x])=="b";
+		if(checkIfWon()&&!firstPick||b){
+			if(b)setTimeout(()=>{
 				for(let i=0,j;i<gridSize.y;i++)for(j=0;j<gridSize.x;j++)if(actual[i][j]!="b"&&cells[i][j]=="f")cells[i][j]="X";
 			},5);
+			canPlace=false;
 			clearTimeout(flagTimeout);
-			diedTimeout=setTimeout(init,1500);
-		}
-		if(checkIfWon()&&!firstPick){
-			firstPick=true;canPlace=false;
-			initTimeout=setTimeout(init,500);
+			result_bg.style.display="flex";
+			resultTxt.innerText=b?"You died":"You won";
+			timed.innerText=b?"Time: --":`Time: ${getTime(Date.now()-time)}s`;
+			setTimeout(()=>{
+				["-moz-","-ms-","-o-","-webkit-",""].forEach(e=>{
+					result_bg.style[e+"opacity"]=1;
+				});
+			},50);
 		}
 	}
-	function dig(x,y){
-		x=Math.min(x,gridSize.x-1);
-		y=Math.min(y,gridSize.y-1);
+	function dig(X,Y){
+		const{x,y}=bound(X,Y);
 		if(cells[y][x]=="f")return;
 		if(symNearby(x,y,"b"))reveal(x,y);
 		else digAdjacent(x,y);
 	}
-	function digAdjacent(x,y,g){
-		x=Math.min(x,gridSize.x-1);
-		y=Math.min(y,gridSize.y-1);
+	function digAdjacent(X,Y,g){
+		const{x,y}=bound(X,Y);
 		if(cells[y][x]=="f")return;
 		let c=actual[y][x],z;
-		for(let i=(y-1<0)?y:y-1;i<=(y+1>=gridSize.y?y:y+1);i++)for(let j=(x-1<0?x:x-1);j<=(x+1>=gridSize.x?x:x+1);j++){
+		for(let i=!y?y:y-1;i<=(y+1>=gridSize.y?y:y+1);i++)for(let j=!x?x:x-1;j<=(x+1>=gridSize.x?x:x+1);j++){
 			z=cells[i][j]=="";
 			if((actual[i][j]!="b"||g)&&cells[i][j]!="f")reveal(j,i);
 			if(actual[i][j]=="0"&&z&&cells[i][j]=="0")digAdjacent(j,i);
 		}
 	}
-	function multiDig(x,y){
-		x=Math.min(x,gridSize.x-1);
-		y=Math.min(y,gridSize.y-1);
-		let c=actual[y][x];
+	function multiDig(X,Y){
+		const{x,y}=bound(X,Y);
+		let c=actual[y][x],flags=0;
 		if(isNaN(c)||c==="0")return;
-		let flags=0;
-		for(let i=(y-1<0)?y:y-1;i<=(y+1>=gridSize.y?y:y+1);i++)for(let j=(x-1<0?x:x-1);j<=(x+1>=gridSize.x?x:x+1);j++)if(cells[i][j]=="f")flags++;
+		for(let i=!y?y:y-1;i<=(y+1>=gridSize.y?y:y+1);i++)for(let j=!x?x:x-1;j<=(x+1>=gridSize.x?x:x+1);j++)if(cells[i][j]=="f")flags++;
 		if(flags+""==c)digAdjacent(x,y,1);
 	}
-	function placeFlag(x,y){
+	function placeFlag(X,Y){
+		const{x,y}=bound(X,Y);
 		flagDebounce=true;
-		x=Math.min(x,gridSize.x-1);
-		y=Math.min(y,gridSize.y-1);
 		if(cells[y][x]=="f")cells[y][x]="";
 		else if(cells[y][x]=="")cells[y][x]="f";
 		setTimeout(()=>flagDebounce=false,200);
@@ -232,7 +281,7 @@ const{init,initMap,reset,setVal,clearFlags,recordKeybind}=(function(){
 		let p=getPS(),flagCount=0,bombCount=0;
 		for(let i=1;i<9;i++){
 			let e=getById(`tile${i}In`),v=e.value.replaceAll(/[^rgb]/g,"");
-			if(v.length==3)setVal("t",e.style.color=rgb.fetch(v),i+"");
+			if(v.length==3)setVal("t",e.style.color=rgb.fetch(v),i);
 		}
 		for(let i=1;i<3;i++){
 			let e=getById(`bgC${i}In`),v=e.value.replaceAll(/[^rgb#]/g,"");
@@ -264,41 +313,42 @@ const{init,initMap,reset,setVal,clearFlags,recordKeybind}=(function(){
 				}
 			}
 		}
+		if(firstPick)time=Date.now();
+		if(canPlace)timee.innerText=`Time: ${((Date.now()-time)/1e3|0)}s`;
 		bombsLeftd.innerText="Flags: "+(bombCount-flagCount);
 		requestAnimationFrame(update);
 	});
 	window.onresize=function(){
-		let w=Math.min(screen.width,screen.height),o=window.innerWidth<window.innerHeight,r=gridSize.x/gridSize.y;
+		let W=Math.min(screen.width,screen.height),o=window.innerWidth<window.innerHeight,R=gridSize.x/gridSize.y,w=o?W:W*R,h=o?W/R:W,rbg=result_bg.style,r=result.style;
 		flexbox.style.display=o?"inline-block":"flex";
-		cvs.width=o?w:w*r;cvs.height=o?w/r:w;
+		cvs.width=rbg.width=w;cvs.height=rbg.height=h;
+		let c=cvs.getBoundingClientRect();
+		rbg.top=c.top;rbg.left=c.left;
+		r.width=w/2.5;r.height=h/2.5;
 	}
 	window.onresize();
 	cvs.addEventListener("contextmenu",e=>e.preventDefault());
 	cvs.addEventListener("click",e=>{
 		if(!canPlace)return;
-		let p=getPS();
-		let x=(e.pageX-cvs.offsetLeft)/p|0,y=(e.pageY-cvs.offsetTop)/p|0;
-		userMouse.x=x;
-		userMouse.y=y;
+		let p=getPS(),x=(e.pageX-cvs.offsetLeft)/p|0,y=(e.pageY-cvs.offsetTop)/p|0;
+		userMouse.x=x;userMouse.y=y;
 		if(firstPick){
+			time=Date.now();
 			firstPick=false;
 			for(let i=y-1;i<y+2;i++)for(let j=x-1;j<x+2;j++)immune.push(j+","+i);
 			generateBombs();
 			initNumberedCells();
-			clearFlags(true);
-			digAdjacent(x,y);
+			clearFlags(1);
 		}
 		dig(x,y);
 		multiDig(x,y);
 	});
 	["mouseup","touchend","touchcancel"].forEach(v=>cvs.addEventListener(v,e=>clearTimeout(flagTimeout)));
 	["touchmove","mousemove"].forEach((v,j)=>cvs.addEventListener(v,e=>{
-		let p=getPS(),t=e.targetTouches&&e.targetTouches.item(0);
-		let x=((j?e:t).pageX-cvs.offsetLeft)/p|0,y=((j?e:t).pageY-cvs.offsetTop)/p|0;
+		let p=getPS(),t=e.targetTouches&&e.targetTouches.item(0),x=((j?e:t).pageX-cvs.offsetLeft)/p|0,y=((j?e:t).pageY-cvs.offsetTop)/p|0;
 		if(x!=userMouse.x||y!=userMouse.y)clearTimeout(flagTimeout);
 		if(!canPlace)return;
-		userMouse.x=x;
-		userMouse.y=y;
+		userMouse.x=x;userMouse.y=y;
 	}));
 	cvs.addEventListener("mousedown",e=>{
 		if(e.button==2){
@@ -314,10 +364,10 @@ const{init,initMap,reset,setVal,clearFlags,recordKeybind}=(function(){
 		flagTimeout=setTimeout(()=>placeFlag(userMouse.x,userMouse.y),flagDelay);
 	});
 	function recordKeybind(t){
-		const l={restart:["flag","dig"],dig:["flag","restart"],flag:["restart","dig"]}
+		const l={restart:["flag","dig"],dig:["flag","restart"],flag:["restart","dig"]};
 		let o=l[t];
 		if(keybinds[o[0]]==recentKey||keybinds[o[1]]==recentKey){
-			let e=getById(t+"kb")
+			let e=getById(t+"kb");
 			e.value="";
 			e.readOnly=false;
 			return alert("key in use");
@@ -332,19 +382,18 @@ const{init,initMap,reset,setVal,clearFlags,recordKeybind}=(function(){
 		}
 		let kC=recentKey=e.keyCode;
 		let{x,y}=userMouse;
-		if(kC==keybinds.restart){
-			init();
-		}else if(kC==keybinds.flag){
+		if(kC==keybinds.restart)init();
+		else if(kC==keybinds.flag){
 			placeFlag(x,y);
 			flatDebounce=false;
 		}else if(kC==keybinds.dig){
 			if(firstPick){
 				firstPick=false;
+				time=Date.now();
 				for(let i=y-1;i<y+2;i++)for(let j=x-1;j<x+2;j++)immune.push(j+","+i);
 				generateBombs();
 				initNumberedCells();
-				clearFlags(true);
-				digAdjacent(x,y);
+				clearFlags(1);
 			}
 			dig(x,y);
 			multiDig(x,y);
