@@ -68,11 +68,19 @@
 				font-size:125%;
 				margin:0 auto;
 			}
+			#highlight{
+				position:fixed;
+				backdrop-filter:brightness(125%);
+				pointer-events:none;
+				padding:.5px;
+				display:none;
+			}
 		</style>
 	</head>
 	<body>
 		<div id=flexbox>
 			<canvas id=cvs></canvas>
+			<div id=highlight></div>
 			<div id=result_bg>
 				<div id=result>
 					<b id=resultTxt></b>
@@ -326,8 +334,13 @@ const{init,initMap,reset,setVal,clearFlags,recordKeybind}=(function(){
 			}
 		}
 		if(firstPick)time=Date.now();
-		if(canPlace)timee.innerText=`Time: ${((Date.now()-time)/1e3|0)}s`;
-		bombsLeftd.innerText="Flags: "+(bombCount-flagCount);
+		if(canPlace){
+			timee.innerText=`Time: ${((Date.now()-time)/1e3|0)}s`;
+			let hl=highlight.style
+			hl.width=hl.height=p*3;
+			hl.left=(userMouse.x-1)*p;hl.top=(userMouse.y-1)*p;
+			bombsLeftd.innerText="Flags: "+(bombCount-flagCount);
+		}
 		requestAnimationFrame(update);
 	});
 	window.onresize=function(){
@@ -355,7 +368,7 @@ const{init,initMap,reset,setVal,clearFlags,recordKeybind}=(function(){
 		dig(x,y);
 		multiDig(x,y);
 	});
-	["mouseup","touchend","touchcancel"].forEach(v=>cvs.addEventListener(v,e=>clearTimeout(flagTimeout)));
+	["touchend","touchcancel"].forEach(v=>cvs.addEventListener(v,e=>clearTimeout(flagTimeout)));
 	["touchmove","mousemove"].forEach((v,j)=>cvs.addEventListener(v,e=>{
 		let p=getPS(),t=e.targetTouches&&e.targetTouches.item(0),x=((j?e:t).pageX-cvs.offsetLeft)/p|0,y=((j?e:t).pageY-cvs.offsetTop)/p|0;
 		if(x!=userMouse.x||y!=userMouse.y)clearTimeout(flagTimeout);
@@ -363,9 +376,17 @@ const{init,initMap,reset,setVal,clearFlags,recordKeybind}=(function(){
 		userMouse.x=x;userMouse.y=y;
 	}));
 	cvs.addEventListener("mousedown",e=>{
-		if(e.button==2){
+		if(e.button==1){
+			highlight.style.display="block";
+		}else if(e.button==2){
 			placeFlag(userMouse.x,userMouse.y);
 			flatDebounce=false;
+		}
+	});
+	cvs.addEventListener("mouseup",e=>{
+		clearTimeout(flagTimeout)
+		if(e.button==1){
+			highlight.style.display="none";
 		}
 	});
 	cvs.addEventListener("touchstart",e=>{
