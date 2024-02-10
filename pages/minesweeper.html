@@ -344,11 +344,11 @@ const{init,initMap,reset,setVal,clearFlags,recordKeybind}=(function(){
 		requestAnimationFrame(update);
 	});
 	window.onresize=function(){
-		let W=Math.min(screen.width,screen.height),o=window.innerWidth<window.innerHeight,R=gridSize.x/gridSize.y,w=o?W:W*R,h=o?W/R:W,rbg=result_bg.style,r=result.style;
+		let W=Math.min(screen.width,screen.height),o=window.innerWidth<window.innerHeight,R=gridSize.x/gridSize.y,w=o?W:W*R,h=o?W/R:W,r=result.style;
 		flexbox.style.display=o?"inline-block":"flex";
-		cvs.width=w;rbg.width=w+"px";cvs.height=h;rbg.height=h+"px";
+		cvs.width=w;result_bg.style.width=w+"px";cvs.height=h;result_bg.style.height=h+"px";
 		let c=cvs.getBoundingClientRect();
-		rbg.top=c.top+"px";rbg.left=c.left+"px";
+		result_bg.style.top=c.top+"px";result_bg.style.left=c.left+"px";
 		r.width=w/2.5+"px";r.height=h/2.5+"px";
 	}
 	window.onresize();
