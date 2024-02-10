@@ -337,8 +337,8 @@ const{init,initMap,reset,setVal,clearFlags,recordKeybind}=(function(){
 		if(canPlace){
 			timee.innerText=`Time: ${((Date.now()-time)/1e3|0)}s`;
 			let hl=highlight.style
-			hl.width=hl.height=p*3;
-			hl.left=(userMouse.x-1)*p;hl.top=(userMouse.y-1)*p;
+			hl.width=hl.height=p*3+"px";
+			hl.left=(userMouse.x-1)*p+"px";hl.top=(userMouse.y-1)*p+"px";
 			bombsLeftd.innerText="Flags: "+(bombCount-flagCount);
 		}
 		requestAnimationFrame(update);
@@ -346,10 +346,10 @@ const{init,initMap,reset,setVal,clearFlags,recordKeybind}=(function(){
 	window.onresize=function(){
 		let W=Math.min(screen.width,screen.height),o=window.innerWidth<window.innerHeight,R=gridSize.x/gridSize.y,w=o?W:W*R,h=o?W/R:W,rbg=result_bg.style,r=result.style;
 		flexbox.style.display=o?"inline-block":"flex";
-		cvs.width=rbg.width=w;cvs.height=rbg.height=h;
+		cvs.width=w;rbg.width=w+"px";cvs.height=h;rbg.height=h+"px";
 		let c=cvs.getBoundingClientRect();
-		rbg.top=c.top;rbg.left=c.left;
-		r.width=w/2.5;r.height=h/2.5;
+		rbg.top=c.top+"px";rbg.left=c.left+"px";
+		r.width=w/2.5+"px";r.height=h/2.5+"px";
 	}
 	window.onresize();
 	cvs.addEventListener("contextmenu",e=>e.preventDefault());
