@@ -27,11 +27,11 @@
 				z-index:0;
 			}
 			#result_bg{
-				background:#0009;
+				background:#0007;
 				position:fixed;
 				z-index:1;
 				display:flex;
-				backdrop-filter:blur(1px);
+				backdrop-filter:blur(1.5px);
 				-moz-transition-timing-function:linear;
 				-ms-transition-timing-function:linear;
 				-o-transition-timing-function:linear;
@@ -58,6 +58,11 @@
 				-o-flex-direction:column;
 				-webkit-flex-direction:column;
 				flex-direction:column;
+				-moz-opacity:.85;
+				-ms-opacity:.85;
+				-o-opacity:.85;
+				-webkit-opacity:.85;
+				opacity:.85;
 			}
 			#resultTxt{
 				font-size:125%;
@@ -72,6 +77,7 @@
 				<div id=result>
 					<b id=resultTxt></b>
 					<div id=timed></div>
+					<div id=ftime></div>
 					<button style='margin-top:auto'onclick='init()'>Retry</button>
 				</div>
 			</div>
@@ -120,7 +126,7 @@ const{init,initMap,reset,setVal,clearFlags,recordKeybind}=(function(){
 	const getById=d=>document.getElementById(d),rgb=(r=>{r={s:1,r:255,g:0,b:0,rg:0,gg:1,bg:0,rl:0,gl:0,bl:0};r.fetch=(f="",h)=>{h=_=>_.toString(16).padStart(2,0);return"#"+(f.length>2?h(r[f[0]])+h(r[f[1]])+h(r[f[2]]):h(r.r)+h(r.g)+h(r.b))};r.i=setInterval((m=255,A,B,C)=>{["g","l"].map((v,i)=>["r","g","b"].map(e=>r[e]==(i?-1:m+1)&&(r[e+v]=0,r[e]=i?0:m)));A=r.r==m;B=r.g==m;C=r.b==m;A&&!r.g&&!r.b&&(r.gg=1);A&&B&&!r.b&&(r.rl=1);!r.r&&B&&!r.b&&(r.bg=1);!r.r&&B&&C&&(r.gl=1);!r.r&&!r.g&&C&&(r.rg=1);A&&!r.g&&C&&(r.bl=1);["r","g","b"].map(e=>r[e+"g"]&&(r[e]+=r.s));["r","g","b"].map(e=>r[e+"l"]&&(r[e]-=r.s))});return r})();
 	let cells=[],actual=[],immune=[];
 	let bpc=.15,bnb=.2,flagDelay=200;
-	let diedTimeout,flagTimeout,initTimeout,recentKey,time;
+	let diedTimeout,flagTimeout,initTimeout,recentKey,time,fastestTime;
 	let flagDebounce=false,canPlace=true,firstPick=true,ctrlPressed=false;
 	function reset(){
 		setVal("grid",20);
@@ -140,6 +146,7 @@ const{init,initMap,reset,setVal,clearFlags,recordKeybind}=(function(){
 				gridSize.x=gdi.value=gridSized.innerText=v;
 				gridSize.y=v/2;
 				bombPopulationd.innerText=bombDensity(bpc);
+				fastestTime=null;
 				init();
 			break;
 			case"bnby":
@@ -155,6 +162,7 @@ const{init,initMap,reset,setVal,clearFlags,recordKeybind}=(function(){
 			case"bgc1":bgColors.bg1=v;break;
 			case"bgc2":bgColors.bg2=v;break;
 			case"t":map[i].txt=v;break;
+			case String.fromCharCode(8710):auto(v);break;
 		}
 	}
 	function init(){
@@ -186,7 +194,7 @@ const{init,initMap,reset,setVal,clearFlags,recordKeybind}=(function(){
 			if(actual[i][j]!="b")dig(j,i);
 			else if(f)placeFlag(j,i);
 			flagDebounce=false;
-			if(Math.random()>.8)await new Promise(r=>setTimeout(r,ms));
+			if(Math.random()>.9)await new Promise(r=>setTimeout(r,ms));
 		}
 	}
 	function bound(x,y){
@@ -234,11 +242,15 @@ const{init,initMap,reset,setVal,clearFlags,recordKeybind}=(function(){
 		if(checkIfWon()&&!firstPick||b){
 			if(b)setTimeout(()=>{
 				for(let i=0,j;i<gridSize.y;i++)for(j=0;j<gridSize.x;j++)if(actual[i][j]!="b"&&cells[i][j]=="f")cells[i][j]="X";
-			},5);
+			},5);else{
+				fastestTime=fastestTime||1/0;
+				if(Date.now()-time<fastestTime)fastestTime=Date.now()-time;
+			}
 			canPlace=false;
 			clearTimeout(flagTimeout);
 			result_bg.style.display="flex";
 			resultTxt.innerText=b?"You died":"You won";
+			ftime.innerText=fastestTime?`Fastest: ${getTime(fastestTime)}s`:"Fastest: --";
 			timed.innerText=b?"Time: --":`Time: ${getTime(Date.now()-time)}s`;
 			setTimeout(()=>{
 				["-moz-","-ms-","-o-","-webkit-",""].forEach(e=>{
