@@ -19,6 +19,7 @@
 			table.l>tbody>tr>td{text-align:left}
 			#shortcutkeys{display:none}
 			#cvs{
+				background:#555;
 				-moz-user-select:none;
 				-ms-user-select:none;
 				-o-user-select:none;
@@ -143,7 +144,7 @@ const{init,initMap,reset,setVal,clearFlags,recordKeybind}=(function(){
 	}
 	function initMap(){
 		["#04f","#194","#f01","#909","#fd0","#0af","#777","#eee"].map((e,i)=>map[++i]={txt:getById(`tile${i}In`).value=getById(`tile${i}In`).style.color=e});
-		["#555","#bbb"].map((e,i)=>getById(`bgC${++i}In`).value=getById(`bgC${i}In`).style.color=bgColors["bg"+i]=e);
+		["#4cab1a","#C4A484"].map((e,i)=>getById(`bgC${++i}In`).value=getById(`bgC${i}In`).style.color=bgColors["bg"+i]=e);
 	}
 	function bombDensity(p){
 		return gridSize.x*gridSize.y*p|0;
@@ -172,6 +173,12 @@ const{init,initMap,reset,setVal,clearFlags,recordKeybind}=(function(){
 			case"t":map[i].txt=v;break;
 			case String.fromCharCode(8710):auto(v);break;
 		}
+	}
+	function fh(h){
+		if(h.match("rgb"))h="#"+h.replaceAll(" ","").split("(")[1].split(")")[0].split(",").map(e=>Number(e).toString(16).padStart(2,0)).join("");
+		if(h.length==4){
+			return"#"+h[1]+h[1]+h[2]+h[2]+h[3]+h[3];
+		}else return h;
 	}
 	function init(){
 		result_bg.style.display="none";
@@ -312,7 +319,8 @@ const{init,initMap,reset,setVal,clearFlags,recordKeybind}=(function(){
 			let cell=cells[i][j],st=map[cell];
 			if(cell=="f")flagCount++;
 			if(actual[i][j]=="b")bombCount++;
-			ctx.fillStyle=cell===""||cell=="f"||cell=="X"?bgColors.bg1:bgColors.bg2;
+			let bg=fh(cell===""||cell=="f"||cell=="X"?bgColors.bg1:bgColors.bg2);
+			ctx.fillStyle=bg+((i%2+j%2)%2?"e5":"");
 			ctx.fillRect(p*j,p*i,p-.15,p-.15);
 			if(st?.txt){
 				ctx.font=p+"px sans-serif";
@@ -437,7 +445,7 @@ const{init,initMap,reset,setVal,clearFlags,recordKeybind}=(function(){
 	document.addEventListener("keyup",e=>{
 		if(e.keyCode==17)ctrlPressed=false;
 	});
-	return{init:init,initMap:initMap,reset:reset,setVal:setVal,clearFlags:clearFlags,recordKeybind:recordKeybind};
+	return{init,initMap,reset,setVal,clearFlags,recordKeybind};
 })();
 init();initMap();
 		</script>
