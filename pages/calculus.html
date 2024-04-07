@@ -26,7 +26,7 @@
 			}
 			#flexbox{
 				transition-timing-function:linear;
-				transition-duration:.5s;
+				transition-duration:.75s;
 				opacity:0;
 			}
 		</style>
@@ -55,7 +55,7 @@
 							<td>14: Continuity on Intervals and Functions</td>
 							<td>15: Intermediate Value Theorem</td>
 							<td>16: Right Angle Trigonometry</td>
-							<td>17: Sin and Cos of Special Angles</td>
+							<td>17: Sine and Cosine of Special Angles</td>
 							<td>18: Unit Circle</td>
 							<td>19: Properties of Trig Functions</td>
 							<td>20: Graphs of Sin and Cos</td>
@@ -66,7 +66,9 @@
 							<td>25: Computing Derivatives from the Definition</td>
 							<td>26: Interpreting Derivatives</td>
 							<td>27: Derivative as a Function: Graph and Domain</td>
-							<td>28: Proof: Differential Funcs are Continuous</td>
+							<td>28: Proof: Differential Functions are Continuous</td>
+							<td>29: Power Rule and Derivatives</td>
+							<td>30: Trigonometric Identities</td>
 						</tr>
 					</table>
 				</div>
@@ -75,12 +77,13 @@
 			</div>
 		</div>
 		<script>
-function hold(e){
+function interaction(e){
+	["mouseenter","mouseover"].forEach(m=>e.addEventListener(m,v=>e.style.backgroundColor="#ccc"));
 	["touchstart","mousedown"].forEach(m=>e.addEventListener(m,v=>e.style.backgroundColor="#999"));
-	["touchend","mouseup","mouseout"].forEach(m=>e.addEventListener(m,v=>e.style.backgroundColor="#fff"));
+	["touchend","mouseup","mouseout","touchcancel","mouseleave"].forEach(m=>e.addEventListener(m,v=>e.style.backgroundColor="#fff"));
 }
 function skipToTimestamp(n){
-	let ts=[18,581,1100.7,1551.9,1889.1,2227.6,2578,3367.2,4120.7,4630.3,5435.4,5851.8,6334.6,6803,7183,7417.2,7873.2,8356.5,8686.4,9325.1,9717.9,10330.8,10864.3,11294.9,12176.4,12843.3,13354.9,14185.7];
+	let ts=[18,581,1100.7,1551.9,1889.1,2227.6,2578,3367.2,4120.7,4630.3,5435.4,5851.8,6334.6,6803,7183,7417.2,7873.2,8356.5,8686.4,9325.1,9717.9,10330.8,10864.3,11294.9,12176.4,12843.3,13354.9,14185.7,14469.8,14863];
 	if(n>=ts.length)return;
 	vid.currentTime=ts[n];
 	vid.play();
@@ -90,7 +93,7 @@ document.addEventListener("DOMContentLoaded",()=>{
 		vid.removeEventListener("loadedmetadata",omdl);
 		flexbox.style.opacity=1;
 		Array.from(document.getElementsByTagName("td")).forEach((e,i)=>{
-			hold(e);
+			interaction(e);
 			e.onclick=_=>skipToTimestamp(i);
 		})
 	})

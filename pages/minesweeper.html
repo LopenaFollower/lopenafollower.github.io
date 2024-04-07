@@ -129,7 +129,7 @@
 		</div>
 		<script>
 const{init,initMap,reset,setVal,clearFlags,recordKeybind}=(function(){
-	const ctx=cvs.getContext("2d");
+	const ctx=cvs.getContext("2d"),{cbrt,random,min:minVal,max:maxVal}=Math;
 	const keybinds={restart:"",flag:"",dig:""},bgColors={bg1:"#555",bg2:"#bbb"},map={f:{sym:"f"},b:{sym:"b"},X:{txt:"red"}};
 	const gridSize={x:20,y:10},userMouse={x:0,y:0};
 	const getById=d=>document.getElementById(d),rgb=(r=>{r={s:1,r:255,g:0,b:0,rg:0,gg:1,bg:0,rl:0,gl:0,bl:0};r.fetch=(f="",h)=>{h=_=>_.toString(16).padStart(2,0);return"#"+(f.length>2?h(r[f[0]])+h(r[f[1]])+h(r[f[2]]):h(r.r)+h(r.g)+h(r.b))};r.i=setInterval((m=255,A,B,C)=>{["g","l"].map((v,i)=>["r","g","b"].map(e=>r[e]==(i?-1:m+1)&&(r[e+v]=0,r[e]=i?0:m)));A=r.r==m;B=r.g==m;C=r.b==m;A&&!r.g&&!r.b&&(r.gg=1);A&&B&&!r.b&&(r.rl=1);!r.r&&B&&!r.b&&(r.bg=1);!r.r&&B&&C&&(r.gl=1);!r.r&&!r.g&&C&&(r.rg=1);A&&!r.g&&C&&(r.bl=1);["r","g","b"].map(e=>r[e+"g"]&&(r[e]+=r.s));["r","g","b"].map(e=>r[e+"l"]&&(r[e]-=r.s))});return r})();
@@ -156,6 +156,7 @@ const{init,initMap,reset,setVal,clearFlags,recordKeybind}=(function(){
 				gridSize.y=v/2;
 				bombPopulationd.innerText=bombDensity(bpc);
 				fastestTime=null;
+				bpc=bpci.value=cbrt(v)/17.6;
 				init();
 			break;
 			case"bnby":
@@ -171,7 +172,7 @@ const{init,initMap,reset,setVal,clearFlags,recordKeybind}=(function(){
 			case"bgc1":bgColors.bg1=v;break;
 			case"bgc2":bgColors.bg2=v;break;
 			case"t":map[i].txt=v;break;
-			case String.fromCharCode(8710):auto(v);break;
+			case String.fromCharCode(8710):auto(v,i);break;
 		}
 	}
 	function fh(h){
@@ -209,11 +210,10 @@ const{init,initMap,reset,setVal,clearFlags,recordKeybind}=(function(){
 			if(actual[i][j]!="b")dig(j,i);
 			else if(f)placeFlag(j,i);
 			flagDebounce=false;
-			if(Math.random()>.9)await new Promise(r=>setTimeout(r,ms));
 		}
 	}
 	function bound(x,y){
-		return{x:Math.min(x,gridSize.x-1),y:Math.min(y,gridSize.y-1)};
+		return{x:minVal(x,gridSize.x-1),y:minVal(y,gridSize.y-1)};
 	}
 	function clearFlags(d){
 		for(let i=0,j;i<gridSize.y;i++)for(j=0;j<gridSize.x;j++)if(cells[i][j]=="f"){
@@ -235,9 +235,9 @@ const{init,initMap,reset,setVal,clearFlags,recordKeybind}=(function(){
 		const N=bombDensity(bpc);
 		let n=0,t=0;
 		while(n<N&&n<gridSize.x*gridSize.y-9){
-			let x=Math.random()*gridSize.x|0,y=Math.random()*gridSize.y|0;
+			let x=random()*gridSize.x|0,y=random()*gridSize.y|0;
 			let s=symNearby(x,y,"b")?1-bnb:bnb;
-			if(immune.indexOf(x+","+y)<0&&actual[y][x]!="b"&&Math.random()>s){
+			if(immune.indexOf(x+","+y)<0&&actual[y][x]!="b"&&random()>s){
 				actual[y][x]="b";n++;
 			}else t++;
 			if(t>1e6&&n>0)break;
@@ -352,7 +352,7 @@ const{init,initMap,reset,setVal,clearFlags,recordKeybind}=(function(){
 		requestAnimationFrame(update);
 	});
 	window.onresize=function(){
-		let W=Math.min(screen.width,screen.height),o=window.innerWidth<window.innerHeight,R=gridSize.x/gridSize.y,w=o?W:W*R,h=o?W/R:W,r=result.style;
+		let W=minVal(screen.width,screen.height),o=window.innerWidth<window.innerHeight,R=gridSize.x/gridSize.y,w=o?W:W*R,h=o?W/R:W,r=result.style;
 		flexbox.style.display=o?"inline-block":"flex";
 		cvs.width=w;cvs.height=h;
 		const c=cvs.getBoundingClientRect();
