@@ -102,6 +102,13 @@ async function shuffle(){
 	return true;
 }
 class Sorts{
+	getNames(){
+		return Object.getOwnPropertyNames(Sorts.prototype).filter(e=>e!="constructor"&&e!="getNames"&&e!="randomSort");
+	}
+	randomSort(){
+		let sorts=this.getNames();
+		runSort(sorts[random()*sorts.length|0]);
+	}
 	async bitonicSortIterative(len){
 		let i,j,k;
 		for(k=2;k<len*2;k=2*k){
@@ -497,7 +504,7 @@ class Sorts{
 	}
 }
 const sorts=new Sorts();
-const sortsNames=Object.getOwnPropertyNames(Sorts.prototype).filter(e=>e!="constructor");
+const sortsNames=sorts.getNames();
 function runSort(name){
 	shuffle().then(()=>{
 		if(sorts[name])sorts[name](arr_size).then(draw);
