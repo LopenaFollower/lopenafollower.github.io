@@ -21,6 +21,9 @@
 						<td>Mark</td>
 						<td><input type=checkbox checked id=markArray /></td>
 					</tr>
+					<tr>
+						<td><button onclick='sorts.randomSort()'>random</button></td>
+					</tr>
 				</table>
 			</fieldset>
 		</div>
@@ -42,6 +45,7 @@ window.onresize=function(){
 window.onresize();
 //Project Started: April 4, 2024
 const arr_size=512;
+let sortRunning=false;
 let arr=new Array(arr_size).fill().map((e,i)=>++i);
 function fill(hex="#fff"){
 	ctx.fillStyle=hex;
@@ -506,11 +510,16 @@ class Sorts{
 const sorts=new Sorts();
 const sortsNames=sorts.getNames();
 function runSort(name){
+	if(sortRunning||!sorts[name])return;
+	sortRunning=true;
 	shuffle().then(()=>{
-		if(sorts[name])sorts[name](arr_size).then(draw);
+		sorts[name](arr_size).then(()=>{
+			draw();
+			sortRunning=false;
+		});
 	});
 }
-runSort("weaveSortRecursive");
+sorts.randomSort();
 		</script>
 	</body>
 </html>
