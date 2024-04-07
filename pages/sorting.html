@@ -508,7 +508,7 @@ class Sorts{
 	}
 }
 const sorts=new Sorts();
-const sortsNames=sorts.getNames();
+const sortNames=sorts.getNames();
 function runSort(name){
 	if(sortRunning||!sorts[name])return;
 	sortRunning=true;
@@ -519,7 +519,7 @@ function runSort(name){
 		});
 	});
 }
-sorts.randomSort();
+runSort(sortNames[random()*sorts.length|0]);
 		</script>
 	</body>
 </html>
