@@ -19785,6 +19785,17 @@ class Sorts{
 		}
 		await quickSort(arr,0,len);
 	}
+	async headPullQuickSort(len){
+		let l=1;
+		while(l-len){
+			let as=false;
+			for(let r=l+1;r<=len;r++)
+				if(compareIndices(arr,l-1,r-1)>0)
+					await multiSwap(arr,r-1,0,.1,as=true);
+			if(as)l=1;
+			else l++;
+		}
+	}
 }
 const sorts=new Sorts(),sortNames=sorts.getNames();
 function filterSorts(t){
@@ -19834,6 +19845,7 @@ function runSort(name){
 		counts.reset();
 		sortnamedisp.innerText="Running: "+name;
 		sorts[name](arr_size).then(async()=>{
+			await sleep(50);
 			let{w,h}=getPixelR();
 			let t=parseFloat(displayType.value);
 			let delay=sqrt(arr_size),sorted=isArraySorted(arr,arr_size);
