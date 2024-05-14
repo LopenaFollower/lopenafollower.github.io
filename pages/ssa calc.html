@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title></title>
+		<meta name="viewport"content="width=device-width,initial-scale=1">
+		<style>
+			body{
+				margin:0;
+			}
+			table{
+				margin:5px;
+			}
+			input[type=number]{
+				width:100px;
+				border:none;
+			}
+			td{
+				min-width:100px;
+				text-align:center;
+				align:center;
+			}
+		</style>
+	</head>
+	<body>
+		<table border=1 style='border-collapse:collapse'>
+			<tbody id=par>
+				
+			</tbody>
+		</table>
+		<button onclick='save()'>Save</button>
+		<button onclick='load()'>Load Save</button>
+		<button onclick='clearsave()'>Reset Save</button><br>
+		<button onclick='copyInfo()'>Copy Info</button>
+		<button onclick='pasteInfo()'>Paste Info</button>
+		<script>
+let ls=false,info;
+if(!localStorage.getItem("ssa_info")){
+	info={checkbox:[1,1,1,1,1,0,0,0,0],values:[70,1.25,7,7,20,0,0,0,0]}
+	localStorage.setItem("ssa_info",JSON.stringify(info));
+}else{
+	info=JSON.parse(localStorage.getItem("ssa_info"));
+	ls=true;
+}
+function create(tag,p){
+	let r=document.createElement(tag);
+	p.appendChild(r);
+	return r;
+}
+function add(sn,id,d1,d2,min,max,formula){
+	let tr=create("tr",par);
+	let td1=create("td",tr);
+	td1.innerText=sn;
+	let td2=create("td",tr);
+	let ch=create("input",td2);ch.type="checkbox";
+	ch.id="checkbox_"+id;
+	ch.checked=d1;
+	ch.oninput=update;
+	let td3=create("td",tr);
+	let inp=create("input",td3);inp.type="number";
+	inp.id="input_"+id;
+	inp.value=d2;
+	inp.onblur=function(){
+		let v=Number(this.value)
+		if(v<min)this.value=min;
+		if(v>max)this.value=max;
+		update();
+	}
+	let td4=create("td",tr);
+	td4.className="value";
+	function update(){
+		if(ch.checked){
+			td4.innerText=formula(Number(inp.value));
+		}else{
+			td4.innerText=0;
+		}
+	}
+	update();
+}
+add("BP","bp",true,70,15,70,function(v){return v?Math.round(v/.7*6.25)/100:0});
+add("CR","cr",true,1.25,1.05,1.25,function(v){return v?Math.round((v-1.05)/.2*140)/100:0});
+add("CC","cc",true,7,1,7,function(v){return v?Math.round(v/6.99*275)/100:0});
+add("BAR","bar",true,7,1,7,function(v){return v?Math.round(v/6.99*160)/100:0});
+add("P","pol",true,20,5,20,function(v){return v?Math.round(v/19.99*300)/100:0});
+add("BGP","bgp",false,0,15,70,function(v){return v?Math.round(v/.7*.5)/100:0});
+add("WP","wp",false,0,15,70,function(v){return v?Math.round(v/.7*.2)/100:0});
+add("IC","ic",false,0,3,12,function(v){return v?Math.round(v/11.99*30)/100:0});
+add("RC","rp",false,0,15,70,function(v){return 0});
+let tr=create("tr",par);
+let td1=create("td",tr);
+let overalltd=create("td",tr);
+let td3=create("td",tr);
+let score=create("td",tr);
+function save(){
+	info={checkbox:[],values:[]};
+	let ids=["bp","cr","cc","bar","pol","bgp","wp","ic","rp"];
+	for(let v in ids){
+		info.checkbox[v]=document.getElementById("checkbox_"+ids[v]).checked;
+		info.values[v]=document.getElementById("input_"+ids[v]).value;
+	}
+	localStorage.setItem("ssa_info",JSON.stringify(info));
+}
+function clearsave(){
+	info={checkbox:[1,1,1,1,1,0,0,0,0],values:[70,1.25,7,7,20,0,0,0,0]};
+	localStorage.setItem("ssa_info",JSON.stringify(info));
+}
+function copyInfo(){
+	navigator.clipboard.writeText(localStorage.getItem("ssa_info"));
+}
+function pasteInfo(){
+	navigator.clipboard.readText().then(e=>{
+		info=JSON.parse(e);
+		load();
+	});
+}
+function load(){
+	let{checkbox,values}=info;
+	let ids=["bp","cr","cc","bar","pol","bgp","wp","ic","rp"];
+	for(let v in ids){
+		document.getElementById("checkbox_"+ids[v]).checked=checkbox[v];
+		document.getElementById("input_"+ids[v]).value=values[v];
+		document.getElementById("checkbox_"+ids[v]).dispatchEvent(new Event("input",{bubbles:true}));
+		document.getElementById("input_"+ids[v]).dispatchEvent(new Event("input",{bubbles:true}));
+	}
+}
+if(ls)load();
+requestAnimationFrame(function update(){
+	let rating=0,ssaval=0;
+	for(let v of["bp","cr","cc","bar","pol"]){
+		if(document.getElementById("checkbox_"+v).checked)rating++;
+	}
+	for(let v of[...document.querySelectorAll(".value")]){
+		ssaval+=Number(v.innerText);
+	}
+	overalltd.innerText=rating+" / 5";
+	score.innerText=ssaval.toFixed(3);
+	requestAnimationFrame(update);
+});
+		</script>
+	</body>
+</html>
