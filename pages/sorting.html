@@ -111,10 +111,11 @@
 							<tr>
 								<td>Display</td>
 								<td>
-									<select id=displayType oninput='draw();if(this.value=="2")verifyc();else if(this.value=="5")verify(prompt("url",""));'>
+									<select id=displayType oninput='draw();if(parseInt(this.value)==2)verifyc();else if(this.value=="5")verify(prompt("url",""));'>
 										<option value=0>Bar</option>
 										<option value=1>Point</option>
 										<option value=2>Gradient</option>
+										<option value=2.5>Gradient - Bars</option>
 										<option value=3>RGB</option>
 										<option value=4>Circle</option>
 										<option value=5>Custom Image</option>
@@ -196,6 +197,9 @@
 							</tr>
 							<tr>
 								<td colspan=2><button onclick='setArraySize()'>Array Size</button></td>
+							</tr>
+							<tr>
+								<td colspan=2><button onclick='cvs.style.backgroundColor=prompt("Color","#000")'>BG Color</button></td>
 							</tr>
 							<tr><td colspan=2 id=fpsDisplay></td></tr>
 							<tr><td colspan=2 id=comparisonsDisplay></td></tr>
@@ -348,7 +352,7 @@ class Gradient{
 	}
 	genRGB(l){
 		let r=[],s=360/l;
-		let hex=this.hex;
+		let{hex}=this;
 		function hsl2rgb(h,s,l){
 			let a=s*minVal(l,1-l);
 			let f=(n,k=(n+h/30)%12)=>(l-a*maxVal(minVal(k-3,9-k,1),-1))*255;
@@ -398,7 +402,7 @@ function draw(){
 	displayCooldown=true;setTimeout(()=>displayCooldown=false);
 	const{w,h}=getPixelR();
 	ctx.clearRect(0,0,cvs.width,cvs.height);
-	let t=parseInt(displayType.value);
+	let t=parseFloat(displayType.value);
 	fill();
 	let g,center=[cvs.width/2,cvs.height/2],rad=minVal(...center)*.9,getDist,angles,cosA,sinA;
 	if(t>1)g=t<3?gradient.gen():gradient.genRGB();
@@ -425,19 +429,19 @@ function draw(){
 	}
 	for(let i=0;i<arr_size;i++){
 		let v=arr[i];
-		if(t<2)ctx.fillRect(i*w,cvs.height-v*h,w,!t?v*h:w);
+		if(t<2)ctx.fillRect(i*w,cvs.height-v*h,w*1.05,!t?v*h:w);
 		else if(t<4){
 			fill(g[arr[i]]);
-			if(t<3)ctx.fillRect(i*w,0,w,cvs.height);
-			else ctx.fillRect(i*w,cvs.height-v*h,w,v*h);
+			if(t<2.1)ctx.fillRect(i*w,0,w*1.05,cvs.height);
+			else ctx.fillRect(i*w,cvs.height-v*h,w*1.05,v*h);
 		}else if(t<5){
 			let rd=getDist(v,i);
 			ctx.beginPath();
-			ctx.arc(center[0]+cosA[i]*rd,center[1]+sinA[i]*rd,w,0,2*PI);
+			ctx.arc(center[0]+cosA[i]*rd,center[1]+sinA[i]*rd,w*1.05,0,2*PI);
 			ctx.fill();
 		}else
 			if(cu3)
-				ctx.drawImage(temp,v*w/scale,0,w*cut*scale,temp.height,i*w,0,w*2*scale,cvs.height);
+				ctx.drawImage(temp,v*w/scale,0,w*cut*scale,temp.height,i*w,0,w*2.025*scale,cvs.height);
 	}
 	comparisonsDisplay.innerText=localeS(counts.cmps)+" Comparisons";
 	swapsDisplay.innerText=localeS(counts.swp)+" Swaps";
@@ -661,9 +665,9 @@ function mark(i){
 		sound(Number(arr[i])||0,.05);
 		let{w,h}=getPixelR();
 		ctx.strokeStyle="#f00";
-		let dt=parseInt(displayType.value);
+		let dt=parseFloat(displayType.value);
 		fill(dt-3?"#f00":"#fff");
-		let t=dt>1&&dt-3;
+		let t=dt>1&&dt<2.1;
 		if(dt-4)ctx.fillRect(i*w,!t?cvs.height-arr[i]*h:0,w,!t?arr[i]*h:cvs.height);
 		else{
 			let correct=[...arr].sort((a,b)=>a-b);
@@ -19676,6 +19680,111 @@ class Sorts{
 		}
 		await sort(arr,len);
 	}
+	async adaptiveForcedStableQuickSort(len){
+		let ofs;
+		async function stableSegmentReversal(A,s,e){
+			if(e-s<3)await swap(A,s,e,1,true);
+			else await reversal(A,s,e,.5,true);
+			let i=s;
+			let l,r;
+			while(i<e){
+				l=i;
+				while(i<e&&!compareIndices(A,i,i+1))i++;
+				r=i;
+				if(l-r){
+					if(r-l<3)await swap(A,l,r,1,true);
+					else await reversal(A,l,r,1,true);
+				}
+				i++;
+			}
+		}
+		function stableComp(A,k,a,b){
+			let c=compareIndices(A,ofs+a,ofs+b);
+			return c>0||(!c&&compareIndices(k,a,b)>0);
+		}
+		async function stableSwap(A,k,a,b){
+			if(a==b)return;
+			await swap(A,ofs+a,ofs+b,0,true);
+			swap(k,a,b,0,false,true);
+		}
+		async function smallSort(A,k,a,b){
+			for(let i=a+1;i<b;i++){
+				let j=i;
+				while(j>0&&stableComp(A,k,j-1,j))
+					await stableSwap(A,k,j-1,j--);
+			}
+		}
+		function medianOfThree(A,k,i0,i1,i2){
+			let t;
+			if(stableComp(A,k,i0,i1)){
+				t=i1;
+				i1=i0;
+			}else t=i0;
+			if(stableComp(A,k,i1,i2)){
+				if(stableComp(A,k,t,i2))return t;
+				return i2;
+			}
+			return i1;
+		}
+		async function medianOfMedians(A,k,a,b){
+			while(b-a>2){
+				let m=a,i=a;
+				for(;i+2<b;i+=3)await stableSwap(A,k,m++,medianOfThree(A,k,i,i+1,i+2));
+				while(i<b)await stableSwap(A,k,m++,i++);
+				b=m;
+			}
+		}
+		async function partition(A,k,a,b){
+			let i=a,j=b;
+			while(1){
+				do i++;while(i<j&&!stableComp(A,k,i,a));
+				do j--;while(j>=i&&stableComp(A,k,j,a));
+				if(i>=j){
+					await stableSwap(A,k,a,j);
+					return j;
+				}
+				await stableSwap(A,k,i,j);
+			}
+		}
+		async function innerSort(A,k,a,b,bA){
+			while(b-a>16){
+				if(bA)await medianOfMedians(A,k,a,b);
+				else await stableSwap(A,k,a,medianOfThree(A,k,a,a+(b-a)/2|0,b-1));
+				let p=await partition(A,k,a,b);
+				let lL=p-a,rL=b-p-1;
+				bA=lL<((b-a)/16||0)|rL<((b-a)/16|0);
+				if(lL>rL){
+					await innerSort(A,k,p+1,b,bA);
+					b=p;
+				}else{
+					await innerSort(A,k,a,p,bA);
+					a=p+1;
+				}
+			}
+			await smallSort(A,k,a,b);
+		}
+		async function quickSort(A,a,b){
+			let z=0,e=0;
+			for(let i=a;i<b-1;i++){
+				let c=compareIndices(A,i,i+1);
+				z+=c>0?1:0;
+				e+=c?0:1;
+			}
+			if(!z)return;
+			if(z+e==b-a-1){
+				if(e>0)await stableSegmentReversal(A,a,b-1);
+				else if(b-a<4)await swap(A,a,b-1,0.75,true);
+				else reversal(A,a,b-1,0.75,true,false);
+				return;
+			}
+			let l=b-a,k=new Array(l);
+			for(let i=0;i<l;i++)
+				write(k,i,i,0,false,true);
+			ofs=a;
+			await innerSort(A,k,0,l,false);
+		}
+		await quickSort(arr,0,len);
+	}
 }
 const sorts=new Sorts(),sortNames=sorts.getNames();
 function filterSorts(t){
@@ -19726,15 +19835,15 @@ function runSort(name){
 		sortnamedisp.innerText="Running: "+name;
 		sorts[name](arr_size).then(async()=>{
 			let{w,h}=getPixelR();
-			let t=parseInt(displayType.value);
+			let t=parseFloat(displayType.value);
 			let delay=sqrt(arr_size),sorted=isArraySorted(arr,arr_size);
 			draw();
 			fill(sorted?"#0f0":"#f00");
 			if(!sorted)console.warn(name);
+			let b=t>1&&t<2.1;
 			for(let i=0,j=0;i<arr_size;i++){
 				let v=arr[i];
-				if(t<2||t==3)ctx.fillRect(i*w,cvs.height-v*h,w,!t||t-4?v*h:w);
-				else if(t-4)ctx.fillRect(i*w,0,w,cvs.height);
+				if(t-4)ctx.fillRect(i*w,b?0:cvs.height-v*h,w+.5,b?cvs.height:v*h);
 				else{
 					let correct=[...arr].sort((a,b)=>a-b);
 					let rad=minVal(cvs.width,cvs.height)/2*.9;

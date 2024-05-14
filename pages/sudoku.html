@@ -28,7 +28,6 @@
 		<div id=flexbox>
 			<canvas id=cvs></canvas>
 			<fieldset>
-				<button onclick='newGame()'>New Game</button>
 				<table border=1>
 					<tr>
 						<td onclick='place(0)'>X</td>
@@ -43,6 +42,7 @@
 						<td onclick='place(9)'>9</td>
 					</tr>
 				</table>
+				<button onclick='newGame()'>New Game</button>
 			</fieldset>
 		</div>
 		<script>
@@ -165,7 +165,7 @@ class Sudoku{
 		return c;
 	}
 }
-let sudoku=new Sudoku(40),selected,mistakes=0,won,startTime=Date.now(),endTime;
+let sudoku=new Sudoku(56),selected,mistakes=0,won,startTime=Date.now(),endTime;
 sudoku.fillValues();
 let current=sudoku.getCopy();
 function getPS(){
@@ -173,7 +173,7 @@ function getPS(){
 	return 149*s/1350;
 }
 function newGame(){
-	let dif=minVal(63,maxVal(1,Number(prompt("Missing Count(1-72)",40))));
+	let dif=minVal(63,maxVal(1,Number(prompt("Missing Count(1-72)",56).replaceAll(/[^\d]/g,""))));
 	sudoku=new Sudoku(dif);
 	sudoku.fillValues();
 	won=mistakes=0;
@@ -184,14 +184,14 @@ function fill(c="#fff"){
 	ctx.fillStyle=c;
 }
 function displayBoard(){
-	fill("#777");
 	const s=cvs.width;
 	let grid=sudoku.mat;
+	fill("#777");
 	ctx.fillRect(0,0,s,s);
 	let margin=s/150;
 	let p=getPS();
-	fill("#344861");
 	for(let i=0;i<4;i++){
+		if(i&&i<3)fill("#111");else fill("#346");
 		ctx.fillRect(0,p*3*i,s,margin);
 		ctx.fillRect(p*3*i,0,margin,s);
 	}
@@ -205,9 +205,9 @@ function displayBoard(){
 			}
 			ctx.fillRect(margin+x*p,margin+y*p,p-margin,p-margin);
 			if(current[y][x]){
-				if(info(x,y)[0]==current[y][x])fill("#344861");else{
+				if(info(x,y)[0]==current[y][x])fill("#346");else{
 					if(sudoku.correct(current[y][x],x,y))
-					fill("#3250AF");else fill("#f00");
+					fill("#35a");else fill("#f00");
 				}
 				ctx.fillText(current[y][x],x*p+p/3.3,(y+1)*p-margin*2.9);
 			}
@@ -216,18 +216,18 @@ function displayBoard(){
 }
 function getTime(ms){
 	let s=ms/1e3|0;
-	let m=s/60|0;
-	s-=m*60;
-	return m+" : "+(s+"").padStart(2,0);
+	let m=s/60|0;s-=m*60;
+	return(m+"").padStart(2,0)+" : "+(s+"").padStart(2,0);
 }
 function displayStat(){
 	const s=cvs.width;
-	ctx.font=s/9+"px sans-serif";
+	let fs=s/12;
+	ctx.font=fs+"px sans-serif";
 	ctx.clearRect(0,0,s,s);
 	fill("#000");
-	ctx.fillText("Mistakes: "+mistakes,s/150,s/150+s/9);
-	ctx.fillText("Difficulty: "+(sudoku.K/63*10|0)*10+" / 100",s/150,s/150+s/9*2);
-	ctx.fillText("Time: "+getTime(endTime-startTime)+"s",s/150,s/150+s/3);
+	ctx.fillText("Mistakes: "+mistakes,s/150,s/150+fs);
+	ctx.fillText("Difficulty: "+(sudoku.K/63*10|0)*10+" / 100",s/150,s/150+fs*2);
+	ctx.fillText("Time: "+getTime(endTime-startTime)+"s",s/150,s/150+fs*3);
 }
 function place(n){
 	if(!selected)return;
@@ -244,8 +244,8 @@ function info(x,y){
 	return[sudoku.mat[y][x],x,y,!sudoku.mat[y][x]];
 }
 cvs.addEventListener("click",e=>{
-	let p=getPS(),x=(e.pageX-cvs.offsetLeft)/p|0,y=(e.pageY-cvs.offsetTop)/p|0;
-	selected=info(x,y);
+	let p=getPS();
+	selected=info((e.pageX-cvs.offsetLeft)/p|0,(e.pageY-cvs.offsetTop)/p|0);
 });
 		</script>
 	</body>
