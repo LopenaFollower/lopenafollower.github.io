@@ -38,7 +38,7 @@ for(let x=1;x<4;x++)for(let y=1;4>y;y++){
 	grid_ids.push(p);
 }
 Element.prototype.text=function(t=1){
-	return t!=1?(this.innerText=t):this.innerText;
+	return t-1?(this.innerText=t):this.innerText;
 }
 Array.prototype.rand=function(){
 	return this[Math.random()*this.length|0]

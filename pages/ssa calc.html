@@ -2,7 +2,7 @@
 <html>
 	<head>
 		<title></title>
-		<meta name="viewport"content="width=device-width,initial-scale=1">
+		<meta name="viewport"content="width=device-width,initial-scale=2">
 		<style>
 			body{
 				margin:0;
@@ -107,6 +107,10 @@ function pasteInfo(){
 		info=JSON.parse(e);
 		load();
 	});
+}
+function pasteManual(data){
+	info=typeof data=="string"?JSON.parse(data):data;
+	load();
 }
 function load(){
 	let{checkbox,values}=info;

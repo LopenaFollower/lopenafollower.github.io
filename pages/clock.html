@@ -12,7 +12,7 @@
 	<body>
 		<div id=flexbox>
 			<canvas id=cvs onclick='p=!p;transition(Number(p))'></canvas>
-			<span id=time></span>
+			<span id=time onclick='ampm=!ampm'></span>
 		</div>
 		<script>
 const ctx=cvs.getContext("2d"),{sin,cos,PI}=Math;
@@ -30,9 +30,9 @@ function line(x1,y1,x2,y2){
 }
 requestAnimationFrame(function tick(){
 	flexbox.style.display=window.innerWidth<window.innerHeight?"inline-block":"flex";
-	const date=new Date(),MS=date.getMilliseconds(),SC=date.getSeconds(),MN=date.getMinutes(),HR=date.getHours();
-	const m=cvs.width/2,rad=m*.75;
-	const HRl=rad*.65,MNl=rad*.875,SCl=rad*.93;
+	let date=new Date(),MS=date.getMilliseconds(),SC=date.getSeconds(),MN=date.getMinutes(),HR=date.getHours();
+	let m=cvs.width/2,rad=m*.75;
+	let HRl=rad*.65,MNl=rad*.875,SCl=rad*.93;
 	let SCa=(1e3*SC*PI+PI*MS-15e3*PI)/3e4;
 	let MNa=(4*MN*PI-59*PI+2*SCa)/120;
 	let HRa=(4*HR*PI-11*PI+2*MNa)/24;
@@ -60,10 +60,18 @@ requestAnimationFrame(function tick(){
 	ctx.strokeStyle="#000";ctx.font=m/12+"px verdana";
 	ctx.beginPath();ctx.lineWidth=2;ctx.arc(m,m,3,0,2*PI);ctx.stroke();
 	const pad=n=>(n+"").padStart(2,"0");
-	document.title=time.innerText=pad(HR)+` : ${pad(MN)} : `+pad(SC);
+	let tx="";
+	if(ampm){
+		tx=" AM";
+		if(HR>12){
+			HR-=12;
+			tx=" PM";
+		}
+	}
+	document.title=time.innerText=pad(HR)+` : ${pad(MN)} : `+pad(SC)+tx;
 	requestAnimationFrame(tick);
 });
-let p=false,transition=function(){}
+let p=false,ampm=false,transition=function(){};
 document.addEventListener("DOMContentLoaded",()=>{
 	window.onresize();
 	const aud=new Audio("https://www.dropbox.com/scl/fi/ha270rppokhb67z1lwlhi/Merry-Go-Round-Of-Life.mp3?rlkey=r3z1fyuhyyej02r62oq4nx393&raw=1");

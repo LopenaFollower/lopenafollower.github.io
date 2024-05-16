@@ -740,8 +740,11 @@ function write(a,t,v,s,m,x){
 async function reversal(A,s,l,sl,m,x){
 	counts.rev++;
 	for(let i=s,j=0;i<s+(l-s+1)/2|0;i++){
-		if(sl*++j>=1)await sleep(j=0);
-		swap(A,i,s+l-i,0,m,x);
+		swap(A,i,s+l-i,0,false,x);
+		if(sl*++j>=1){
+			if(m)mark(i);
+			await sleep(j=0);
+		}
 	}
 	if(sl)await sleep();
 }
@@ -19794,6 +19797,274 @@ class Sorts{
 					await multiSwap(arr,r-1,0,.1,as=true);
 			if(as)l=1;
 			else l++;
+		}
+	}
+	async LDQuickSort(len){
+		async function partition(A,a,b){
+			let p=A[a],i=a;
+			for(let j=a;j<=b;j++){
+				if(compareValues(A[j],p)<0){
+					await swap(A,i,j,1,true);
+					await swap(A,++i,j,1,true);
+				}
+			}
+			return i;
+		}
+		async function quickSort(A,a,b){
+			if(a<b){
+				let p=await partition(A,a,b);
+				await quickSort(A,a,p-1);
+				await quickSort(A,p+1,b);
+			}
+		}
+		await quickSort(arr,0,len-1);
+	}
+	async orpicSort(len){
+		const hs=new HeapSorting(true);
+		async function sort3(A,a,b,c){
+			if(compareIndices(A,a,b)>0)
+				await swap(A,a,b,2.5,true);
+			if(compareIndices(A,b,c)>0){
+				await swap(A,b,c,2.5,true);
+				if(compareIndices(A,a,b)>0)
+					await swap(A,a,b,2.5,true);
+			}
+		}
+		async function partition(a,p,r,pw){
+			let mG,mZ=1,po=pw,mT=sqrt(r-p+1)|0;
+			while(po-->0)mZ*=3;
+			mG=(r-p+1)/mZ|0;
+			if(mG<1)return hs.sort(a,p,r,.25);
+			if(mG>1)
+				for(let i=p+mG,j=p+1;i<=r;i+=mG)
+					await swap(a,i,j++,2.5,true);
+			for(let j=0;j<pw;j++){
+				for(let i=p,k=p;i<p+mZ-2;i+=3,k++){
+					await sort3(a,i,i+1,i+2);
+					await swap(a,i+1,k,2.5,true);
+				}
+				mZ=(mZ+2)/3|0;
+			}
+			let pv=a[p],i=p,j=r,it=0,itn=0;
+			while(i<=j){
+				while(it<=mT&&compareValues(a[i],pv)<0){
+					i++;
+					it++;
+					itn=0;
+				}
+				if(it+itn>mT&&i<=j)return await partition(a,p,r,pw+1);
+				else{
+					it=0;
+					itn++;
+				}
+				while(it<=mT&&compareValues(a[j],pv)>0){
+					j--;
+					it++;
+					itn=0;
+				}
+				if(it+itn>mT&&i<=j)return await partition(a,p,r,pw+1);
+				else{
+					it=0;
+					itn++;
+				}
+				if(i<=j)
+					await swap(a,i++,j--,1,true);
+			}
+			let m=maxVal(pw-1,1);
+			await partition(a,p,j,m);
+			await partition(a,i,r,m);
+		}
+		await partition(arr,0,len-1,1);
+		await insertSort(arr,0,len,.1);
+	}
+	async adjacencyPancakeSort(len){
+		function dualSwap(A,K,a,b){
+			swap(K,a,b,0,false,true);
+			swap(A,a,b,0);
+		}
+		async function reverse(A,K,a,b){
+			let i=0;
+			while(b-a>1){
+				dualSwap(A,K,a++,--b);
+				if(++i>=cbrt(len)){
+					mark(a-1);
+					await sleep(i=0);
+				}
+			}
+		}
+		function isAdjacent(K,a,b,N){
+			return(K[a]+1)%N==K[b]||(K[b]+1)%N==K[a];
+		}
+		function findAdjacent(K,e,a,N){
+			while(!isAdjacent(K,a,e,N))a++;
+			return a;
+		}
+		async function sort(A,N){
+			let a=0,b=N;
+			if(N==2){
+				if(compareIndices(A,a,a+1)>0)
+					await reversal(A,a,a+1,.5,true);
+				return;
+			}
+			let K=new Array(N);
+			for(let j=a;j<b;j++){
+				let c=0;
+				for(let i=a;i<b;i++){
+					if(i==j)continue;
+					let cm=compareIndices(A,i,j);
+					if(cm<0||(!cm&&i<j))c++;
+				}
+				write(K,j-a,c,0,false);
+			}
+			while(1){
+				let i=a;
+				while(i<b-1&&isAdjacent(K,i,i+1,N))i++;
+				if(i==b-1)break;
+				if(i==a){
+					let j=findAdjacent(K,a,a+2,N);
+					if(!isAdjacent(K,j-1,j,N))
+						await reverse(A,K,a,j);
+					else{
+						let k=findAdjacent(K,a,j+1,N);
+						if(!isAdjacent(K,k-1,k,N))
+							await reverse(A,K,a,k);
+						else{
+							await reverse(A,K,a,j+1);
+							await reverse(A,K,a,j);
+							await reverse(A,K,a,k+1);
+							await reverse(A,K,a,a+k-j);
+						}
+					}
+				}else{
+					let j=findAdjacent(K,a,i+1,N);
+					if(!isAdjacent(K,j-1,j,N))
+						await reverse(A,K,a,j);
+					else{
+						let k=findAdjacent(K,i,i+2,N);
+						if(k+1<b&&isAdjacent(K,k+1,k,N)){
+							await reverse(A,K,a,i+1);
+							await reverse(A,K,a,k+1);
+						}else if(isAdjacent(K,k-1,k,N)){
+							await reverse(A,K,a,k+1);
+							await reverse(A,K,a,a+k-i);
+						}else{
+							await reverse(A,K,a,k+1);
+							await reverse(A,K,a,a+k-i);
+							if(j<k){
+								await reverse(A,K,a,k+1);
+								await reverse(A,K,a,i+k-j+1);
+							}else{
+								await reverse(A,K,a,j+1);
+								await reverse(A,K,a,a+j-k);
+							}
+						}
+					}
+				}
+			}
+			let i=a;
+			while(K[i]&&K[i]!=N-1)i++;
+			if(!K[i]){
+				if(i==a)return;
+				await reverse(A,K,a,b);
+				i=b-2-i+a;
+			}else if(i==a)return await reverse(A,K,a,b);
+			await reverse(A,K,a,++i);
+			await reverse(A,K,a,b);
+			await reverse(A,K,a,b-i);
+		}
+		await sort(arr,len);
+	}
+	async rotatePancakeInsertionSort(len){
+		let o;
+		function compare(A,a,b){
+			return compareIndices(A,o+a,o+b);
+		}
+		async function flip(A,i){
+			if(i<1)return;
+			if(i>2)
+				await reversal(A,o,o+i,.1,true);
+			else
+				await swap(A,o,o+i,1,true);
+		}
+		async function sort(A,a,b){
+			let ln=b-a;o=a;
+			let v=false;
+			let l,r,m;
+			for(let i=1;i<ln;i++){
+				if(v^compare(A,i-1,i)<1)continue;
+				if(v^compare(A,0,i)>0){
+					await flip(A,i-1);
+					v=!v;
+					continue;
+				}
+				l=0;r=i;
+				while(l<r){
+					m=l+(r-l)/2|0;
+					if(v^compare(A,m,i)>0)r=m;
+					else l=m+1;
+				}
+				await flip(A,l-1);
+				await flip(A,i-1);
+				await flip(A,i);
+				await flip(A,l);
+			}
+			if(v)await flip(A,len-1);
+		}
+		await sort(arr,0,len);
+	}
+	async binaryQuasiPancakeSort(len){
+		function binarySearch(A,s,e,v){
+			while(s<e){
+				let m=s+e>>>1;
+				if(compareValues(A[m],v)<1)s=m+1;
+				else e=m;
+			}
+			return s;
+		}
+		for(let i=1;i<len;++i){
+			let j=binarySearch(arr,0,i,arr[i]);
+			if(j-i){
+				await reversal(arr,j,i-1,.2,true);
+				await reversal(arr,j,i,.2,true);
+			}
+		}
+	}
+	async cubicPancakeSort(len){
+		async function cubicReversal(A,i,j){
+			for(let x=j;x>i;x--){
+				for(let y=i;y<x;y++){
+					reversal(A,i,y,0,true);
+					reversal(A,i+1,y+1,0,true);
+					reversal(A,i,y+1,0,true);
+					await reversal(A,i,y-1,.1,true);
+				}
+			}
+		}
+		function sorted(A,l){
+			for(let i=0;i<l;i++)
+				if(compareIndices(A,i,i+1)>0)return false;
+			return true;
+		}
+		function findMax(A,e){
+			let j=0,m=-1/0;
+			for(let i=0;i<=e;i++){
+				if(compareValues(A[i],m)>0){
+					m=A[i];
+					j=i;
+				}
+			}
+			return j;
+		}
+		for(let i=len-1;i>=0;i--){
+			if(!sorted(arr,i)){
+				let j=findMax(arr,i);
+				if(!j)
+					await cubicReversal(arr,0,i);
+				else if(j-i){
+					await cubicReversal(arr,0,j);
+					await cubicReversal(arr,0,i);
+				}
+			}else break;
 		}
 	}
 }
