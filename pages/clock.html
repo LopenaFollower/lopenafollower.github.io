@@ -68,7 +68,7 @@ requestAnimationFrame(function tick(){
 			tx=" PM";
 		}
 	}
-	document.title=time.innerText=pad(HR)+` : ${pad(MN)} : `+pad(SC)+tx;
+	document.title=time.innerText=HR+` : ${pad(MN)} : `+pad(SC)+tx;
 	requestAnimationFrame(tick);
 });
 let p=false,ampm=false,transition=function(){};

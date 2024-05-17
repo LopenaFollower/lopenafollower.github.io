@@ -20307,6 +20307,104 @@ class Sorts{
 		}
 		await grossPass(arr,0,len,len,true);
 	}
+	async greenHerringSort(len){
+		async function comp(A,s,e,d){
+			if(s-e&&d==(compareIndices(A,s,e)>0)){
+				await swap(A,s,e,1,true);
+				return true;
+			}
+			return false;
+		}
+		async function bitPass(A,s,e,d){
+			if(s==e)return;
+			let m=(e-s)/2|0;
+			for(let i=0;i<m;i++)
+				await comp(A,s+i,s+m+i,d);
+			if(m==e-s)return;
+			await bitPass(A,s,s+m,d);
+			await bitPass(A,e-m,e,d);
+		}
+		async function horrorPass(A,s,e){
+			for(let i=0;i<e-s;i++){
+				await bitPass(A,s,e,true);
+				await bitPass(A,s+i,e);
+			}
+		}
+		async function surpass(A,s,e){
+			for(let i=s;i<e;i++)
+				for(let j=s;j<e;j++)
+					for(let k=0;k<e-s;k++)
+						if(compareIndices(A,i,j)<0)
+							await multiSwap(A,j,i,0.05,true);
+		}
+		async function circlePass(A,s,e){
+			if(s==e)return 0;
+			let m=(e-s)/2|0,sw=0;
+			for(let i=0;i<m;i++)
+				if(await comp(A,s+i,e-i-1,true))
+					sw++;
+			if(m==e-s)return 0;
+			sw+=await circlePass(A,s,s+m);
+			sw+=await circlePass(A,e-m,e);
+			return sw;
+		}
+		async function circleSort(A,s,e){
+			let a=1;
+			while(a>0)
+				a=await circlePass(A,s,e);
+		}
+		async function greenHerringPass(A,s,e){
+			let h=(e-s)/2|0,a=s+h/2|0,b=e-h/2|0;
+			if(a==s||b==e)return;
+			await horrorPass(A,s,a);
+			await surpass(A,s,a);
+			await greenHerringPass(A,a,e);
+			await circleSort(A,s,e);
+		}
+		await greenHerringPass(arr,0,len);
+	}
+	async weavedStalinSortReplace(len){
+		function loprime2(n){
+			let p=new Array(n).fill(0);
+			pchk:for(let i=2,l=0;i<n;i++){
+				for(let j=0;j<l;j++)
+					if(i%p[j])continue pchk;
+				if(!(n%i))return i;
+				p[l++]=i;
+			}
+			return n;
+		}
+		let g=len;
+		while(g>1){
+			g=g/loprime2(g)|0;
+			for(let j=0;j<g;j++)
+				for(let i=j+g,i1=j;i<len;i+=g)
+					if(compareIndices(arr,i1,i)<1)i1=i;
+					else await write(arr,i,arr[i1],1,true);
+		}
+	}
+	async miyskiyuSort(len){
+		async function compSwap(A,a,b){
+			if(compareIndices(A,a,b)>0){
+				await swap(A,a,b,0.25,true);
+				return true;
+			}
+			return false;
+		}
+		async function sort(A,a,b){
+			let l=b-a;
+			for(let i=1;i<=l;i++){
+				let j=i,g=1;
+				while(j+g<=l){
+					if(await compSwap(A,j-1,j-1+g)&&j>1)j--;
+					j++;
+					g++;
+				}
+			}
+			await insertSort(A,a,b,0.5);
+		}
+		await sort(arr,0,len);
+	}
 }
 const sorts=new Sorts(),sortNames=sorts.getNames();
 function filterSorts(t){
