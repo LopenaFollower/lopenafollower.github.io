@@ -488,7 +488,7 @@ const Rotations={
 	shiftForwards:async function(A,s,l,sl,m,x){
 		let t=A[s];
 		for(let i=0;i<l;i++){
-			write(A,s+i,A[s+i+1],sl,m,x);
+			write(A,s+i,A[s+i+1],0,m,x);
 			if(!x)await sleep(sl);
 		}
 		write(A,s+l,t,sl,m,x);
@@ -557,35 +557,32 @@ const Rotations={
 			}
 		}
 		if(lB==1)await this.shiftBackwards(A,p,lA,sl,mark,x);
-		else if(lA==1)await this.shiftForwards(A,p,lB,sl,mark,x);
+		else if(lA==1)await this.shiftForwards(A,p,lB,sl,m,x);
 	},
-	cycleReverse:async function(A,pos,lA,lB,sl,mark,x){
+	cycleReverse:async function(A,p,lA,lB,sl,m,x){
 		if(lA<1||lB<1)return;
-		let a=pos,
-			b=pos+lA-1,
-			c=pos+lA,
-			d=pos+lA+lB-1;
+		let a=p,b=p+lA-1,c=p+lA,d=p+lA+lB-1;
 		let sw;
 		while(a<b&&c<d){
 			sw=A[b];
-			await write(A,b--,A[a],sl/2,mark,x);
-			await write(A,a++,A[c],sl/2,mark,x);
-			await write(A,c++,A[d],sl/2,mark,x);
-			await write(A,d--,sw,sl/2,mark,x);
+			write(A,b--,A[a],0,m,x);
+			write(A,a++,A[c],0,m,x);
+			write(A,c++,A[d],0,m,x);
+			await write(A,d--,sw,sl,m,x);
 		}
 		while(a<b){
 			sw=A[b];
-			await write(A,b--,A[a],sl/2,mark,x);
-			await write(A,a++,A[d],sl/2,mark,x);
-			await write(A,d--,sw,sl/2,mark,x);
+			write(A,b--,A[a],0,m,x);
+			write(A,a++,A[d],0,m,x);
+			await write(A,d--,sw,sl,m,x);
 		}
 		while(c<d){
 			sw=A[c];
-			await write(A,c++,A[d],sl/2,mark,x);
-			await write(A,d--,A[a],sl/2,mark,x);
-			await write(A,a++,sw,sl/2,mark,x);
+			write(A,c++,A[d],0,m,x);
+			write(A,d--,A[a],0,m,x);
+			await write(A,a++,sw,sl,m,x);
 		}
-		if(a<d)await reversal(A,a,d,sl,mark,x);
+		if(a<d)await reversal(A,a,d,sl,m,x);
 	},
 	juggling:async function(A,pos,lA,lB,sl,mark,x){
 		let l=lA+lB;
@@ -644,6 +641,11 @@ const Rotations={
 			while(left-->0)
 				await swap(A,pta++,ptb++,sl,mark,x);
 		}
+	},
+	adaptable:async function(A,p,lA,lB,sl,m,x){
+		if(!lA||!lB)return;
+		if(lA%lB<1||lB%lA<1)await this.holyGriesMills(A,p,lA,lB,sl,m,x);
+		else await this.cycleReverse(A,p,lA,lB,sl,m,x);
 	}
 }
 const IndexedRotations={
@@ -653,7 +655,32 @@ const IndexedRotations={
 	holyGriesMills:async function(A,s,m,e,sl,r,x){await Rotations.holyGriesMills(A,s,m-s,e-m,sl,r,x)},
 	helium:async function(A,s,m,e,sl,r,x){await Rotations.helium(A,s,m-s,e-m,sl,r,x)},
 	cycleReverse:async function(A,s,m,e,sl,r,x){await Rotations.cycleReverse(A,s,m-s,e-m,sl,r,x)},
-	bridge:async function(A,s,m,e,sl,r,x){await Rotations.bridge(A,s,m-s,e-m,sl,r,x)}
+	bridge:async function(A,s,m,e,sl,r,x){await Rotations.bridge(A,s,m-s,e-m,sl,r,x)},
+	adaptable:async function(A,s,m,e,sl,r,x){await Rotations.adaptable(A,s,m-s,e-m,sl,r,x)}
+}
+const Wr={
+	insert:async function(A,p,t,sl,m,x){
+		let tm=A[p],j;
+		if(t-p>0){
+			for(let i=p;i<t;i++){
+				write(A,i,A[i+1],0,false,x);
+				if(++j*sl>=1){
+					if(m)mark(i);
+					await sleep()
+				}
+			}
+		}else if(t-p<0){
+			for(let i=p;i>t;i--){
+				write(A,i,A[i-1],0,false,x);
+				if(++j*sl>=1){
+					if(m)mark(i);
+					await sleep()
+				}
+			}
+		}
+		if(p-t)
+			await write(A,t,tm,sl,m,x);
+	}
 }
 function ask(t,d){return !prompts.checked?d:prompt(t,d)}
 function askForBase(d){
@@ -14723,7 +14750,7 @@ class Sorts{
 			for(let i=len-2;i+1;i--)if(await sift(arr,i,len))s=true;
 		}
 	}
-	async split16Merge(len){
+	async split16MergeSort(len){
 		let meds=[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,1,3,5,7,9,11,13,15,2,4,6,8,10,12,14,16,1,5,9,13,2,6,10,14,3,7,11,15,4,8,12,16,1,9,2,10,3,11,4,12,5,13,6,14,7,15,8,16,6,11,7,10,4,13,14,15,8,12,2,3,5,9,2,5,8,14,3,9,12,15,6,7,10,11,3,5,12,14,4,9,8,13,7,9,11,13,4,6,8,10,4,5,6,7,8,9,10,11,12,13,7,8,9,10];
 		async function cS1(A,a,b){
 			if(compareIndices(A,a,b)>0)
@@ -20066,6 +20093,219 @@ class Sorts{
 				}
 			}else break;
 		}
+	}
+	async tinyPullSort(len){
+		let k=0;
+		for(let j=len;j>0;j--)
+			for(let i=1;i<j;i++){
+				swap(arr,i-1,i,0);
+				if(++k>len){
+					mark(i-1);
+					await sleep(k=0);
+				}
+				if(compareIndices(arr,i-1,i)>0)i=0;
+			}
+	}
+	async inverseGnomeSort(len){
+		for(let i=1;i<len;i++)
+			for(let g=0;g<i;g++)
+				if(compareIndices(arr,g,i)>0){
+					multiSwap(arr,g,i,0);
+					markSwap(g,i);
+					await sleep();
+					g=-1;
+				}
+	}
+	async reverseClamberSort(len){
+		for(let i=len-2,k=0;i>=0;i--)
+			for(let j=len-1;j>i;j--)
+				if(compareIndices(arr,i,j)>0){
+					swap(arr,i,j,0);
+					if(++k>sqrt(len)){
+						markSwap(i,j);
+						await sleep(k=0);
+					}
+				}
+	}
+	async bottleSort(len){
+		for(let i=0;i<len-1;i++){
+			reversal(arr,0,i-1,0);
+			if(compareIndices(arr,i,i+1)>0){
+				await swap(arr,i,i+1,1,true);
+				i=-1;
+			}
+		}
+		for(let i=len-2;i>0;i--)
+			reversal(arr,0,i-1,0);
+	}
+	async slightlyUnoptimizedBubbleSort(len){
+		for(let i=len-1,k=0;i>0;i--)
+			for(let j=0;j<i;j++)
+				if(compareIndices(arr,j,j+1)>0){
+					swap(arr,j,j+1,0);
+					if(++k>sqrt(len)){
+						markSwap(j,j+1);
+						await sleep(k=0);
+					}
+				}
+	}
+	async jumpDownSort(len){
+		let mP=len-1;
+		for(let i=mP;i>0;i--){
+			for(let j=0;j<i;j++){
+				if(compareIndices(arr,i,j)<0){
+					await swap(arr,i,j,0.2,true);
+				}
+			}
+		}
+	}
+	async inPlaceOptimizedSmartSafeStalinSortInserts(len){
+		function scan(A,c,l){
+			for(let i=c;i+1<l;i++)
+				if(compareIndices(A,i,i+1)>0)
+					return false;
+			return true;
+		}
+		function stepDown(A,e){
+			for(let i=e-1;i>0;i--)
+				for(let j=i-1;j>=0;j--)
+					if(compareIndices(A,j,i)>0)
+						return i+1;
+			return 0;
+		}
+		function checkSegments(A,e){
+			sC=0;
+			for(let i=0;i+1<e&&sC<2;i++)
+				if(compareIndices(A,i,i+1)>0)sC++;
+		}
+		let sC;
+		async function sort(A,l){
+			let p=false;
+			l=stepDown(A,l);
+			let nC=true;
+			while(!p){
+				p=nC=true;
+				let c=1;
+				for(let i=1;i+1<l;i++){
+					if(compareIndices(A,c-1,i)<1){
+						if(c-i)await Wr.insert(A,i,c,0.01,true,nC=false);
+						p=false;
+						c++;
+					}
+				}
+				if(nC){
+					checkSegments(A,l);
+					if(sC<2)break;
+				}
+				if(p)p=scan(A,c,l);
+				if(!p)await IndexedRotations.adaptable(A,0,c,l,0.25,true);
+				if(--l-1>0){
+					let cmp=compareIndices(A,l-1,l);
+					while(!cmp&&l>0)
+						if(--l>0)cmp=compareIndices(A,l-1,l);
+				}
+				l=stepDown(A,l);
+			}
+			if(nC)
+				await insertSort(A,0,l,0.1);
+		}
+		await sort(arr,len);
+	}
+	async twoOptSort(len){
+		function getDist(A,l){
+			let d=0;
+			for(let i=0;i<l-1;i++)
+				d+=abs(A[i+1]-A[i]);
+			return d;
+		}
+		async function sort(A,l){
+			let d=false;
+			while(!d){
+				d=true;
+				let bD=getDist(A,l);
+				for(let i=0;i<l-1;i++){
+					for(let j=i+1;j<l;j++){
+						await reversal(A,i,j,0.02,true);
+						let ds=getDist(A,l);
+						if(ds<bD){
+							bD=ds;
+							d=false;
+						}else await reversal(A,i,j,0.02,true);
+					}
+				}
+			}
+		}
+		await sort(arr,len);
+	}
+	async grossSort(len){
+		async function comp(A,s,e,d){
+			if(s-e&&d==(compareIndices(A,s,e)>0)){
+				await swap(A,s,e,1,true);
+				return true;
+			}
+			return false;
+		}
+		async function rot(A,p,lA,lB,sl,m,x){
+			for(let i=0;i<lB;i++)
+				await multiSwap(A,p+lA+lB-1,p,sl,m,x);
+		}
+		async function bitPass(A,s,e,d){
+			if(s==e)return;
+			let m=(e-s)/2|0;
+			for(let i=0;i<m;i++)
+				await comp(A,s+i,s+m+i,d);
+			if(m==e-s)return;
+			await bitPass(A,s,s+m,d);
+			await bitPass(A,e-m,e,d);
+		}
+		async function circlePass(A,s,e){
+			if(s==e)return 0;
+			let m=(e-s)/2|0,sw=0;
+			for(let i=0;i<m;i++)
+				if(await comp(A,s+i,e-i-1,true))
+					sw++;
+			if(m==e-s)return 0;
+			sw+=await circlePass(A,s,s+m);
+			sw+=await circlePass(A,e-m,e);
+			return sw;
+		}
+		async function circleSort(A,s,e){
+			let a=1;
+			while(a>0)
+				a=await circlePass(A,s,e);
+		}
+		async function horrorPass(A,s,e){
+			for(let i=0;i<e-s;i++){
+				await bitPass(A,s,e,true);
+				await bitPass(A,s+i,e);
+			}
+		}
+		async function surpass(A,s,e){
+			for(let i=s;i<e;i++)
+				for(let j=s;j<e;j++)
+					for(let k=0;k<e-s;k++)
+						if(compareIndices(A,i,j)<0)
+							await multiSwap(A,j,i,0.05,true);
+		}
+		async function greenHerringPass(A,s,e){
+			let h=(e-s)/2|0,a=s+h/2|0,b=e-h/2|0;
+			if(a==s||b==e)return;
+			await horrorPass(A,s,a);
+			await surpass(A,s,a);
+			await greenHerringPass(A,a,e);
+			await circleSort(A,s,e);
+		}
+		async function grossPass(A,s,e,ln,l){
+			let h=(e-s)/2|0,m=s+h;
+			if (m==s)return;
+			if(e-s<32)return await greenHerringPass(A,s,e);
+			await grossPass(A,s,m,ln,true);
+			if(l)await rot(A,s,h,h,.1,true);
+			await grossPass(A,s,e-(m-s),ln,false);
+			await circleSort(A,s,e);
+			if(!l)await rot(A,s,e-s,minVal(ln-e,e-s),.1,true);
+		}
+		await grossPass(arr,0,len,len,true);
 	}
 }
 const sorts=new Sorts(),sortNames=sorts.getNames();
