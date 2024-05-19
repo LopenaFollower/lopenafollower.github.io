@@ -38,47 +38,46 @@ if(!localStorage.getItem("ssa_info")){
 	info=JSON.parse(localStorage.getItem("ssa_info"));
 	ls=true;
 }
-function create(tag,p){
-	let r=document.createElement(tag);
+function create(t,p){
+	let r=document.createElement(t);
 	p.appendChild(r);
 	return r;
 }
-function add(sn,id,st,d1,d2,min,max,formula){
+function add(statName,id,step,def1,def2,min,max,formula){
 	let tr=create("tr",par);
 	let td1=create("td",tr);
-	td1.innerText=sn;
+	td1.innerText=statName;
 	let td2=create("td",tr);
 	let ch=create("input",td2);ch.type="checkbox";
 	ch.id="checkbox_"+id;
-	ch.checked=d1;
+	ch.checked=def1;
 	ch.oninput=update;
 	let td3=create("td",tr);
 	let inp=create("input",td3);inp.type="number";
-	inp.step=st;
+	inp.step=step;
 	inp.id="input_"+id;
-	inp.value=d2;
+	inp.value=def2;
 	inp.onblur=function(){
-		let v=Number(this.value)
-		if(v<min)this.value=min;
-		if(v>max)this.value=max;
+		this.value=Math.min(Math.max(Number(this.value),min),max);
 		update();
 	}
 	let td4=create("td",tr);
-	td4.className="value";
+	td4.className="sv";
 	function update(){
 		td4.innerText=ch.checked?formula(Number(inp.value)):0;
 	}
 	update();
 }
-add("BP","bp",1,true,70,15,70,function(v){return v?Math.round(v/.7*6.25)/100:0});
-add("CR","cr",.01,true,1.25,1.05,1.25,function(v){return v?Math.round((v-1.05)/.2*140)/100:0});
-add("CC","cc",1,true,7,1,7,function(v){return v?Math.round(v/6.99*275)/100:0});
-add("BAR","bar",1,true,7,1,7,function(v){return v?Math.round(v/6.99*160)/100:0});
-add("P","pol",1,true,20,5,20,function(v){return v?Math.round(v/19.99*300)/100:0});
-add("BGP","bgp",1,false,0,15,70,function(v){return v?Math.round(v/.7*.5)/100:0});
-add("WP","wp",1,false,0,15,70,function(v){return v?Math.round(v/.7*.2)/100:0});
-add("IC","ic",1,false,0,3,12,function(v){return v?Math.round(v/11.99*30)/100:0});
-add("RP","rp",1,false,0,15,70,function(v){return 0});
+let{round:rnd}=Math;
+add("BP","bp",1,true,70,15,70,v=>v?rnd(v/7*62.5)/100:0);
+add("CR","cr",.01,true,1.25,1.05,1.25,v=>v?rnd(700*(v-1.05))/100:0);
+add("CC","cc",1,true,7,1,7,v=>v?rnd(v/6.99*275)/100:0);
+add("BAR","bar",1,true,7,1,7,v=>v?rnd(v/.699*16)/100:0);
+add("P","pol",1,true,20,5,20,v=>v?rnd(v/.1999*3)/100:0);
+add("BGP","bgp",1,false,0,15,70,v=>v?rnd(v/7*5)/100:0);
+add("WP","wp",1,false,0,15,70,v=>v?rnd(v/7*2)/100:0);
+add("IC","ic",1,false,0,3,12,v=>v?rnd(v/1.199*3)/100:0);
+add("RP","rp",1,false,0,15,70,v=>0);
 let tr=create("tr",par);
 let td1=create("td",tr);
 let overalltd=create("td",tr);
@@ -116,21 +115,19 @@ function load(){
 	for(let v in ids){
 		document.getElementById("checkbox_"+ids[v]).checked=checkbox[v];
 		document.getElementById("input_"+ids[v]).value=values[v];
-		document.getElementById("checkbox_"+ids[v]).dispatchEvent(new Event("input",{bubbles:true}));
-		document.getElementById("input_"+ids[v]).dispatchEvent(new Event("input",{bubbles:true}));
+		document.getElementById("checkbox_"+ids[v]).dispatchEvent(new Event("input"));
+		document.getElementById("input_"+ids[v]).dispatchEvent(new Event("input"));
 	}
 }
 if(ls)load();
 requestAnimationFrame(function update(){
 	let rating=0,ssaval=0;
-	for(let v of["bp","cr","cc","bar","pol"]){
+	for(let v of["bp","cr","cc","bar","pol"])
 		if(document.getElementById("checkbox_"+v).checked)rating++;
-	}
-	for(let v of[...document.querySelectorAll(".value")]){
+	for(let v of[...document.querySelectorAll(".sv")])
 		ssaval+=Number(v.innerText);
-	}
 	overalltd.innerText=rating+" / 5";
-	score.innerText=ssaval.toFixed(3);
+	score.innerText=ssaval.toFixed(2);
 	requestAnimationFrame(update);
 });
 		</script>

@@ -13,8 +13,8 @@
 	</head>
 	<body>
 		<div id=flexbox>
-			<canvas id=cvs class=ecwpfc></canvas>
-			<fieldset id=EYPL8e>
+			<canvas id=cvs></canvas>
+			<fieldset>
 				<input id=rulin maxlength=20 value=LR oninput='rule=convert(this.value.replaceAll(/[^L^R]/g,""));init()'/><button onclick='rule=new Array(Math.random()*95+5|0).fill().map(e=>Math.random()*2|0).join("");rulin.value=convert(rule)'>Random 1</button><button onclick='rule=convert(personal[Math.random()*personal.length|0]);rulin.value=convert(rule);init()'>Random 2</button><br>
 				Toggle<input type=checkbox checked id=tog /><br>
 				Grid<input id=grz type=number value=100 oninput='verify(0,parseInt(this.value))'/><br>
