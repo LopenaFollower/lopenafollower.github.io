@@ -2140,7 +2140,7 @@ class MultiWayMergeSorting{
 			this.siftDown(s,h,p,h[i],i,z);
 		for(let i=0;z>0;i++){
 			let m=h[0];
-			write(d,i,s[a[m]],0.5,!x,x);
+			write(d,i,s[a[m]],0,!x,x);
 			if(!x)await sleep();
 			write(a,m,a[m]+1,0,false,true);
 			if(a[m]==b[m])this.siftDown(s,h,a,h[--z],0,z);
@@ -2872,35 +2872,27 @@ class QuadSorting{
 		count=n/16|0;
 		while(count-->0){
 			await this.parityMerge16(A,pta,swp);
-			pta +=16;
+			pta+=16;
 		}
-		if(n%16>4)
-			await this.tailMerge(A,swp,pta,n%16,4);
+		if(n%16>4)await this.tailMerge(A,swp,pta,n%16,4);
 		return 0;
 	}
 	async quadSort(A,s,l){
-		if(l<16)
-			await this.tailSwap(A,s,l);
+		if(l<16)await this.tailSwap(A,s,l);
 		else if(l<256){
-			if(await this.quadSwap(A,s,l)==0){
-				let swp=new Array(128);
-				await this.tailMerge(A,swp,s,l,16);
-			}
-		}else{
-			if(await this.quadSwap(A,s,l)==0){
-				let swp=new Array(l/2|0);
-				await this.quadMerge(A,swp,s,l,16);
-			}
-		}
+			if(!await this.quadSwap(A,s,l))
+				await this.tailMerge(A,new Array(128),s,l,16);
+		}else
+			if(!await this.quadSwap(A,s,l))
+				await this.quadMerge(A,new Array(l/2|0),s,l,16);
 	}
 	async quadSortSwap(A,swp,s,l){
-		if(l<16)
-			await this.tailSwap(A,s,l);
+		if(l<16)await this.tailSwap(A,s,l);
 		else if(l<256){
-			if(await this.quadSwap(A,s,l)==0)
+			if(!await this.quadSwap(A,s,l))
 				await this.tailMerge(A,swp,s,l,16);
 		}else
-			if(await this.quadSwap(A,s,l)==0)
+			if(!await this.quadSwap(A,s,l))
 				await this.quadMerge(A,swp,s,l,16);
 	}
 }
