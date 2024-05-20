@@ -5,22 +5,22 @@
 		<meta name="viewport"content="width=device-width,initial-scale=1">
 		<style>
 			body{
-				margin:0;
-				color:#fff;
 				user-select:none;
+				color:#fff;
+				margin:0;
 			}
 			::-webkit-scrollbar{
 				width:5px;
 			}
 			::-webkit-scrollbar-thumb{
-				background:#777f;
 				border-radius:10px;
+				background:#777f;
 			}
 			@media(orientation:landscape){#cvs{width:auto}}
 			@media(orientation:portrait){#cvs{width:98%}}
 			#cvs{
-				margin:1%;
 				background:#000;
+				margin:1%;
 			}
 			td,
 			#sortnamedisp,
@@ -39,19 +39,19 @@
 				height:100%;
 			}
 			div.btnholder{
-				border-radius:2px;
-				background:#1e252a;
 				border:3px #000 solid;
-				height:0px;
-				margin:0;
+				background:#1e252a;
+				border-radius:2px;
 				overflow-x:hidden;
-				width:100%;
 				text-align:left;
+				height:0px;
+				width:100%;
+				margin:0;
 			}
 			div.fieldset{
-				margin:2px;
-				padding:3px;
 				border:1px white solid;
+				padding:3px;
+				margin:2px;
 				width:100%;
 			}
 			div.btnholder>div.shown{
@@ -61,11 +61,11 @@
 				display:none;
 			}
 			div.topicname{
-				font-family:monospace;
-				margin:5px;
 				border:2px dashed grey;
-				padding:2px;
+				font-family:monospace;
 				text-align:center;
+				padding:2px;
+				margin:5px;
 			}
 			.flex{
 				display:flex;
@@ -79,21 +79,21 @@
 			}
 			#searchBar{
 				transition-timing-function:linear;
-				transition-duration:.2s;
-				margin-left:5px;
-				width:50%;
-				color:#fff;
-				border-radius:2px;
-				border:1px grey solid;
-				outline:none;
 				background-color:#0e151a;
-				opacity:.5;
+				transition-duration:.2s;
+				border:1px grey solid;
+				border-radius:2px;
+				margin-left:5px;
 				box-shadow:none;
+				outline:none;
+				opacity:.5;
+				color:#fff;
+				width:50%;
 			}
 			#searchBar:focus{
+				box-shadow:-.2px -.2px 4px 2px #1d2a35;
 				background-color:#121c24;
 				opacity:1;
-				box-shadow:-.2px -.2px 4px 2px #1d2a35;
 			}
 		</style>
 	</head>
