@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title></title>
+		<meta name="viewport"content="width=device-width,initial-scale=1">
+		<style>
+			body{margin:0 0;text-align:center;font-family:monospace,verdana}
+			@media(orientation:landscape){#cvs{width:auto}}
+			@media(orientation:portrait){#cvs{width:100%}}
+		</style>
+	</head>
+	<body>
+		<div id=flexbox>
+			<canvas id=cvs onclick='p=!p;transition(Number(p))'></canvas>
+			<span id=time onclick='ampm=!ampm'></span>
+		</div>
+		<script>
+const ctx=cvs.getContext("2d"),{sin,cos,PI}=Math;
+window.onresize=function(){
+	cvs.width=cvs.height=Math.min(window.innerWidth,window.innerHeight);
+	ctx.textAlign="center";
+	ctx.lineCap="round";
+	ctx.textBaseline="middle";
+}
+function line(x1,y1,x2,y2){
+	ctx.beginPath();
+	ctx.moveTo(x1,y1);
+	ctx.lineTo(x2,y2);
+	ctx.stroke();
+}
+requestAnimationFrame(function tick(){
+	flexbox.style.display=window.innerWidth<window.innerHeight?"inline-block":"flex";
+	let date=new Date(),MS=date.getMilliseconds(),SC=date.getSeconds(),MN=date.getMinutes(),HR=date.getHours();
+	let m=cvs.width/2,rad=m*.75;
+	let HRl=rad*.65,MNl=rad*.875,SCl=rad*.93;
+	let SCa=(1e3*SC*PI+PI*MS-15e3*PI)/3e4;
+	let MNa=(4*MN*PI-59*PI+2*SCa)/120;
+	let HRa=(4*HR*PI-11*PI+2*MNa)/24;
+	ctx.clearRect(0,0,2*m,2*m);
+	ctx.beginPath();ctx.fillStyle="#fff";ctx.lineWidth=5;ctx.arc(m,m,rad,0,2*PI);ctx.fill();
+	ctx.beginPath();ctx.fillStyle="#000";ctx.arc(m,m,rad,0,2*PI);ctx.stroke();
+	for(let i=0;i<360;i+=6){
+		let a=i/180*PI-PI/3;
+		let r1=rad*.91,r2=rad*.95,r3=rad*.83;
+		ctx.beginPath();
+		ctx.lineWidth=i%30?2:4;
+		if(i%30==0){
+			let txt=ctx.measureText(i/30+1);
+			ctx.fillText(i/30+1,m+cos(a)*r3,m+sin(a)*r3+2);
+		}
+		line(m+cos(a)*r1,m+sin(a)*r1,m+cos(a)*r2,m+sin(a)*r2);
+	}
+	ctx.lineWidth=1.5;
+	let e=.13;
+	line(m-cos(SCa)*SCl*e,m-sin(SCa)*SCl*e,m+cos(SCa)*SCl,m+sin(SCa)*SCl);
+	ctx.strokeStyle="#333";ctx.lineWidth=3;
+	line(m-cos(MNa)*MNl*e,m-sin(MNa)*MNl*e,m+cos(MNa)*MNl,m+sin(MNa)*MNl);
+	ctx.strokeStyle="#555";ctx.lineWidth=6;
+	line(m-cos(HRa)*HRl*e,m-sin(HRa)*HRl*e,m+cos(HRa)*HRl,m+sin(HRa)*HRl);
+	ctx.strokeStyle="#000";ctx.font=m/12+"px verdana";
+	ctx.beginPath();ctx.lineWidth=2;ctx.arc(m,m,3,0,2*PI);ctx.stroke();
+	const pad=n=>(n+"").padStart(2,"0");
+	let tx="";
+	if(ampm){
+		tx=" AM";
+		if(HR>12){
+			HR-=12;
+			tx=" PM";
+		}
+	}
+	document.title=time.innerText=HR+` : ${pad(MN)} : `+pad(SC)+tx;
+	requestAnimationFrame(tick);
+});
+let p=false,ampm=false,transition=function(){};
+document.addEventListener("DOMContentLoaded",()=>{
+	window.onresize();
+	const aud=new Audio("https://www.dropbox.com/scl/fi/ha270rppokhb67z1lwlhi/Merry-Go-Round-Of-Life.mp3?rlkey=r3z1fyuhyyej02r62oq4nx393&raw=1");
+	aud.volume=0;
+	aud.addEventListener("loadeddata",function odl(){
+		aud.removeEventListener("loadeddata",odl);
+		setInterval(()=>{
+			if(aud.volume)aud.play();else aud.pause();
+		},250);
+		transition=async function(v){
+			for(let i=1;i>=0;i-=.025){
+				aud.volume=Math.abs(v-i);
+				await new Promise(setTimeout);
+			}
+		}
+	})
+});
+		</script>
+	</body>
+</html>

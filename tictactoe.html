@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>tic tac toe</title>
+		<meta name=viewport content="width=device-width,initial-scale=1">
+		<style>
+			body{color:#fff}
+			td,table{width:130px;height:130px;text-align:center;font-size:104px;table-layout:fixed;border:3px solid #444;user-select:none;-webkit-user-select:none;-moz-user-select:none}
+		</style>
+	</head>
+	<body bgcolor=#222>
+		<select id=diff oninput="reset(1)"><option value=0>Impossible</option><option value=1>Medium</option><option value=2>Easy</option></select>
+		<table>
+			<tr><td id="1,1"></td><td id="1,2"></td><td id="1,3"></td></tr>
+			<tr><td id="2,1"></td><td id="2,2"></td><td id="2,3"></td></tr>
+			<tr><td id="3,1"></td><td id="3,2"></td><td id="3,3"></td></tr>
+		</table>
+		You are <select id=first oninput="reset(1)"><option value=0>X</option><option value=1>O</option></select><br>
+		<input type=button onclick="reset()"value=reset><br><br>
+		<div id=win></div>
+		<script>
+const $=id=>document.getElementById(id),grid_ids=[],
+	corners=["1,1","1,3","3,1","3,3"],
+	sides=["1,2","2,1","2,3","3,2"],
+	winningPatterns=[["1,1","2,1","3,1"],["1,2","2,2","3,2"],["1,3","2,3","3,3"],["1,1","1,2","1,3"],["2,1","2,2","2,3"],["3,1","3,2","3,3"],["1,1","2,2","3,3"],["1,3","2,2","3,1"]];
+var me,
+	bot,
+	lastMove,
+	moveCnt=0,
+	mode=0,
+	canMove=true,
+	ongoing=true,
+	grid=[],
+	score={X:0,O:0};
+for(let x=1;x<4;x++)for(let y=1;4>y;y++){
+	let p=x+","+y;
+	$(p).onclick=_=>check(p);
+	grid_ids.push(p);
+}
+Element.prototype.text=function(t=1){
+	return t!=1?(this.innerText=t):this.innerText;
+}
+Array.prototype.rand=function(){
+	return this[Math.random()*this.length|0];
+}
+const t=id=>$(id).text();
+const ps=(e,n=0)=>e&&Number(e.split(",")[n]);
+const gi=n=>grid_ids.includes(n);
+function arent(a,...b){
+	return a!==b[0]&&b.every(e=>e==b[0]);
+}
+function place(id,s){
+	return id&&!win.text("")&&!t(id)&&(grid.push(id))&&$(id).text(s);
+}
+function check(id){
+	canMove&&ongoing&&place(id,me)&&(setTimeout(botMove,150),lastMove=id,canMove=!1,moveCnt++);
+}
+function blockThreat(){
+	if(mode>1)return!1;
+	let toBlock=[],wm=!1;
+	for(let i=0;3>i;i++)
+		winningPatterns.forEach(e=>{
+			let e2=e.filter((m,n)=>n!=i);
+			arent("",t(e2[0]),t(e2[1]),bot)&&!t(e[i])&&(wm=e[i]);
+			arent("",t(e2[0]),t(e2[1]),me)&&!t(e[i])&&toBlock.push(e[i]);
+		})
+	let final=toBlock.filter((e,i)=>toBlock.indexOf(e)==i)||[];
+	mode&&(final=final[0]);
+	return wm||final?.length&&final||!1;
+}
+function createThreat(){
+	if(mode>1)return!1;
+	let threats=[];
+	grid_ids.forEach(e=>{
+		if(t(e)==bot){
+			let x=ps(e,0),y=ps(e,1);
+			for(let i=-2;i<3;i+=4)for(let o=-1;o<2;o+=2){
+				gi(x+","+(y+i))&&gi(x+","+(y+i-o))&&!t(x+","+(y+i))&&!t(x+","+(y+i-o))&&threats.push(x+","+(y+i));
+				gi(x+i+","+y)&&gi(x+i-o+","+y)&&!t(x+i+","+y)&&!t(x+i-o+","+y)&&threats.push(x+i+","+y);
+			}
+		}
+	});
+	let final=threats.filter((e,i)=>threats.indexOf(e)==i);
+	return final.length&&final.rand()||!1;
+}
+function beside(p){
+	let x=ps(p,0),
+		y=ps(p,1),
+		points=[];
+	for(let i=-1;i<2;i+=2){
+		gi(x+","+(y+i))&&!t(x+","+(y+i))&&points.push(x+","+(y+i));
+		gi(x+i+","+y)&&!t(x+i+","+y)&&points.push(x+i+","+y);
+	}
+	let final=points.filter(e=>{
+		let x=ps(e,0),y=ps(e,1);
+		for(let i=-2;i<3;i+=4)return gi(x+","+(y+i))&&!t(x+","+(y+i))||gi(x+i+","+y)&&!t(x+i+","+y);
+	});
+	return final.length&&final[0]||points.length&&points[0]||!1;
+}
+function randomMove(){
+	return grid_ids.find(e=>!t(e));
+}
+function botMove(){
+	if(grid.length>8||!ongoing)return;
+	let r=!1;
+	if(bot=="X"&&moveCnt<2){
+		if(!mode){
+			moveCnt?place(beside(lastMove),bot):place("2,2",bot);
+		}else if(mode==1){
+			while(!r)r=place(sides.rand(),bot);
+		}else{
+			while(!r)r=place([...corners,...sides].rand(),bot);
+		}
+	}else if(bot=="O"&&moveCnt==1){
+		if(!mode){
+			place("2,2",bot)||place(corners.rand(),bot);
+		}else{
+			while(!r)r=place(mode==1?sides.rand():[...corners,...sides].rand(),bot);
+		}
+	}else{
+		place(blockThreat()||
+			createThreat()||
+			beside(lastMove)||
+			randomMove()
+		,bot);
+	}
+	setTimeout(()=>canMove=true,75);
+}
+function winner(w){
+	ongoing&&(score[w]++,setTimeout(reset,600));
+	ongoing=canMove=!1;
+	win.text(w+" wins!\nScore: "+score[me]+" - "+score[bot]);
+}
+function reset(n){
+	n&&(score={X:0,O:0})
+	grid_ids.forEach(e=>$(e).text(""));
+	lastMove=null;
+	grid=[];
+	moveCnt=0;
+	ongoing=true;
+	canMove=!1;
+	setTimeout(()=>{
+		canMove=me=="X";
+		!canMove&&botMove();
+	},300);
+}
+setInterval(()=>{
+	let fv=eval(first.value);
+	me=fv?"O":"X";
+	bot=fv?"X":"O";
+	mode=Number(diff.value);
+	winningPatterns.find(e=>arent("",t(e[0]),t(e[1]),t(e[2]))&&winner(t(e[0])));
+	grid.length==9&&(grid=[],setTimeout(reset,500));
+});
+		</script>
+	</body>
+</html>
