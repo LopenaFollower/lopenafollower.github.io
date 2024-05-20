@@ -4,20 +4,33 @@
 		<title>Home Page</title>
 		<meta name="viewport"content="width=device-width,initial-scale=1">
 		<style>
+			body{
+				margin:0;
+			}
+			#box{
+				position:fixed;
+				border:1px solid #000;
+				transition-timing-function:linear;
+				transition-duration:.01s;
+			}
 		</style>
 	</head>
 	<body>
-		<select id=dropdown oninput="file=this.value"><option value=null></option></select><button onclick="verify()">go</button>
+		<div id=box>
+			<select id=dropdown oninput="site=this.value">
+				<option value=null></option>
+			</select><br>
+			<button onclick="verify()">Go</button>
+		</div>
 		<script>
-var file=null;
+var site=null;
 function verify(){
-	if(file)location.href+="pages/"+file;
+	if(site)location.href+="pages/"+site;
 }
 document.addEventListener("DOMContentLoaded",()=>{
 	function getContents(){
-		const self=this;
-		if(self.status+self.readyState==204){
-			console.log("contents loaded")
+		if(this.status+this.readyState==204){
+			console.log("contents loaded");
 			let x=new XMLHttpRequest();
 			x.onreadystatechange=handlePages;
 			x.open("GET",JSON.parse(this.responseText)[1].git_url,true);
@@ -40,7 +53,17 @@ document.addEventListener("DOMContentLoaded",()=>{
 	xhr.onreadystatechange=getContents;
 	xhr.open("GET","https://api.github.com/repos/LopenaFollower/lopenafollower.github.io/contents",true);
 	xhr.send();
-})
+});
+let s=2.5;
+let dx=s,dy=s;
+requestAnimationFrame(function upd(){
+	let{x,y,width:w,height:h}=box.getBoundingClientRect(),b=box.style;
+	b.left=(x+=dx)+"px";
+	if(dx>0&&x>window.innerWidth-w||dx<0&&x<0)dx=-dx;
+	b.top=(y+=dy)+"px";
+	if(dy>0&&y>window.innerHeight-h||dy<0&&y<0)dy=-dy;
+	requestAnimationFrame(upd);
+});
 		</script>
 	</body>
 </html>
