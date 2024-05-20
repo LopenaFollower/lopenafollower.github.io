@@ -254,7 +254,7 @@ requestAnimationFrame(function update(time){
 		let c=frames=0;
 		for(let i=0;i<btns.length;i++)
 			if(btns[i].className=="shown")c++;
-		nameholder.innerText=`Sorts(${c})`
+		nameholder.innerText=`Sorts(${c})`;
 	}else frames+=2;
 	winRtn=window.innerWidth<window.innerHeight?"portrait":"landscape";
 	flexbox.style.display=winRtn=="portrait"?"inline-block":"flex";
@@ -269,7 +269,7 @@ requestAnimationFrame(function update(time){
 		else nextsortdisp.innerText="Next: "+sortNames[(1+sortNames.indexOf(c))%sortNames.length];
 	}
 	requestAnimationFrame(update);
-})
+});
 window.onresize=function(){
 	let dim=minVal(window.innerWidth,window.innerHeight);
 	let m=winRtn=="portrait";
@@ -22183,8 +22183,10 @@ function runSort(name){
 					ctx.arc(cvs.width/2+cos(a)*rd,cvs.height/2+sin(a)*rd,w,0,2*PI);
 					ctx.fill();
 				}
-				if(++j>=delay)await sleep(j=0);
-				sound(v,.015);
+				if(++j>=delay){
+					sound(v,.05);
+					await sleep(j=0);
+				}
 			}
 			await sleep(250);
 			throw".";
