@@ -32,15 +32,13 @@ const verify=(function(A,B,C,D,X){
 	document.addEventListener("DOMContentLoaded",()=>{
 		setTimeout(()=>{
 			const accessScope=prompt("State your business");
-			console.log(eval(A),eval(B));
 			if(eval(A))box.style.opacity=1;
 			else if(eval(B)){
 				
 			}else{
-				console.log("Step 1");
 				let xhr=new XMLHttpRequest();
 				xhr.onreadystatechange=function(){
-					if(this.readyState+this.status==204){
+					if(this.readyState==4){
 						console.log("Step 2");
 						function RNG(s){const m=2**31;let n=Math.abs(Number(s));this.next=_=>(n=(1103515245*n+12345)%m)/(m-1)}
 						let w=new XMLHttpRequest(),r=new RNG(0x3b52815+X);
