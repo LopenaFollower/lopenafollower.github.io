@@ -4,7 +4,7 @@
 		<title></title>
 		<meta name="viewport"content="width=device-width,initial-scale=1">
 		<style>
-			body{margin:0 0;text-align:center;font-family:monospace,verdana}
+			body{margin:0;text-align:center;font-family:monospace,verdana}
 			@media(orientation:landscape){#cvs{width:auto}}
 			@media(orientation:portrait){#cvs{width:100%}}
 		</style>
@@ -42,12 +42,8 @@ requestAnimationFrame(function tick(){
 	for(let i=0;i<360;i+=6){
 		let a=i/180*PI-PI/3;
 		let r1=rad*.91,r2=rad*.95,r3=rad*.83;
-		ctx.beginPath();
-		ctx.lineWidth=i%30?2:4;
-		if(i%30==0){
-			let txt=ctx.measureText(i/30+1);
-			ctx.fillText(i/30+1,m+cos(a)*r3,m+sin(a)*r3+2);
-		}
+		ctx.beginPath();ctx.lineWidth=i%30?2:4;
+		if(i%30<1)ctx.fillText(i/30+1,m+cos(a)*r3,m+sin(a)*r3+2);
 		line(m+cos(a)*r1,m+sin(a)*r1,m+cos(a)*r2,m+sin(a)*r2);
 	}
 	ctx.lineWidth=1.5;
@@ -59,19 +55,19 @@ requestAnimationFrame(function tick(){
 	line(m-cos(HRa)*HRl*e,m-sin(HRa)*HRl*e,m+cos(HRa)*HRl,m+sin(HRa)*HRl);
 	ctx.strokeStyle="#000";ctx.font=m/12+"px verdana";
 	ctx.beginPath();ctx.lineWidth=2;ctx.arc(m,m,3,0,2*PI);ctx.stroke();
-	const pad=n=>(n+"").padStart(2,"0");
+	const pad=n=>(n+"").padStart(2,0);
 	let tx="";
 	if(ampm){
 		tx=" AM";
 		if(HR>12){
-			HR-=12;
+			HR%=12;
 			tx=" PM";
 		}
 	}
 	document.title=time.innerText=HR+` : ${pad(MN)} : `+pad(SC)+tx;
 	requestAnimationFrame(tick);
 });
-let p=false,ampm=false,transition=function(){};
+let p=false,ampm=false,transition=function(){p=false};
 document.addEventListener("DOMContentLoaded",()=>{
 	window.onresize();
 	const aud=new Audio("https://www.dropbox.com/scl/fi/ha270rppokhb67z1lwlhi/Merry-Go-Round-Of-Life.mp3?rlkey=r3z1fyuhyyej02r62oq4nx393&raw=1");

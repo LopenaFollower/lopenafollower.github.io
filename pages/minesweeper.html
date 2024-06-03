@@ -197,7 +197,7 @@ const{init,initMap,reset,setVal,clearFlags,recordKeybind}=(function(){
 	}
 	function getPS(){
 		let w=cvs.width,h=cvs.height,{x,y}=gridSize;
-		return(w<h?w/x:h/y);
+		return w<h?w/x:h/y;
 	}
 	async function auto(ms,f){
 		if(firstPick){
@@ -209,7 +209,9 @@ const{init,initMap,reset,setVal,clearFlags,recordKeybind}=(function(){
 			if(cells[i][j]!="")continue;
 			if(actual[i][j]!="b")dig(j,i);
 			else if(f)placeFlag(j,i);
+			else continue;
 			flagDebounce=false;
+			if(ms)await new Promise(setTimeout);
 		}
 	}
 	function bound(x,y){

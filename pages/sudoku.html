@@ -46,7 +46,7 @@
 			</fieldset>
 		</div>
 		<script>
-const ctx=cvs.getContext("2d"),{random,sqrt,min:minVal,max:maxVal}=Math;
+const ctx=cvs.getContext("2d"),{random,min:minVal,max:maxVal}=Math;
 requestAnimationFrame(function update(){
 	flexbox.style.display=window.innerWidth<window.innerHeight?"inline-block":"flex";
 	if(won)displayStat();else displayBoard();
@@ -56,7 +56,7 @@ requestAnimationFrame(function update(){
 		e.style.opacity=ms[i-1]/9;
 	});
 	requestAnimationFrame(update);
-})
+});
 window.onresize=function(){
 	cvs.width=cvs.height=Math.min(window.innerWidth,window.innerHeight);
 }
@@ -200,8 +200,9 @@ function displayBoard(){
 		for(let x=0;x<9;x++){
 			fill();
 			if(selected){
-				if(x==selected[1]||y==selected[2])fill("#dadada");
-				if(selected[3]&&x==selected[1]&&y==selected[2]||(!selected[3]||selected[3]&&current[y][x])&&current[y][x]==current[selected[2]][selected[1]])fill("#aaa");
+				let[n,i,j,p]=selected;
+				if(x==i||y==j)fill("#dadada");
+				if(p&&x==i&&y==j||(!p||p&&current[y][x])&&current[y][x]==current[j][i])fill("#aaa");
 			}
 			ctx.fillRect(margin+x*p,margin+y*p,p-margin,p-margin);
 			if(current[y][x]){
@@ -217,22 +218,23 @@ function displayBoard(){
 function getTime(ms){
 	let s=ms/1e3|0;
 	let m=s/60|0;s-=m*60;
-	return(m+"").padStart(2,0)+" : "+(s+"").padStart(2,0);
+	return m+" : "+(s+"").padStart(2,0);
 }
 function displayStat(){
 	const s=cvs.width;
+	let m=s/150;
 	let fs=s/12;
 	ctx.font=fs+"px sans-serif";
 	ctx.clearRect(0,0,s,s);
 	fill("#000");
-	ctx.fillText("Mistakes: "+mistakes,s/150,s/150+fs);
-	ctx.fillText("Difficulty: "+(sudoku.K/63*10|0)*10+" / 100",s/150,s/150+fs*2);
-	ctx.fillText("Time: "+getTime(endTime-startTime)+"s",s/150,s/150+fs*3);
+	ctx.fillText("Mistakes: "+mistakes,m,m+fs);
+	ctx.fillText("Difficulty: "+(sudoku.K/6.3|0)*10+" / 100",m,m+fs*2);
+	ctx.fillText("Time: "+getTime(endTime-startTime)+"s",m,m+fs*3);
 }
 function place(n){
 	if(!selected)return;
-	let[_,x,y]=selected;
-	if(!selected[3]||n==current[y][x]||won)return;
+	let[_,x,y,p]=selected;
+	if(!p||n==current[y][x]||won)return;
 	current[y][x]=n;
 	if(!sudoku.correct(n,x,y))mistakes++;
 	if(sudoku.check(current)){
@@ -241,7 +243,8 @@ function place(n){
 	}
 }
 function info(x,y){
-	return[sudoku.mat[y][x],x,y,!sudoku.mat[y][x]];
+	let n=sudoku.mat[y][x];
+	return[n,x,y,!n];
 }
 cvs.addEventListener("click",e=>{
 	let p=getPS();
