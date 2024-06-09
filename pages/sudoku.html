@@ -4,11 +4,12 @@
 		<title>Sudoku</title>
 		<meta name="viewport"content="width=device-width,initial-scale=1">
 		<style>
-			body{margin:0 0}
+			body{margin:0}
 			@media(orientation:landscape){#cvs{width:auto}}
 			@media(orientation:portrait){#cvs{width:98%}}
 			#cvs{
 				margin:1%;
+				border:1px solid #346;
 			}
 			table{
 				border-collapse:collapse;
@@ -19,7 +20,7 @@
 			td{
 				text-align:center;
 				font-size:150%;
-				width:11.111111%;
+				width:calc(100%/9);
 				height:40px;
 			}
 		</style>
@@ -42,7 +43,7 @@
 						<td onclick='place(9)'>9</td>
 					</tr>
 				</table>
-				<button onclick='newGame()'>New Game</button>
+				<br><button onclick='newGame()'>New Game</button>
 			</fieldset>
 		</div>
 		<script>
@@ -173,7 +174,7 @@ function getPS(){
 	return 149*s/1350;
 }
 function newGame(){
-	let dif=minVal(63,maxVal(1,Number(prompt("Missing Count(1-72)",56).replaceAll(/[^\d]/g,""))));
+	let dif=minVal(63,maxVal(1,Number(prompt("Missing Count(1-63)",56).replaceAll(/[^\d]/g,""))));
 	sudoku=new Sudoku(dif);
 	sudoku.fillValues();
 	won=mistakes=0;
@@ -216,20 +217,18 @@ function displayBoard(){
 	}
 }
 function getTime(ms){
-	let s=ms/1e3|0;
-	let m=s/60|0;s-=m*60;
+	let s=ms/1e3|0,m=s/60|0;s-=m*60;
 	return m+" : "+(s+"").padStart(2,0);
 }
 function displayStat(){
 	const s=cvs.width;
-	let m=s/150;
-	let fs=s/12;
+	let m=s/150,fs=s/12;
 	ctx.font=fs+"px sans-serif";
 	ctx.clearRect(0,0,s,s);
 	fill("#000");
 	ctx.fillText("Mistakes: "+mistakes,m,m+fs);
 	ctx.fillText("Difficulty: "+(sudoku.K/6.3|0)*10+" / 100",m,m+fs*2);
-	ctx.fillText("Time: "+getTime(endTime-startTime)+"s",m,m+fs*3);
+	ctx.fillText("Time: "+getTime(endTime-startTime),m,m+fs*3);
 }
 function place(n){
 	if(!selected)return;

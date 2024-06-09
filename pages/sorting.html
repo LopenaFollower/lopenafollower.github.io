@@ -23964,6 +23964,88 @@ class Sorts{
 		}
 		await sort(arr,len);
 	}
+	async crozeSort(len){
+		while(!isArraySorted(arr,len))
+			for(let i=0;i<len;i++)
+				for(let j=0;j<i;j++)
+					if(compareIndices(arr,j,i)>0){
+						for(let k=j+1;k<len;k++)
+							if(compareIndices(arr,j,k)>0)await multiSwap(arr,k,j,.02,true);
+							else if(k>i)break;
+					}else await multiSwap(arr,i,j+1,.02,true);
+	}
+	async opiumSort(len){
+		function isLeast(A,t,j,e,l){
+			for(let i=j+1;i<l-e;i++)if(compareIndices(A,j,i)>0)return false;
+			for(let i=0;i<e;i++)if(compareIndexValue(A,j,t[i])>0)return false;
+			return true;
+		}
+		async function sort(A,l){
+			let i=0;
+			let c=new Array(l);
+			for(let j=0;j<l;j++)c[j]=-1;
+			let cd=0;
+			while(i<l){
+				if(isLeast(A,c,i,cd,l)){
+					if(++i+cd>=l){
+						for(let j=0;j<cd;j++){
+							await write(A,i+j,c[j],0.01,true);
+							c[j]=-1;
+						}
+						cd=0;
+					}
+				}else{
+					if(cd+i>=l){
+						for(let j=0;j<cd;j++){
+							await write(A,i+j,c[j],0.01,true);
+							c[j]=-1;
+						}
+						cd=0;
+					}else{
+						write(c,cd,A[i],0,false,true);
+						await arraycopy(A,i+1,A,i,l-cd++-i-1,.01,true);
+					}
+				}
+			}
+		}
+		await sort(arr,len);
+	}
+	async zubbleSort(len){
+		for(let i=len-1;i>0;i--){
+			let r=true;
+			for(let j=0;j<i;j++){
+				let k=j,s=false;
+				while(j<i&&compareIndices(arr,k,j+1)>0){
+					j++;r=false;s=true;
+				}
+				if(s)await swap(arr,k,j,1,true);
+			}
+			if(r)break;
+		}
+	}
+	async simpleFireSort(len){
+		let t1=1,l=len,i=0,m=0,k=0;
+		while(i<len||t1==-1){
+			if(i==0&&t1==-1){
+				t1*=-1;
+				m=0;
+			}
+			for(let j=i;(t1==-1?j<len:j>0)&&compareIndices(arr,j-1,j)==t1;j-=t1){
+				m++;
+				swap(arr,j,j-1,0);
+				if(++k>len*2){
+					markSwap(j,j-1);
+					await sleep(k=0);
+				}
+			}
+			i+=t1;
+			if(m>l){
+				l+=len;
+				m=0;
+				t1*=-1;
+			}
+		}
+	}
 }
 const sorts=new Sorts(),sortNames=sorts.getNames();
 function filterSorts(t){
@@ -24072,7 +24154,12 @@ function runSort(name){
 }
 let unfiltered=Object.getOwnPropertyNames(Sorts.prototype);
 runSort(unfiltered.pop());
-//@400 massive clean up and speed optimization for slower sorts
+let to_do=[];
+let dupes=[];
+for(let i=0;i<sortNames.length;i++)
+	for(let j=0;j<to_do.length;j++)
+		if(to_do[j].toLowerCase().replace(".java","")==sortNames[i].toLowerCase())
+			dupes.push(to_do[j]);
 		</script>
 	</body>
 </html>
