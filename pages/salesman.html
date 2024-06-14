@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Evolution</title>
+		<meta name="viewport"content="width=device-width,initial-scale=1">
+		<style>
+			body{margin:0}
+			@media(orientation:landscape){#cvs{width:auto}}
+			@media(orientation:portrait){#cvs{width:100%}}
+			table{
+				border-collapse:collapse;
+			}
+		</style>
+	</head>
+	<body>
+		<div id=flexbox>
+			<canvas id=cvs></canvas>
+			<fieldset>
+				<button onclick="changeCount()">Change Number of Points</button>
+				<button onclick="refresh()">New Set</button>
+				<table border=1>
+					<tr>
+						<td id=info colspan=2></td>
+					</tr>
+					<tr>
+						<td>Current:</td>
+						<td id=currentScore></td>
+					</tr>
+					<tr>
+						<td>Optimal:</td>
+						<td id=optimalScore></td>
+					</tr>
+					<tr>
+						<td>Mutations:</td>
+						<td id=mutations></td>
+					</tr>
+				</table>
+			</fieldset>
+		</div>
+		<script>
+const ctx=cvs.getContext("2d");
+const{random,sqrt,abs,min:minVal,max:maxVal}=Math;
+requestAnimationFrame(function update(){
+	flexbox.style.display=window.innerWidth<window.innerHeight?"inline-block":"flex";
+	plotPoints();
+	requestAnimationFrame(update);
+});
+window.onresize=function(){
+	cvs.width=cvs.height=minVal(window.innerWidth,window.innerHeight);
+}
+window.onresize();
+let count=20;
+let points=new Array(count).fill().map(e=>[random(),random()]);
+let highest={score:0,gene:""};
+let currentGen,genSize,loop,swaps,mutated=0;
+function changeCount(){
+	let n=prompt("Count",count);
+	if(isNaN(parseInt(n)))return alert("Invalid");
+	count=parseInt(n);
+	refresh();
+}
+function plotPoints(){
+	ctx.font=cvs.width/30+"px monospace";
+	for(let i=0;i<count;i++){
+		let[x,y]=points[i];
+		ctx.beginPath();
+		ctx.fillText(i,cvs.width*x-ctx.measureText(i).width/2,cvs.width*y+ctx.measureText(i).actualBoundingBoxAscent/2);
+	}
+}
+function printGens(){
+	console.log(currentGen.map(e=>e.join("")).join("\n"));
+}
+function start(n){
+	stop();
+	genSize=n;
+	currentGen=new Array(n).fill().map(e=>{
+		let gene=new Array(count).fill().map((e,i)=>i);
+		let l=gene.length;
+		for(let i=0;i<l-1;i++){
+			let j=random()*(l-i)+i|0;
+			[gene[i],gene[j]]=[gene[j],gene[i]];
+		}
+		return gene;
+	});
+	loop=setInterval(()=>{
+		for(let i=0;i<10;i++){
+			swaps=0;
+			currentGen=currentGen.map(optSwap);
+			placeEdges();
+			if(random()<.25)mutate();
+		}
+		visualize();
+	});
+}
+function stop(){
+	clearInterval(loop);
+}
+function visualize(){
+	ctx.clearRect(0,0,cvs.width,cvs.width);
+	let gene=currentGen[0];
+	let score=0;
+	for(let i=0;i<genSize;i++){
+		let s=fitness(currentGen[i]);
+		if(s>score){
+			gene=currentGen[i];
+			score=s;
+		}
+		if(s>highest.score){
+			highest.score=s;
+			highest.gene=[...currentGen[i]];
+		}
+	}
+	currentScore.innerText=score.toFixed(4);
+	optimalScore.innerText=highest.score.toFixed(4);
+	for(let j=1;j<gene.length;j++){
+		ctx.strokeStyle="#000";
+		ctx.beginPath();
+		ctx.moveTo(...points[highest.gene[j-1]].map(e=>e*cvs.width));
+		ctx.lineTo(...points[highest.gene[j]].map(e=>e*cvs.width));
+		ctx.stroke();
+		ctx.strokeStyle="#0c06";
+		ctx.beginPath();
+		ctx.moveTo(...points[gene[j-1]].map(e=>e*cvs.width));
+		ctx.lineTo(...points[gene[j]].map(e=>e*cvs.width));
+		ctx.stroke();
+	}
+}
+function dist([x1,y1],[x2,y2]){
+	return sqrt((x1-x2)**2+(y1-y2)**2);
+}
+function nearestPoint(p,x,y){
+	let nd=1/0,ni;
+	for(let i=0;i<p.length;i++){
+		let d=dist(p[i],[x,y]);
+		if(d<nd){
+			nd=d;
+			ni=i;
+		}
+	}
+	return ni;
+}
+function placeEdges(){
+	currentGen.forEach(e=>{
+		let n=count-1;
+		let l=e.indexOf(nearestPoint(points,0,0));
+		let h=e.indexOf(nearestPoint(points,cvs.width,cvs.width));
+		[e[l],e[0]]=[e[0],e[l]];
+		[e[h],e[n]]=[e[n],e[h]];
+		info.innerText=`Starts: ${e[0]}, Ends: `+e[n];
+	});
+}
+function fitness(g){
+	let score=count;
+	for(let i=1;i<g.length;i++)
+		score-=dist(points[g[i-1]],points[g[i]]);
+	return score;
+}
+function genomeSwap(gene){
+	let i=0,j=0,l=gene.length-2;
+	while(i==j){
+		i=random()*l+1|0;
+		j=random()*l+1|0;
+	}
+	return[i,j];
+}
+function optSwap(gene){
+	let initialScore=fitness(gene);
+	let copy=[...gene];
+	let[i,j]=genomeSwap(copy);
+	[copy[i],copy[j]]=[copy[j],copy[i]];
+	let newScore=fitness(copy);
+	if(newScore>initialScore){
+		swaps++;
+		return copy;
+	}else{
+		return gene;
+	}
+}
+function mutate(){
+	if(random()<genSize/100){
+		let gene=currentGen[random()*genSize|0];
+		let[i,j]=genomeSwap(gene);
+		[gene[i],gene[j]]=[gene[j],gene[i]];
+		mutations.innerText=++mutated;
+	}
+}
+function refresh(){
+	highest={score:0,gene:""};
+	points=new Array(count).fill().map(e=>[random(),random()]);
+	start(50);
+}
+refresh();
+		</script>
+	</body>
+</html>
