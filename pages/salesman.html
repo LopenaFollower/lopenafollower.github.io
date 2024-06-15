@@ -44,7 +44,6 @@ const{random,sqrt,abs,min:minVal,max:maxVal}=Math;
 requestAnimationFrame(function update(){
 	flexbox.style.display=window.innerWidth<window.innerHeight?"inline-block":"flex";
 	ctx.lineWidth=cvs.width/200;
-	plotPoints();
 	requestAnimationFrame(update);
 });
 window.onresize=function(){
@@ -110,6 +109,7 @@ function stop(){
 }
 function visualize(){
 	ctx.clearRect(0,0,cvs.width,cvs.width);
+	plotPoints();
 	let gene=currentGen[0];
 	let score=0;
 	for(let i=0;i<genSize;i++){
