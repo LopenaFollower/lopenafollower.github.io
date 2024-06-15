@@ -16,9 +16,9 @@
 		<div id=flexbox>
 			<canvas id=cvs></canvas>
 			<fieldset>
-				<button onclick="changeCount()">Change Number of Points</button>
-				<button onclick="changeGenSize()">Change Size of each Generation</button>
-				<button onclick="start()">New Set</button>
+				<button onclick="changeCount()">Change Number of Points</button><br>
+				<button onclick="changeGenSize()">Change Size of each Generation</button><br>
+				<button onclick="start(true)">New Set</button>
 				<table border=1>
 					<tr>
 						<td id=info colspan=2></td>
@@ -52,19 +52,19 @@ window.onresize=function(){
 window.onresize();
 let count=20,genSize=50;
 let points=new Array(count).fill().map(e=>[random(),random()]);
-let highest={score:0,gene:""};
+let highest={score:1/0,gene:""};
 let currentGen,loop,swaps,mutated=0;
-function verifyPrompt(q,d){
-	let n=prompt(q,d);
-	if(isNaN(parseInt(n)))return d;
-	return parseInt(n);
+function verifyPrompt(q,d,m){
+	let n=parseInt(prompt(q,d));
+	if(isNaN(n))return d;
+	return maxVal(m,n);
 }
 function changeCount(){
-	count=verifyPrompt("Count",count);
-	start();
+	count=verifyPrompt("Count",count,4);
+	start(true);
 }
 function changeGenSize(){
-	genSize=verifyPrompt("Gen Size",genSize);
+	genSize=verifyPrompt("Gen Size",genSize,1);
 	start();
 }
 function plotPoints(){
@@ -78,12 +78,12 @@ function plotPoints(){
 function printGens(){
 	console.log(currentGen.map(e=>e.join("")).join("\n"));
 }
-function start(){
+function start(ps){
 	stop();
 	setTimeout(()=>{
-		highest={score:0,gene:""};
+		highest={score:1/0,gene:""};
 		mutated=0;
-		points=new Array(count).fill().map(e=>[random(),random()]);
+		if(ps)points=new Array(count).fill().map(e=>[random(),random()]);
 		currentGen=new Array(genSize).fill().map(e=>{
 			let gene=new Array(count).fill().map((e,i)=>i);
 			let l=gene.length;
@@ -111,14 +111,14 @@ function visualize(){
 	ctx.clearRect(0,0,cvs.width,cvs.width);
 	plotPoints();
 	let gene=currentGen[0];
-	let score=0;
+	let score=1/0;
 	for(let i=0;i<genSize;i++){
 		let s=fitness(currentGen[i]);
-		if(s>score){
+		if(s<score){
 			gene=currentGen[i];
 			score=s;
 		}
-		if(s>highest.score){
+		if(s<highest.score){
 			highest.score=s;
 			highest.gene=[...currentGen[i]];
 		}
@@ -163,9 +163,9 @@ function placeEdges(){
 	});
 }
 function fitness(g){
-	let score=count;
+	let score=0;
 	for(let i=1;i<g.length;i++)
-		score-=dist(points[g[i-1]],points[g[i]]);
+		score+=dist(points[g[i-1]],points[g[i]]);
 	return score;
 }
 function genomeSwap(gene){
@@ -182,7 +182,7 @@ function optSwap(gene){
 	let[i,j]=genomeSwap(copy);
 	[copy[i],copy[j]]=[copy[j],copy[i]];
 	let newScore=fitness(copy);
-	if(newScore>initialScore){
+	if(newScore<initialScore){
 		swaps++;
 		return copy;
 	}else{
@@ -195,9 +195,10 @@ function mutate(){
 		let[i,j]=genomeSwap(gene);
 		[gene[i],gene[j]]=[gene[j],gene[i]];
 		mutations.innerText=++mutated;
+		if(genSize/100>1&&random()>.5)mutate();
 	}
 }
-start();
+start(true);
 		</script>
 	</body>
 </html>
