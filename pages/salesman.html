@@ -42,6 +42,7 @@ const ctx=cvs.getContext("2d");
 const{random,sqrt,abs,min:minVal,max:maxVal}=Math;
 requestAnimationFrame(function update(){
 	flexbox.style.display=window.innerWidth<window.innerHeight?"inline-block":"flex";
+	ctx.lineWidth=cvs.width/200;
 	plotPoints();
 	requestAnimationFrame(update);
 });
