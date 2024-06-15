@@ -50,7 +50,7 @@ window.onresize=function(){
 	cvs.width=cvs.height=minVal(window.innerWidth,window.innerHeight);
 }
 window.onresize();
-let count=20;
+let count=20,genSize=50;
 let points=new Array(count).fill().map(e=>[random(),random()]);
 let highest={score:0,gene:""};
 let currentGen,genSize,loop,swaps,mutated=0;
@@ -71,10 +71,9 @@ function plotPoints(){
 function printGens(){
 	console.log(currentGen.map(e=>e.join("")).join("\n"));
 }
-function start(n){
+function start(){
 	stop();
-	genSize=n;
-	currentGen=new Array(n).fill().map(e=>{
+	currentGen=new Array(genSize).fill().map(e=>{
 		let gene=new Array(count).fill().map((e,i)=>i);
 		let l=gene.length;
 		for(let i=0;i<l-1;i++){
@@ -188,7 +187,7 @@ function mutate(){
 function refresh(){
 	highest={score:0,gene:""};
 	points=new Array(count).fill().map(e=>[random(),random()]);
-	start(50);
+	start();
 }
 refresh();
 		</script>
