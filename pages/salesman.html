@@ -17,7 +17,8 @@
 			<canvas id=cvs></canvas>
 			<fieldset>
 				<button onclick="changeCount()">Change Number of Points</button>
-				<button onclick="refresh()">New Set</button>
+				<button onclick="changeGenSize()">Change Size of each Generation</button>
+				<button onclick="start()">New Set</button>
 				<table border=1>
 					<tr>
 						<td id=info colspan=2></td>
@@ -54,11 +55,18 @@ let count=20,genSize=50;
 let points=new Array(count).fill().map(e=>[random(),random()]);
 let highest={score:0,gene:""};
 let currentGen,loop,swaps,mutated=0;
+function verifyPrompt(q,d){
+	let n=prompt(q,d);
+	if(isNaN(parseInt(n)))return d;
+	return parseInt(n);
+}
 function changeCount(){
-	let n=prompt("Count",count);
-	if(isNaN(parseInt(n)))return alert("Invalid");
-	count=parseInt(n);
-	refresh();
+	count=verifyPrompt("Count",count);
+	start();
+}
+function changeGenSize(){
+	genSize=verifyPrompt("Gen Size",genSize);
+	start();
 }
 function plotPoints(){
 	ctx.font=cvs.width/30+"px monospace";
@@ -73,24 +81,29 @@ function printGens(){
 }
 function start(){
 	stop();
-	currentGen=new Array(genSize).fill().map(e=>{
-		let gene=new Array(count).fill().map((e,i)=>i);
-		let l=gene.length;
-		for(let i=0;i<l-1;i++){
-			let j=random()*(l-i)+i|0;
-			[gene[i],gene[j]]=[gene[j],gene[i]];
-		}
-		return gene;
-	});
-	loop=setInterval(()=>{
-		for(let i=0;i<10;i++){
-			swaps=0;
-			currentGen=currentGen.map(optSwap);
-			placeEdges();
-			if(random()<.25)mutate();
-		}
-		visualize();
-	});
+	setTimeout(()=>{
+		highest={score:0,gene:""};
+		mutated=0;
+		points=new Array(count).fill().map(e=>[random(),random()]);
+		currentGen=new Array(genSize).fill().map(e=>{
+			let gene=new Array(count).fill().map((e,i)=>i);
+			let l=gene.length;
+			for(let i=0;i<l-1;i++){
+				let j=random()*(l-i)+i|0;
+				[gene[i],gene[j]]=[gene[j],gene[i]];
+			}
+			return gene;
+		});
+		loop=setInterval(()=>{
+			for(let i=0;i<10;i++){
+				swaps=0;
+				currentGen=currentGen.map(optSwap);
+				placeEdges();
+				if(random()<.25)mutate();
+			}
+			visualize();
+		});
+	},100);
 }
 function stop(){
 	clearInterval(loop);
@@ -184,12 +197,7 @@ function mutate(){
 		mutations.innerText=++mutated;
 	}
 }
-function refresh(){
-	highest={score:0,gene:""};
-	points=new Array(count).fill().map(e=>[random(),random()]);
-	start();
-}
-refresh();
+start();
 		</script>
 	</body>
 </html>
