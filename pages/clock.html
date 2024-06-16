@@ -58,11 +58,8 @@ requestAnimationFrame(function tick(){
 	const pad=n=>(n+"").padStart(2,0);
 	let tx="";
 	if(ampm){
-		tx=" AM";
-		if(HR>12){
-			HR%=12;
-			tx=" PM";
-		}
+		tx=HR<13?" AM":" PM";
+		HR%=12;
 	}
 	document.title=time.innerText=HR+` : ${pad(MN)} : `+pad(SC)+tx;
 	requestAnimationFrame(tick);
@@ -83,7 +80,7 @@ document.addEventListener("DOMContentLoaded",()=>{
 				await new Promise(setTimeout);
 			}
 		}
-	})
+	});
 });
 		</script>
 	</body>

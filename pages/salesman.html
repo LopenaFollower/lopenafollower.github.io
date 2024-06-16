@@ -81,9 +81,11 @@ function printGens(){
 function start(ps){
 	stop();
 	setTimeout(()=>{
-		highest={score:1/0,gene:""};
-		mutated=0;
-		if(ps)points=new Array(count).fill().map(e=>[random(),random()]);
+		if(ps){
+			mutated=0;
+			points=new Array(count).fill().map(e=>[random(),random()]);
+			highest={score:1/0,gene:""};
+		}
 		currentGen=new Array(genSize).fill().map(e=>{
 			let gene=new Array(count).fill().map((e,i)=>i);
 			let l=gene.length;
@@ -126,15 +128,15 @@ function visualize(){
 	currentScore.innerText=score.toFixed(4);
 	optimalScore.innerText=highest.score.toFixed(4);
 	for(let j=1;j<gene.length;j++){
-		ctx.strokeStyle="#000";
-		ctx.beginPath();
-		ctx.moveTo(...points[highest.gene[j-1]].map(e=>e*cvs.width));
-		ctx.lineTo(...points[highest.gene[j]].map(e=>e*cvs.width));
-		ctx.stroke();
 		ctx.strokeStyle="#0c06";
 		ctx.beginPath();
 		ctx.moveTo(...points[gene[j-1]].map(e=>e*cvs.width));
 		ctx.lineTo(...points[gene[j]].map(e=>e*cvs.width));
+		ctx.stroke();
+		ctx.strokeStyle="#000";
+		ctx.beginPath();
+		ctx.moveTo(...points[highest.gene[j-1]].map(e=>e*cvs.width));
+		ctx.lineTo(...points[highest.gene[j]].map(e=>e*cvs.width));
 		ctx.stroke();
 	}
 }
