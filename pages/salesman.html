@@ -17,7 +17,7 @@
 			<canvas id=cvs></canvas>
 			<fieldset>
 				<button onclick="changeCount()">Change Number of Points</button><br>
-				<button onclick="changeGenSize()">Change Size of each Generation</button><br>
+				<button onclick="changePopulation()">Change Population</button><br>
 				<button onclick="start(true)">New Set</button>
 				<table border=1>
 					<tr>
@@ -50,7 +50,7 @@ window.onresize=function(){
 	cvs.width=cvs.height=minVal(window.innerWidth,window.innerHeight);
 }
 window.onresize();
-let count=20,genSize=50;
+let count=20,population=50;
 let points=new Array(count).fill().map(e=>[random(),random()]);
 let highest={score:1/0,gene:""};
 let currentGen,loop,swaps,mutated=0;
@@ -63,8 +63,8 @@ function changeCount(){
 	count=verifyPrompt("Count",count,4);
 	start(true);
 }
-function changeGenSize(){
-	genSize=verifyPrompt("Gen Size",genSize,1);
+function changePopulation(){
+	population=verifyPrompt("Gen Size",population,1);
 	start();
 }
 function plotPoints(){
@@ -86,7 +86,7 @@ function start(ps){
 			points=new Array(count).fill().map(e=>[random(),random()]);
 			highest={score:1/0,gene:""};
 		}
-		currentGen=new Array(genSize).fill().map(e=>{
+		currentGen=new Array(population).fill().map(e=>{
 			let gene=new Array(count).fill().map((e,i)=>i);
 			let l=gene.length;
 			for(let i=0;i<l-1;i++){
@@ -98,9 +98,11 @@ function start(ps){
 		loop=setInterval(()=>{
 			for(let i=0;i<10;i++){
 				swaps=0;
+				let best=getBest()[0];
+				currentGen=currentGen.map(e=>best);
 				currentGen=currentGen.map(optSwap);
 				placeEdges();
-				if(random()<.25)mutate();
+				if(random()<.2)mutate();
 			}
 			visualize();
 		});
@@ -109,12 +111,10 @@ function start(ps){
 function stop(){
 	clearInterval(loop);
 }
-function visualize(){
-	ctx.clearRect(0,0,cvs.width,cvs.width);
-	plotPoints();
+function getBest(){
 	let gene=currentGen[0];
 	let score=1/0;
-	for(let i=0;i<genSize;i++){
+	for(let i=0;i<population;i++){
 		let s=fitness(currentGen[i]);
 		if(s<score){
 			gene=currentGen[i];
@@ -125,6 +125,12 @@ function visualize(){
 			highest.gene=[...currentGen[i]];
 		}
 	}
+	return[gene,score];
+}
+function visualize(){
+	ctx.clearRect(0,0,cvs.width,cvs.width);
+	plotPoints();
+	let[gene,score]=getBest();
 	currentScore.innerText=score.toFixed(4);
 	optimalScore.innerText=highest.score.toFixed(4);
 	for(let j=1;j<gene.length;j++){
@@ -173,8 +179,8 @@ function fitness(g){
 function genomeSwap(gene){
 	let i=0,j=0,l=gene.length-2;
 	while(i==j){
-		i=random()*l+1|0;
-		j=random()*l+1|0;
+		i=~~(random()*l+1);
+		j=~~(random()*l+1);
 	}
 	return[i,j];
 }
@@ -184,7 +190,7 @@ function optSwap(gene){
 	let[i,j]=genomeSwap(copy);
 	[copy[i],copy[j]]=[copy[j],copy[i]];
 	let newScore=fitness(copy);
-	if(newScore<initialScore){
+	if(newScore<initialScore||random()<.01){
 		swaps++;
 		return copy;
 	}else{
@@ -192,12 +198,12 @@ function optSwap(gene){
 	}
 }
 function mutate(){
-	if(random()<genSize/100){
-		let gene=currentGen[random()*genSize|0];
+	if(random()<population/100){
+		let gene=currentGen[random()*population|0];
 		let[i,j]=genomeSwap(gene);
 		[gene[i],gene[j]]=[gene[j],gene[i]];
 		mutations.innerText=++mutated;
-		if(genSize/100>1&&random()>.5)mutate();
+		if(population/50>=1&&random()>.5)mutate();
 	}
 }
 start(true);
