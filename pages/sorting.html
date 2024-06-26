@@ -24146,13 +24146,126 @@ class Sorts{
 			}
 		}
 	}
+	async blueFlameSort(len){
+		let k=0;
+		async function ignite(A,i,j){
+			if(i>=j)return;
+			if(compareIndices(A,i,j)<0){
+				swap(A,i,j,0);
+				if(++k>len){
+					markSwap(i,j);
+					await sleep(k=0);
+				}
+				await ignite(A,i+1,j);
+			}else await ignite(A,i+1,j-1);
+			reversal(A,i,j,0);
+			await ignite(A,i,j-1);
+		}
+		for(let i=0;i<len;i++)
+			await ignite(arr,i,len-1);
+	}
+	async shipperSort(len){
+		function minSorted(A,st,e){
+			let i=st,sg=true;
+			while(sg){
+				if(i+1>e)return e;
+				if(compareIndices(A,i,i+1)>0)sg=false;
+				else i++;
+			}
+			let sl=i+1;
+			for(let s=i+2;s<e;s++)if(compareIndices(A,sl,s)>0)sl=s;
+			let w=sl;
+			while(compareIndices(A,sl,st)+1)if(++st>=e)break;
+			return st;
+		}
+		async function shipPass(A,a,b){
+			ch=false;
+			for(let h=1,i=h+a;i<b;i++){
+				let v=A[i],j=i,w=false;
+				for(;j>=h&&j-h>=a&&compareValues(A[j-h],v)>0;j-=h){
+					await write(A,j,A[j-h],.1,w=true);
+				}
+				if(w){
+					await write(A,j,v,0.1,true);
+					if(h>4)ch=true;
+					h++;
+				}
+			}
+		}
+		async function shellPass(A,s,e,g){
+			for(let h=g,i=h+s;i<e;i++){
+				let v=A[i],j=i,w=false;
+				for(;j>=h&&j-h>=s&&compareValues(A[j-h],v)>0;j-=h){
+					await write(A,j,A[j-h],.5,w=true);
+				}
+				if(w)await write(A,j,v,.5,true);
+			}
+		}
+		let ch=true,s=0;
+		while(ch)await shipPass(arr,s=minSorted(arr,s,len),len);
+		await shellPass(arr,s,len,1);
+	}
+	async bidiBinaryQuasiPancakeSort(len){
+		async function reverse(A,a,b,s,m,x){
+			if(b<=a)return;
+			if(b-a>=3)await reversal(A,a,b,s,m,x);
+			else await swap(A,a,b,s,m,x);
+		}
+		async function insertSort(A,s,e){
+			let n=false,l,r,m;
+			for(let i=s+1;i<e;i++){
+				if(n^compareIndices(A,i-1,i)<1)continue;
+				if(n^compareIndices(A,s,i)>0){
+					await reversal(A,s,i-1,.2,true);
+					n=!n;
+					continue;
+				}
+				l=s+1;r=i-1;
+				while(l<r){
+					m=l+(r-l)/2|0;
+					if(n^compareIndices(A,m,i)>0)r=m;
+					else l=m+1;
+				}
+				if(l-i){
+					await reverse(A,l,i-1,.2,true);
+					await reverse(A,l,i,.2,true);
+				}
+			}
+			if(n)await reversal(A,s,e-1,.2,true);
+		}
+		await insertSort(arr,0,len);
+	}
+	async sandpaperMergeSort(len){
+		async function sandpaper(A,a,b){
+			for(let i=a,k=0;i<b-1;i++)
+				for(let j=b-1;j>i;j--)
+					if(compareIndices(A,i,j)>0){
+						swap(A,i,j,0);
+						if(++k>sqrt(len)){
+							markSwap(i,j);
+							await sleep(k=0);
+						}
+					}
+		}
+		async function sort(A,a,b){
+			if(b-a<2)return;
+			let m=a+(b-a)/2|0;
+			await sort(A,a,m);
+			await sort(A,m,b);
+			await sandpaper(A,a,b);
+		}
+		await sort(arr,0,len);
+	}
 }
 const sorts=new Sorts(),sortNames=sorts.getNames();
-function filterSorts(t){
-	t=t.replaceAll("Sort","");
-	if(t.startsWith("@"))t=t.trim();
-	else t=t.toLowerCase().trim();
-	document.querySelectorAll("div.btnholder>div").forEach((e,i)=>{
+let filtering=false;
+async function filterSorts(t){
+	if(filtering)return;
+	filtering=true;
+	t=t.replaceAll("Sort","").trim();
+	if(!t.startsWith("@"))t=t.toLowerCase();
+	await document.querySelectorAll("div.btnholder>div").forEach(async(e,i)=>{
+		await sleep(150);
 		if(t.length<1)e.className="shown";
 		else{
 			let raw=e.innerText.trim().replace("Sort","");
@@ -24170,6 +24283,7 @@ function filterSorts(t){
 			e.className=f?"shown":"hidden";
 		}
 	});
+	filtering=false;
 }
 function appendTo(p,t,c){
 	function hold(e){
@@ -24258,7 +24372,7 @@ let to_do=[];
 let dupes=[];
 for(let i=0;i<sortNames.length;i++)
 	for(let j=0;j<to_do.length;j++)
-		if(to_do[j].toLowerCase().replace(".java","")==sortNames[i].toLowerCase())
+		if(to_do[j].toLowerCase()==sortNames[i].toLowerCase())
 			dupes.push(to_do[j]);
 		</script>
 	</body>
