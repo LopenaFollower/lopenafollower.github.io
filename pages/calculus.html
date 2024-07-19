@@ -4,18 +4,22 @@
 		<title>Calculus 1</title>
 		<meta name="viewport"content="width=device-width,initial-scale=1">
 		<style>
-			body{margin:0}
+			body{
+				margin:0;
+				/*overflow:hidden;*/
+			}
 			@media(orientation:landscape){#vid,#tbl{width:auto}}
 			@media(orientation:portrait){#vid,#tbl{width:100%}}
-			table{border-collapse:collapse}
+			table{
+				border-collapse:collapse;
+			}
 			#tbl{
 				overflow:hidden;
 				overflow-y:scroll;
 				border:1px solid #000;
 			}
 			td{
-				transition-timing-function:linear;
-				transition-duration:.1s;
+				transition:all .1s linear;
 				font-family:monospace;
 				border:1px solid #000;
 				white-space:nowrap;
@@ -27,9 +31,12 @@
 				width:100%;
 			}
 			#flexbox{
-				transition-timing-function:linear;
-				transition-duration:.75s;
+				transition:opacity .75s linear;
 				opacity:0;
+			}
+			#extra{
+				border:1px solid #000;
+				font-weight:900;
 			}
 		</style>
 	</head>
@@ -37,10 +44,10 @@
 		<div id=flexbox>
 			<video id=vid type="video/mp4"controls></video>
 			<div id=cont>
+				<div id=extra>Lessons</div>
+				<div id=tbl><table><tr id=par></tr></table></div>
 				<span id=dur onclick="navigator.clipboard.writeText(this.innerText)"></span>
 				<button onclick="vid.currentTime-=30">-30</button><button onclick="vid.currentTime+=120">+2m</button>
-				<div style='border:1px solid #000'id=extra><b>Lessons</b></div>
-				<div id=tbl><table><tr id=par></tr></table></div>
 			</div>
 		</div>
 		<script>
@@ -105,9 +112,15 @@ const data=[
 	[28283.5,"Inverse Trig Functions"],
 	[28855.8,"Derivatives of Inverse Trig Functions"],
 	[29531.6,"Related Rates - Distances"],
-	[29875.3,"Related Rates - Water Flows into a Cone"]
+	[29875.3,"Related Rates - Water Flows into a Cone"],
+	[30141.3,"Related Rates - Changing Angle"],
+	[30500.5,"Solving Right Triangles"],
+	[30894.8,"Max and Min Values"],
+	[31578.5,"1st and 2nd Derivative Test"],
+	[31897.8,"Extreme Values"],
+	[32493.9,"Main Value Theorem"]
 ];
-function interaction(e){
+function handle(e){
 	["mouseenter","mouseover"].forEach(m=>e.addEventListener(m,v=>e.style.backgroundColor="#ccc"));
 	["touchstart","mousedown"].forEach(m=>e.addEventListener(m,v=>e.style.backgroundColor="#999"));
 	["touchend","mouseup","mouseout","touchcancel","mouseleave","contextmenu"].forEach(m=>e.addEventListener(m,v=>e.style.backgroundColor="#fff"));
@@ -116,30 +129,34 @@ function skipToTimestamp(n){
 	vid.currentTime=n;
 	vid.play();
 }
+function getProperty(el,p){
+	return getComputedStyle(el).getPropertyValue(p);
+}
+function update(){
+	requestAnimationFrame(update);
+	dur.innerText=vid.currentTime.toFixed(1);
+	let res=window.innerWidth<window.innerHeight;
+	flexbox.style.display=res?"inline-block":"flex";
+	vid.style.height=res?"auto":window.innerHeight+"px";
+	let vh=parseFloat(getProperty(vid,"height"));
+	let ex=parseFloat(getProperty(extra,"height"));
+	tbl.style.height=res?window.innerHeight-vh-ex+"px":window.innerHeight-ex+"px";
+}
 document.addEventListener("DOMContentLoaded",()=>{
 	vid.addEventListener("loadedmetadata",function omdl(){
 		vid.removeEventListener("loadedmetadata",omdl);
 		flexbox.style.opacity=1;
 		let dl=data.length;
 		for(let i=0;i<dl;i++){
-			const[ts,tx]=data[i],e=document.createElement("td");
-			e.innerHTML=i+1+": "+tx;
-			interaction(e);
+			let[ts,tx]=data[i],e=document.createElement("td");
 			e.onclick=_=>skipToTimestamp(ts);
+			e.innerHTML=i+1+": "+tx;
+			handle(e);
 			par.appendChild(e);
 		};
 	});
 	vid.src="https://www.dropbox.com/scl/fi/si48hap617shxnw0gw2yf/vid.mp4?rlkey=t748kd0wsnl1zi4qyg96s6gsp&raw=1";
-});
-requestAnimationFrame(function update(){
-	dur.innerText=vid.currentTime.toFixed(1);
-	let res=window.innerWidth<window.innerHeight;
-	flexbox.style.display=res?"inline-block":"flex";
-	vid.style.height=res?"auto":window.innerHeight+"px";
-	let vh=parseFloat(getComputedStyle(vid).getPropertyValue("height"));
-	let ex=parseFloat(getComputedStyle(extra).getPropertyValue("height"));
-	tbl.style.height=res?window.innerHeight-vh-ex+"px":window.innerHeight-ex+"px";
-	requestAnimationFrame(update);
+	update();
 });
 		</script>
 	</body>
