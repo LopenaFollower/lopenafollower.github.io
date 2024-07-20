@@ -17,10 +17,10 @@
 	</head>
 	<body>
 		<div id=box>
-			<select id=dropdown oninput="site=this.value">
+			<select tab-index=-1 id=dropdown oninput="site=this.value">
 				<option value=null></option>
 			</select><br>
-			<button onclick="verify()">Go</button>
+			<button tab-index=-1 onclick="verify()">Go</button>
 		</div>
 		<script>
 var site=null;
