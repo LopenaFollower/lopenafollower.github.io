@@ -172,6 +172,7 @@ const{place,newGame}=(function(){
 		let dif=minVal(63,maxVal(1,Number(prompt("Missing Count(1-63)",56).replaceAll(/[^\d]/g,""))));
 		sudoku=new Sudoku(dif);
 		sudoku.fillValues();
+		selected=null;
 		won=0;
 		startTime=Date.now();
 		current=sudoku.getCopy();
