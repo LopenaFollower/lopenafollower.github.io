@@ -46,8 +46,8 @@ Array.prototype.rand=function(){
 const t=id=>$(id).text();
 const ps=(e,n=0)=>e&&Number(e.split(",")[n]);
 const gi=n=>grid_ids.includes(n);
-function arent(a,...b){
-	return a!==b[0]&&b.every(e=>e==b[0]);
+function arent(a,b,...c){
+	return a!==b&&c.every(e=>e==b);
 }
 function place(id,s){
 	return id&&!win.text("")&&!t(id)&&(grid.push(id))&&$(id).text(s);
@@ -104,6 +104,7 @@ function botMove(){
 	if(grid.length>8||!ongoing)return;
 	let r=!1;
 	if(bot=="X"&&moveCnt<2){
+		console.log(1);
 		if(!mode){
 			moveCnt?place(beside(lastMove),bot):place("2,2",bot);
 		}else if(mode==1){
@@ -112,6 +113,7 @@ function botMove(){
 			while(!r)r=place([...corners,...sides].rand(),bot);
 		}
 	}else if(bot=="O"&&moveCnt==1){
+		console.log(2)
 		if(!mode){
 			place("2,2",bot)||place(corners.rand(),bot);
 		}else{
