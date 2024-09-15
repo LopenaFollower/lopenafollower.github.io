@@ -50,9 +50,9 @@
 			}
 			div.fieldset{
 				border:1px white solid;
-				width:fit-content;
 				padding:3px;
 				margin:2px;
+				width:100%;
 			}
 			#sortsholder>div.shown{
 				margin-top:3px;
@@ -212,7 +212,7 @@
 							<tr><td colspan=2 id=timeDisplay></td></tr>
 						</table>
 					</div>
-					<div id=sortsfieldset class=fieldset style="overflow-x:scroll">
+					<div class=fieldset style="max-width:50%">
 						<div id=cont>
 							<input id=searchBar oninput='filterSorts(this.value)'placeholder='Search...'/>
 							<div class=topicname>
@@ -28849,7 +28849,6 @@ function appendTo(p,t,c){
 }
 sortNames.forEach((e,i)=>appendTo(sortsholder,e,()=>runSort(e)));
 sortsholder.style.height=parseFloat(window.getComputedStyle(cont).getPropertyValue("height"))+"px";
-sortsfieldset.style.width=parseFloat(window.innerWidth)/1.9+"px";
 function runSort(name){
 	if(sortRunning||!sorts[name]){
 		if(!loopSort.checked&&sortnamedisp.innerText!="Running: ...")sortQueue=name;
