@@ -29316,6 +29316,20 @@ class Sorts{
 			}else l++;
 		}
 	}
+	async weirdInsertionSort(len){
+		let s=false,k=0;
+		while(!s){
+			s=true;
+			for(let i=1;i<len;i++)
+				for(let j=i;j>0&&compareIndices(arr,j-1,j)>0;j--){
+					swap(arr,i,j-1,0,s=false);
+					if(++k>sqrt(len)){
+						markSwap(i,j-1);
+						await sleep(k=0);
+					}
+				}
+		}
+	}
 }
 const sorts=new Sorts(),sortNames=sorts.getNames();
 let filtering=false;
