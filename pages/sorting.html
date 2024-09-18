@@ -29330,6 +29330,22 @@ class Sorts{
 				}
 		}
 	}
+	async inverseInsertionSort(len){
+		for(let i=1;i<len;i++){
+			let j=len-1,t=arr[j],k=0;
+			while(j>=i||(j>=0&&compareValues(arr[j],t)+1)){
+				if(j>0){
+					write(arr,j,arr[j-1]);
+					if(++k>sqrt(len)){
+						mark(j);
+						await sleep(k=0);
+					}
+				}
+				j--;
+			}
+			await write(arr,j+1,t,0,true);
+		}
+	}
 }
 const sorts=new Sorts(),sortNames=sorts.getNames();
 let filtering=false;
