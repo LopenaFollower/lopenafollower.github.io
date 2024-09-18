@@ -29306,6 +29306,16 @@ class Sorts{
 					}
 				}
 	}
+	async hesvoSort(len){
+		let l=1;
+		while(l<len){
+			if(compareIndices(arr,l-1,len-1)>0)await reversal(arr,l-1,len-1,.5,true);
+			if(compareIndices(arr,l-1,l)>0){
+				await multiSwap(arr,l-1,len-1,0,true);
+				if(l>1)l--;
+			}else l++;
+		}
+	}
 }
 const sorts=new Sorts(),sortNames=sorts.getNames();
 let filtering=false;
