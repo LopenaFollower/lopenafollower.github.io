@@ -58,7 +58,7 @@
 			#sortsholder>div.shown{
 				margin-top:3px;
 			}
-			#sortsholder>div.hidden{
+			#sortsholder>div.hidden,#imageInput{
 				display:none;
 			}
 			div.topicname{
@@ -112,15 +112,18 @@
 							<tr>
 								<td>Display</td>
 								<td>
-									<select id=displayType oninput='draw();if(parseInt(this.value)==2)verifyc();else if(this.value=="5")verify(prompt("url",""));'>
+									<select id=displayType oninput='draw();let v=parseInt(this.value);if(v==2||v==3)verifyc();else if(v==7)verify(prompt("url",""));else if(v==8)imageInputHandler();'>
 										<option value=0>Bar</option>
 										<option value=1>Point</option>
 										<option value=2>Gradient</option>
-										<option value=2.5>Gradient - Bars</option>
-										<option value=3>RGB</option>
-										<option value=4>Circle</option>
-										<option value=5>Custom Image</option>
+										<option value=3>Gradient - Bars</option>
+										<option value=4>RGB</option>
+										<option value=5>Circle</option>
+										<option value=6>Circle RGB</option>
+										<option value=7>Custom Image(URL)</option>
+										<option value=8>Custom Image(Upload)</option>
 									</select>
+									<input id=imageInput type=file accept="image/*"/>
 								</td>
 							</tr>
 							<tr>
@@ -254,6 +257,7 @@ let image=new Image();
 let startTime=Date.now();
 let clog=console.log;
 let arr=[...new Array(arr_size)].map((e,i)=>++i);
+let sortedArr=[...arr];
 let shuffleNames=[...shuffleType.children].map(e=>e.value);
 let counts={
 	swp:0,wrt:0,rev:0,aux:0,cmps:0,
@@ -267,6 +271,9 @@ function formatTime(t){
 	t=(t-t%1e3)/1e3;
 	let s=t%60;
 	return(t-s)/60+":"+pad(s);
+}
+function sleep(ms){
+	return new Promise(r=>setTimeout(r,ms));
 }
 let prevTime=0,frames=0;
 requestAnimationFrame(function update(time){
@@ -311,6 +318,7 @@ function setArraySize(){
 	let n=minVal(2048,maxVal(2,parseInt(pn)));
 	if(typeof n!=="number"||isNaN(n))return;
 	arr=[...new Array(arr_size=n)].map((e,i)=>++i);
+	sortedArr=[...arr].sort((a,b)=>a-b);;
 	maxValue=arr_size;
 	willLoop=loopSort.checked;
 	emergencyStop=stopped=loopSort.checked=true;
@@ -321,6 +329,7 @@ function limitArraySize(n){
 	arr_size=minVal(old,n);
 	let t=[...arr];arr=[];
 	arraycopy(t,0,arr,0,n,0,false,true);
+	sortedArr=[...arr].sort((a,b)=>a-b);
 	maxValue=arr_size;
 	willLoop=loopSort.checked;
 	emergencyStop=stopped=loopSort.checked=true;
@@ -329,6 +338,7 @@ function limitArraySize(n){
 function restoreArraySize(){
 	if(restoreLen===null)return;
 	arr=[...new Array(arr_size=restoreLen)].map((e,i)=>++i);
+	sortedArr=[...arr].sort((a,b)=>a-b);
 	restoreLen=null;
 	maxValue=arr_size;
 	draw();
@@ -412,6 +422,20 @@ function verify(s){
 	image.setAttribute("crossorigin","anonymous");
 	image.src=s;
 }
+function imageInputHandler(){
+	imageInput.style.display="block";
+	imageInput.onchange=e=>{
+		let t=e.target||window.event.srcElement,f=t.files;
+		if(FileReader&&f&&f.length){
+			let fr=new FileReader();
+			fr.onload=function(){
+				image.src=fr.result;
+				imageInput.style.display="none";
+			}
+			fr.readAsDataURL(f[0]);
+		}
+	}
+}
 function fill(hex="#fff"){
 	ctx.fillStyle=hex;
 }
@@ -426,20 +450,23 @@ function findSegments(a,l){
 	for(let i=0;i<l-1;i++)if(a[i]<=a[i+1])c++;
 	return c/(l-1)*100;
 }
+function getDisparity(n,i,r){
+	return(arr_size-abs(sortedArr.indexOf(n)-i))/arr_size*r;
+}
 function draw(){
 	if(displayCooldown)return;
 	displayCooldown=true;setTimeout(()=>displayCooldown=false);
 	const{w,h}=getPixelR();
-	ctx.clearRect(0,0,cvs.width,cvs.height);
-	let t=parseFloat(displayType.value);
-	fill();
-	let g,center=[cvs.width/2,cvs.height/2],rad=minVal(...center)*.9,getDist,angles,cosA,sinA;
-	if(t>1)g=t<3?gradient.gen():gradient.genRGB();
+	ctx.clearRect(0,0,cvs.width,cvs.height);fill();
+	let renderMode=parseFloat(displayType.value);
+	let grad,center=[cvs.width/2,cvs.height/2],rad=minVal(...center)*.9;
+	if(renderMode==2||renderMode==3||renderMode==4||renderMode==6)
+		grad=renderMode<4?gradient.gen():gradient.genRGB();
 	let iw=image.width;
 	let ih=image.height;
-	let cu3=iw>0;
+	let imageLoaded=iw>0;
 	let temp,scale,cut;
-	if(cu3){
+	if(imageLoaded){
 		temp=document.createElement("canvas");
 		scale=1.5;
 		temp.width=cvs.width/scale;temp.height=cvs.height/scale;
@@ -447,30 +474,20 @@ function draw(){
 		cut=temp.width/arr_size;
 		temp.getContext("2d").drawImage(image,0,0,iw,ih,0,0,iw*wR,ih*hR);
 	}
-	if(t==4){
-		const correct=[...arr].sort((a,b)=>a-b);
-		getDist=function(n,i){
-			return(arr_size-abs(correct.indexOf(n)-i))/arr_size*rad;
-		}
-		angles=new Array(arr_size).fill(2*PI/arr_size).map((e,i)=>e*i-.5*PI);
-		cosA=angles.map(e=>cos(e));
-		sinA=angles.map(e=>sin(e));
-	}
 	for(let i=0;i<arr_size;i++){
 		let v=arr[i];
-		if(t<2)ctx.fillRect(i*w,cvs.height-v*h,w*1.05,!t?v*h:w);
-		else if(t<4){
-			fill(g[arr[i]]);
-			if(t<2.1)ctx.fillRect(i*w,0,w*1.05,cvs.height);
-			else ctx.fillRect(i*w,cvs.height-v*h,w*1.05,v*h);
-		}else if(t<5){
-			let rd=getDist(v,i);
+		if(renderMode==2||renderMode==3||renderMode==4||renderMode==6)fill(grad[arr[i]]);
+		if(0==renderMode||3==renderMode||4==renderMode)ctx.fillRect(i*w,cvs.height-v*h,w*1.05,v*h);
+		else if(1==renderMode)ctx.fillRect(i*w,cvs.height-v*h,w*1.05,w);
+		else if(2==renderMode)ctx.fillRect(i*w,0,w*1.05,cvs.height);
+		else if(5==renderMode||6==renderMode){
+			let rd=getDisparity(v,i,rad),a=2*PI/arr_size*i-PI/2;
 			ctx.beginPath();
-			ctx.arc(center[0]+cosA[i]*rd,center[1]+sinA[i]*rd,w*1.05,0,2*PI);
+			ctx.arc(center[0]+cos(a)*rd,center[1]+sin(a)*rd,w*1.05,0,2*PI);
 			ctx.fill();
-		}else
-			if(cu3)
-				ctx.drawImage(temp,v*w/scale,0,w*cut*scale,temp.height,i*w,0,w*2.025*scale,cvs.height);
+		}else if(7==renderMode||8==renderMode){
+			if(imageLoaded)ctx.drawImage(temp,v*w/scale,0,w*cut*scale,temp.height,i*w,0,w*2.025*scale,cvs.height);
+		}
 	}
 	comparisonsDisplay.innerText=localeS(counts.cmps)+" Comparisons";
 	swapsDisplay.innerText=localeS(counts.swp)+" Swaps";
@@ -480,8 +497,28 @@ function draw(){
 	progressDisplay.innerText=findSegments(arr,arr_size).toFixed(1)+"% Sorted";
 	uniquesCount.innerText=new Set(arr).size+" Uniques";
 }
-function sleep(ms){
-	return new Promise(r=>setTimeout(r,ms));
+function mark(i){
+	if(markArray.checked){
+		sound(Number(arr[i])||0,.05);
+		let{w,h}=getPixelR();
+		let renderMode=parseFloat(displayType.value);
+		ctx.strokeStyle=renderMode-6?"#f00":"#fff";
+		fill(renderMode-3&&renderMode-6?"#f00":"#fff");
+		let rad=minVal(cvs.width,cvs.height)/2*.9;
+		let v=arr[i];
+		let rd=getDisparity(v,i,rad);
+		let a=2*PI/arr_size*i-PI/2;
+		if(0==renderMode||1==renderMode||3==renderMode||4==renderMode)ctx.fillRect(i*w,cvs.height-v*h,w*1.05,v*h);
+		else if(2==renderMode||7==renderMode||8==renderMode)ctx.fillRect(i*w,0,w*1.05,cvs.height);
+		else if(5==renderMode||6==renderMode){
+			ctx.lineWidth=w;
+			ctx.beginPath();
+			ctx.moveTo(cvs.width/2,cvs.height/2);
+			ctx.lineTo(cvs.width/2+cos(a)*rd,cvs.height/2+sin(a)*rd);
+			ctx.stroke();
+		}
+	}
+	return sleep();
 }
 function sound(fr,g=.1){
 	if(!playsound)return;
@@ -549,8 +586,7 @@ const Rotations={
 	griesMills:async function(A,p,lA,lB,sl,m,x){
 		while(lA&&lB)
 			if(lA<=lB){
-				await this.blockSwap(A,p,p+lA,lA,sl,m,x);
-				p+=lA;
+				await this.blockSwap(A,p,p+=lA,lA,sl,m,x);
 				lB-=lA;
 			}else{
 				await this.blockSwap(A,p+lA-lB,p+lA,lB,sl,m,x);
@@ -565,8 +601,8 @@ const Rotations={
 	holyGriesMills:async function(A,p,lA,lB,sl,r,x){
 		while(lA>1&&lB>1){
 			while(lA<=lB){
-				await this.blockSwap(A,p,p+lA,lA,sl,r,x);
-				p+=lA;lB-=lA;
+				await this.blockSwap(A,p,p+=lA,lA,sl,r,x);
+				lB-=lA;
 			}
 			if(lA<2||lB<2)break;
 			while(lA>lB){
@@ -578,16 +614,14 @@ const Rotations={
 		else if(lB==1)await this.shiftBackwards(A,p,lA,sl,r,x);
 	},
 	helium:async function(A,p,lA,lB,sl,m,x){
-		while(lB>1&&lA>1){
+		while(lB>1&&lA>1)
 			if(lB<lA){
-				await this.blockSwap(A,p,p+lA,lB,sl,m,x);
-				p+=lB;
+				await this.blockSwap(A,p,p+=lA,lB,sl,m,x);
 				lA-=lB;
 			}else{
 				await this.swapBlocksBackwards(A,p,p+lB,lA,sl,m,x);
 				lB-=lA;
 			}
-		}
 		if(lB==1)await this.shiftBackwards(A,p,lA,sl,m,x);
 		else if(lA==1)await this.shiftForwards(A,p,lB,sl,m,x);
 	},
@@ -600,30 +634,21 @@ const Rotations={
 			write(A,a++,A[c],0,m,x);
 			write(A,c++,A[d],0,m,x);
 			write(A,d--,sw,0,m,x);
-			if(++i*sl>1){
-				if(m)mark(d+1);
-				await sleep(i=0);
-			}
+			if(++i*sl>1)await sleep(i=0);
 		}
 		while(a<b){
 			sw=A[b];
 			write(A,b--,A[a],0,m,x);
 			write(A,a++,A[d],0,m,x);
 			write(A,d--,sw,0,m,x);
-			if(++i*sl>1){
-				if(m)mark(d+1);
-				await sleep(i=0);
-			}
+			if(++i*sl>1)await sleep(i=0);
 		}
 		while(c<d){
 			sw=A[c];
 			write(A,c++,A[d],0,m,x);
 			write(A,d--,A[a],0,m,x);
 			write(A,a++,sw,0,m,x);
-			if(++i*sl>1){
-				if(m)mark(a-1);
-				await sleep(i=0);
-			}
+			if(++i*sl>1)await sleep(i=0);
 		}
 		if(a<d)await reversal(A,a,d,sl,m,x);
 	},
@@ -642,9 +667,7 @@ const Rotations={
 					}
 					await write(A,j-lA,t,sl,r,x);
 				}
-				p+=lB;
-				lB%=lA;
-				lA-=lB;
+				p+=lB;lB%=lA;lA-=lB;
 			}else{
 				for(let i=0;i<lB;i++){
 					let t=A[p+i+lA],j=p+i+lA-lB;
@@ -657,9 +680,7 @@ const Rotations={
 					}
 					await write(A,j+lB,t,sl,r,x);
 				}
-				e=p+lB;
-				lA%=lB;
-				lB-=lA;
+				e=p+lB;lA%=lB;lB-=lA;
 			}
 		}
 	},
@@ -740,24 +761,24 @@ const IndexedRotations={
 }
 const Wr={
 	insert:async function(A,p,t,sl,m,x){
-		let tm=A[p],j;
+		let tm=A[p],j=0;
 		if(t-p>0)
 			for(let i=p;i<t;i++){
 				write(A,i,A[i+1],0,false,x);
-				if(++j*sl>=1){
+				if(++j*sl>1){
 					if(m)mark(i);
-					await sleep();
+					await sleep(j=0,s=true);
 				}
 			}
 		else if(t-p<0)
 			for(let i=p;i>t;i--){
 				write(A,i,A[i-1],0,false,x);
-				if(++j*sl>=1){
+				if(++j*sl>1){
 					if(m)mark(i);
-					await sleep();
+					await sleep(j=0,s=true);
 				}
 			}
-		if(p-t)await write(A,t,tm,sl,m,x);
+		if(p-t)write(A,t,tm,0,m,x);
 	}
 }
 const MHT={
@@ -846,42 +867,21 @@ const bestNS={
 		}
 	}
 }
-function ask(t,d){return!prompts.checked?d:prompt(t,d)}
-function askForNum(d,t){
-	let r=Number(ask(t,d))|0;
-	return r>1&&r<=arr_size?r:d;
+function isNumber(n){
+	return(typeof n=="number"&&n-n===0)||(typeof n=="string"&&Number.isFinite(+n)&&n.trim()!=="");
 }
-function mark(i){
-	if(markArray.checked){
-		sound(Number(arr[i])||0,.05);
-		let{w,h}=getPixelR();
-		ctx.strokeStyle="#f00";
-		let dt=parseFloat(displayType.value);
-		fill(dt-3?"#f00":"#fff");
-		let t=dt>1&&dt<2.1||dt==5;
-		if(dt-4)ctx.fillRect(i*w,!t?cvs.height-arr[i]*h:0,w,!t?arr[i]*h:cvs.height);
-		else{
-			let correct=[...arr].sort((a,b)=>a-b);
-			let rad=minVal(cvs.width,cvs.height)/2*.9;
-			function getDist(n,i){
-				return(arr_size-abs(correct.indexOf(n)-i))/arr_size*rad;
-			}
-			let rd=getDist(arr[i],i);
-			let a=2*PI/arr_size*i-PI/2;
-			ctx.lineWidth=w;
-			ctx.beginPath();
-			ctx.moveTo(cvs.width/2,cvs.height/2);
-			ctx.lineTo(cvs.width/2+cos(a)*rd,cvs.height/2+sin(a)*rd);
-			ctx.stroke();
-		}
-	}
-	return sleep();
+function ask(t,d){return!prompts.checked?d:prompt(t,d)}
+function askForNum(d,t,n,x){
+	n=isNumber(n)?n:2;x=isNumber(x)?x:arr_size;
+	let r=Number(ask(t,d))|0;
+	return r>=n&&r<=x?r:d;
 }
 function stop(reason){
 	if(shuffling)return stopped=false;
 	setTimeout(()=>{
 		stopped=sortRunning=false;
 		arr=[...new Array(arr_size)].map((e,i)=>++i);
+		sortedArr=[...arr].sort((a,b)=>a-b);
 		maxValue=maxVal(...arr);
 		draw();
 	});
@@ -1705,11 +1705,10 @@ class TimSorting{
 				else l=m+1;
 			}
 			let n=s-l;
-			switch(n){
-				case 2:await write(a,l+2,a[l+1],1,true);
-				case 1:await write(a,l+1,a[l],1,true);break;
-				default:await arraycopy(a,l,a,l+1,n,1,true);
-			}
+			if(n&&n<3){
+				if(n>1)await write(a,l+2,a[l+1],1,true);
+				await write(a,l+1,a[l],1,true);
+			}else await arraycopy(a,l,a,l+1,n,1,true);
 			await write(a,l,p,1,true);
 		}
 	}
@@ -3377,7 +3376,7 @@ class Sorts{
 		await weaveCircle(arr,0,n,1);
 	}
 	async americanFlagSort(len){
-		let base=askForNum(64,"Bucket count");
+		let base=askForNum(64,"Bucket count",1,len);
 		function gMND(A,l){
 			let m=-1/0,t=0;
 			for(let i=0;i<l;i++){
@@ -3409,7 +3408,7 @@ class Sorts{
 						write(os,dg,os[dg]+1,0,false,true);
 						write(cn,dg,cn[dg]-1,0,false,true);
 						let t=A[to];
-						await write(A,to,n,.75,true,false);
+						await write(A,to,n,.75,true);
 						n=t;fr=to;
 					}while(fr-or);
 				}
@@ -3448,7 +3447,7 @@ class Sorts{
 	async bogoSort(len){
 		for(let i=0;!isArraySorted(arr,len);){
 			bogoSwap(arr,0,len);
-			if(++i>sqrt(len))await mark(randInt(0,len),i=0);
+			if(++i>cbrt(len))await mark(randInt(0,len),i=0);
 		}
 	}
 	async bozoSort(len){
@@ -12062,7 +12061,7 @@ class Sorts{
 		}
 	}
 	async divisorSort(len){
-		let base=askForNum(10,"Base");
+		let base=askForNum(10,"Base",1,len);
 		async function safePush(aL,i,v){
 			while(aL.length<=i)aL.push([]);
 			aL[i].push(v);
@@ -12268,16 +12267,15 @@ class Sorts{
 			i=1;
 			while(i-1+g<len){
 				if(compareIndices(arr,i-1,i-1+g)>0){
-					swap(arr,i-1,i-1+g,0);
+					swap(arr,i-1,i-1+g);
 					as=true;
 					xl=i+1;xr=i+g-1;
-					if(g-1){
+					if(g-1)
 						for(let r=0;r<g-1;r++){
 							if(compareIndices(arr,xl-1,xr-1)>0)
-								swap(arr,xl-1,xr-1,0);
+								swap(arr,xl-1,xr-1);
 							xl++;xr--;
 						}
-					}
 					await sleep();
 				}
 				i++;
@@ -13377,7 +13375,7 @@ class Sorts{
 		await sort(arr,len);
 	}
 	async noisySort(len){
-		let base=askForNum(16,"Noise intensity");
+		let base=askForNum(16,"Noise intensity",1,len);
 		async function sort(A,ln){
 			let l=1,r=1,vi=1,vp=false;
 			while(!vp){
@@ -17612,7 +17610,7 @@ class Sorts{
 		await sort(arr,len);
 	}
 	async PCBoysParShellSort(len){
-		let base=askForNum(10,"Division constant");
+		let base=askForNum(10,"Division constant",1,len);
 		function threshold(x){
 			return sqrt(x);
 		}
@@ -18811,7 +18809,7 @@ class Sorts{
 		await sort(arr,len);
 	}
 	async baseNMergeSort(len){
-		let base=askForNum(10,"Base");
+		let base=askForNum(10,"Base",1,1000);//lwk
 		function copyStarts(s,b){
 			let c=new Array(b);
 			for(let i=0;i<b;i++)
@@ -32831,12 +32829,387 @@ class Sorts{
 					let f=false,g;
 					for(g=2;g<=b&&!f;g++)if(compareIndices(A,0,g)<0)f=true;
 					if(!f){
-						await Wr.insert(A,0,b--,.05,true);
+						await Wr.insert(A,0,b--,.01,true);
 						b=score(A,b);
-					}else await Wr.insert(A,0,g-2,.05,true);
-				}else await Wr.insert(A,0,b,.05,true);
+					}else await Wr.insert(A,0,g-2,.01,true);
+				}else await Wr.insert(A,0,b,.01,true);
 		}
 		await sort(arr,len);
+	}
+	async meanPartitionSort(len){
+		async function partition(A,s,e){
+			let n=1/0,x=-1/0;
+			for(let i=s;i<e;i++){
+				if(A[i]<n)n=A[i];
+				if(A[i]>x)x=A[i];
+			}
+			let md=n+(x-n)/2+1|0,il=0;
+			for(let i=s;i<e;i++)if(compareValues(A[i],md)<0)if(s+il++-i)await swap(A,i,s+il-1,.25,true);
+			return il;
+		}
+		async function presumepartitions(A,s,e){
+			if(e-s>1){
+				let m=await partition(A,s,e);
+				await presumepartitions(A,s,s+m);
+				await presumepartitions(A,s+m,e);
+			}
+		}
+		await presumepartitions(arr,0,len,0);
+	}
+	async swaplessClamberSort(len){
+		async function clamber(A,a,b){
+			for(let i=a+1,k=0;i<b;i++){
+				let t=A[i],c=false;
+				for(let j=a;j<i;j++)
+					if(compareValueIndex(A,t,j)<0){
+						let t2=A[j];c=true;
+						write(A,j,t);
+						if(++k>sqrt(len))await mark(j,k=0);
+						t=t2;
+					}
+				if(c)await write(A,i,t,.25,true);
+			}
+		}
+		await clamber(arr,0,len);
+	}
+	async paintSort(len){
+		for(let i=0,k=0;i<len;i++)
+			for(let j=i;j<len;j++){
+				if(compareIndices(arr,j,j+1)>0){
+					await multiSwap(arr,j,len-1,.005,true);
+					j=i;
+				}else if(j<len-1){
+					swap(arr,j,j+1);
+					if(++k>sqrt(len))await markSwap(j,j+1,k=0);
+				}
+				if(compareIndices(arr,j,i)>0)await swap(arr,j,i,1,true);
+			}
+		await reversal(arr,0,len-1,1,true);
+	}
+	async circleSortInverseIterative(len){
+		async function circle(A,a,b,as){
+			let sh=false;
+			for(;a<b;a++,b--)if(compareIndices(A,a,b)>0)await swap(A,a,b,1,sh=true);
+			return as||sh;
+		}
+		let g=2,as=true;
+		while(as){
+			as=false;g=2;
+			while(g<=len){
+				for(let o=0;o+g-1<len;o+=g)as=await circle(arr,o,o+g-1,as);
+				g*=2;
+			}
+			if(g/2-len&&!as)await new QuadSorting().quadSort(arr,0,len);
+		}
+	}
+	async optimizedShoveSort(len){
+		let l=1,r=0;
+		while(l<len)
+			if(compareIndices(arr,l-1,l)>0){
+				await multiSwap(arr,l-1,len-1,.0125,true);
+				if(l>1)l--;
+				if(++r>=len-l){
+					await reversal(arr,l,len-1,1.25,true);
+					r=0;
+				}
+			}else l++;
+	}
+	async NReboundSort(len){
+		let base=askForNum(0,"Base",0);
+		async function sort(A,l,t){
+			if(!t)t=(l/16|0)>1?(l/16|0):(l/2|0);
+			let su=false,s=false;
+			for(let d=1;!s;d*=-1){
+				let i=d>0||!su?0:l-2,b=0;
+				su=s=true;
+				for(;i>=0&&i<l-1;i+=d)
+					if(compareIndices(A,i,i+1)>0){
+						await swap(A,i,i+1,.01,true,s=false);
+						if(++b==t){
+							d=-d;
+							b=0;
+						}
+					}
+			}
+		}
+		await sort(arr,len,base);
+	}
+	async badGnomeSort(len){
+		let s=0;
+		while(s<len&&compareIndices(arr,s,s+1)<1)s++;
+		for(let i=s;i<len;i++){
+			await multiSwap(arr,len-1,i,.05,true);
+			let j=i-1,k=0;
+			while(j+1&&compareIndices(arr,j,j+1)>0){
+				swap(arr,j,j--+1);
+				if(++k>sqrt(len))await markSwap(j+1,j+2,k=0);
+			}
+		}
+	}
+	async binaryVacuumSort(len){
+		async function pull(A,a,b){
+			let t=a;--b;
+			while(a<b){
+				let m=a+(b-a+1)/2|0,c=compareIndices(A,m,t);
+				if(c>0)return await multiSwap(A,t,m,2/b,true);
+				else a=m+1;
+			}
+			await multiSwap(A,t,b,1/b,true);
+		}
+		while(len>0){
+			while(!isMaxSorted(arr,0,len))
+				await pull(arr,0,len);
+			len--;
+		}
+	}
+	async pingPongSort(len){
+		let i=len/2|0,sC=0,f=true,j=0;
+		while(1){
+			if(compareIndices(arr,i-1,i)>0){
+				swap(arr,i-1,i);
+				if(++j>sqrt(len))await markSwap(i-1,i,j=0);
+				if(i==1)f=true;
+				else if(i==len-1)f=false;
+				else f=!f;
+				sC=0;
+				continue;
+			}else{
+				if(f)i++;
+				else i--;
+				sC++;
+			}
+			if(sC>=len-1)break;
+			else{
+				if(!i){
+					f=true;
+					sC=0;
+					i++;
+				}else if(i==len){
+					f=false;
+					sC=0;
+					i--;
+				}
+			}
+		}
+	}
+	async poptimalSort(len){
+		async function greversal(A,s,e,g){
+			let l=e-s,k=s+l-g-l%g;
+			for(let i=s,j=k;i<j;i+=g,j-=g)
+				await swap(A,i,j,.1,true);
+		}
+		async function defeatPatterns(A,s,e,g,dr){
+			let c=compareIndices(A,s,s+g)*dr,n=c,t=s;
+			if(!c)c=-dr;
+			while(s<e-g&&(n==c||!n)){
+				s+=g;
+				n=compareIndices(A,s,s+g);
+			}
+			if(c==dr)await greversal(A,t,s+1,g);
+			return s>=e-g;
+		}
+		async function zubble(A,s,e,dr,g){
+			if(await defeatPatterns(A,s,e,g,dr))return;
+			let fb=s+g,cs=1;
+			for(let j=e-g;j>=fb;j-=g*cs){
+				let fs=false;
+				for(let i=maxVal(s,fb-g);i<j;i+=g){
+					let k=i;
+					while(i<j&&compareIndices(A,k,i+g)==dr)i+=g;
+					if(k-i){
+						await swap(A,k,i,1,true);
+						if(!fs){
+							fb=k;
+							fs=true;
+						}
+						cs=1;
+					}else cs++;
+				}
+			}
+		}
+		async function circleRoutine(A,s,e,b,dr,g){
+			for(let i=s,j=e;i<j;i+=g,j-=g)if(j<b)if(compareIndices(A,i,j)==dr)await swap(A,i,j,1,true);
+			let m=s+((e-s)/(2*g)|0)*g;
+			if(m==s)return;
+			await circleRoutine(A,s,m,b,dr,g);
+			await circleRoutine(A,m+g,e,b,dr,g);
+		}
+		async function gpedCircle(A,s,e,d,g){
+			let ug=(e-s)/g|0,cp=1;
+			while(cp<ug)cp<<=1;
+			await circleRoutine(A,s,s+(cp-1)*g,e,d,g);
+		}
+		async function wipdiPop(A,s,e,dr,gq,o){
+			if(e-s<=gq)return;
+			if(o<1)await zubble(A,s,e,dr,gq);
+			else{
+				let g=1,d=dr;
+				while(g<=((e-s)/(2*gq)|0))g*=2;
+				g=g/2|0;
+				let li=s,tC=sqrt(g)|0;
+				while(g>1){
+					let gr=g*gq;d=dr;
+					for(let i=s;i<s+(e-s)%gr+gr;i+=gq){
+						if(o==1&&g<tC)await gpedCircle(A,i,e,d,gr);
+						else await wipdiPop(A,i,e,d,gr,o-1);
+						li=i;d=-d;
+					}
+					g=g/2|0;
+				}
+				if(d==dr)await greversal(A,li,e+gq,2*gq);
+				else await greversal(A,s,e+gq,2*gq);
+				await wipdiPop(A,s,e,dr,gq,o-1);
+			}
+		}
+		await wipdiPop(arr,0,len,1,1,1);
+	}
+	async strangeSort(len){
+		let base=askForNum(2,"Base");
+		let as=true;
+		while(as){
+			as=false;
+			for(let o=1;o-len;o++){
+				let m=1,b=1;
+				while(o+m<=len)
+					if(compareIndices(arr,o+m/base-1|0,o+m-1)>0){
+						await swap(arr,o+m/base-1|0,o+m-1,.1,as=true);
+						if(!m){
+							b*=base;
+							m=b;
+						}else m=m/base|0;
+					}else{
+						b*=base;
+						m=b;
+					}
+			}
+		}
+	}
+	async rubbleSort(len){
+		function sig(a,b,d){
+			return(a+b+d*abs(a-b))/2|0;
+		}
+		async function run(A,s,e){
+			if(s>=e-1)return s+1;
+			let c=-compareIndices(A,s++,s)|1,k=s-1,d;
+			do d=compareIndices(A,s++,s);while(s<e&&d-c);
+			let m=(s-k)/2|0,q=sig(k,s-1,-c);
+			for(let i=0;i<m;i++)await swap(A,k+i,q+c*i,1,true);
+			return s;
+		}
+		async function sort(A,l){
+			let rs=new Array(l/2|0),rf=0,r=0;
+			while(r<l)write(rs,rf++,(r=await run(A,r,l))-1,0,false,true);
+			while(rf>1){
+				for(let i=1;i<rf;i++)
+					if(compareIndices(A,rs[i-1],rs[i])>0){
+						let t=A[rs[i-1]],tm=rs[i-1]-1;
+						while(tm>=(i-2<0?0:rs[i-2]+1)){
+							if(compareIndices(A,tm,rs[i])<1)break;
+							await write(A,tm+1,A[tm--],.1,true);
+						}
+						await write(A,tm+1,A[rs[i]],.1,true);
+						await write(A,rs[i],t,.1,true);
+					}
+				if(rs[rf-1]==rs[rf-2])write(rs,--rf,0,0,false,true);
+				else write(rs,rf-1,rs[rf-1]-1,0,false,true);
+			}
+		}
+		await sort(arr,len);
+	}
+	async weirdBubblePopSort(len){
+		async function weirdBubble(A,a,b,d){
+			let c=d?1:-1,s=false,k=0;
+			while(!s){
+				s=true;
+				for(let i=a+1;i<b;i++){
+					let j=i;
+					while(j>a&&compareIndices(A,j-1,j)*c>0){
+						swap(A,i,--j);
+						if(++k>sqrt(b-a))await markSwap(i,j+1,k=0);
+						s=false;
+					}
+				}
+			}
+		}
+		async function popSort(A,a,b){
+			let q=(b-a)/4|0,h=(b-a)/2|0;
+			await weirdBubble(A,a,a+q,0);
+			await weirdBubble(A,a+q,a+h,1);
+			await weirdBubble(A,a+h,b-q,0);
+			await weirdBubble(A,b-q,b,1);
+			await weirdBubble(A,a,a+h,0);
+			await weirdBubble(A,a+h,b,1);
+			await weirdBubble(A,a,b,1);
+		}
+		await popSort(arr,0,len);
+	}
+	async shobeSort(len){
+		let d=false;
+		let s=0;
+		while(!d){
+			d=true;
+			let sf=false;
+			for(let i=s-1>0?s-1:0;i+1<len;i++)
+				while(compareIndices(arr,i,i+1)>0){
+					await multiSwap(arr,i,len-1,.01,true,d=false);
+					if(!sf){
+						s=i;
+						sf=true;
+					}
+				}
+		}
+	}
+	async quasimiddleSort(len){
+		async function cs(A,a,b){
+			if(compareIndices(A,a,b)>0){
+				await swap(A,a,b,.05,true);
+				return true;
+			}
+			return false;
+		}
+		async function middle(A,s,e){
+			let m=s+(e-s)/2|0,sw=false,t=false;
+			for(let i=1;m-i>=s&&m+i<=e;i++){
+				t=await cs(A,m-i,m);
+				if(!sw&&t)sw=true;
+				t=await cs(A,m,m+i);
+				if(!sw&&t)sw=true;
+			}
+			return sw;
+		}
+		let sw=true;
+		while(sw){
+			let t=sw=false;
+			for(let i=1;i<len;i++){
+				t=await middle(arr,0,i);
+				if(!sw&&t)sw=true;
+				t=await middle(arr,i,len-1);
+				if(!sw&&t)sw=true;
+			}
+		}
+	}
+	async segmentedSort(len){
+		async function sortSegments(A,s,e){
+			let as=false;
+			for(let i=s;i<e;i++){
+				let a=i;
+				while(compareIndices(A,i,i+1)<1&&i+1<e)i++;
+				let b1=i,b2=i+1;
+				if(i+1<e){
+					if(compareIndices(A,a,b2)>0){
+						i++;
+						while(compareIndices(A,i,i+1)<1&&i+1<e)i++;
+						let c1=i,c2=i+1;
+						if((b2-a)%(c1-b1)<1||(c1-b1)%(b2-a)<1)await IndexedRotations.holyGriesMills(A,a,b2,c2,.1,as=true);
+						else await IndexedRotations.cycleReverse(A,a,b2,c2,.1,as=true);
+						i=a-1;
+					}else i=b1;
+				}
+			}
+			return as;
+		}
+		while(await sortSegments(arr,0,len));
+		for(let i=1;i<len;i++)await sortSegments(arr,i,len);
 	}
 }
 const sorts=new Sorts(),sortNames=sorts.getNames();
@@ -32848,7 +33221,7 @@ async function filterSorts(t){
 	if(!t.startsWith("@"))t=t.toLowerCase();
 	await document.querySelectorAll("#sortsholder>div").forEach(async(e,i)=>{
 		await sleep();
-		if(t.length<1)e.className="shown";
+		if(!t.length)e.className="shown";
 		else{
 			/*
 			@ - case sensitive
@@ -32901,28 +33274,23 @@ function runSort(name){
 		sorts[name](arr_size).then(async()=>{
 			await sleep(50);
 			let{w,h}=getPixelR();
-			let t=parseFloat(displayType.value);
 			let delay=sqrt(arr_size),sorted=isArraySorted(arr,arr_size);
 			draw();
 			fill(sorted?"#0f0":"#f00");
-			if(!sorted)console.warn(name);
-			let b=t>1&&t<2.1||t==5;
+			let renderMode=parseFloat(displayType.value);
+			let rad=minVal(cvs.width,cvs.height)/2*.9;
 			for(let i=0,j=0;i<arr_size;i++){
 				let v=arr[i];
-				if(t-4)ctx.fillRect(i*w,b?0:cvs.height-v*h,w+.5,b?cvs.height:v*h);
-				else{
-					let correct=[...arr].sort((a,b)=>a-b);
-					let rad=minVal(cvs.width,cvs.height)/2*.9;
-					function getDist(n,i){
-						return(arr_size-abs(correct.indexOf(n)-i))/(arr_size)*rad;
-					}
-					let rd=getDist(v,i);
-					let a=2*PI/arr_size*i-.5*PI;
+				if(0==renderMode||1==renderMode||3==renderMode||4==renderMode)ctx.fillRect(i*w,cvs.height-v*h,w*1.05,v*h);
+				else if(2==renderMode||7==renderMode||8==renderMode)ctx.fillRect(i*w,0,w*1.05,cvs.height);
+				else if(5==renderMode||6==renderMode){
+					let rd=getDisparity(v,i,rad);
+					let a=2*PI/arr_size*i-PI/2;
 					ctx.beginPath();
 					ctx.arc(cvs.width/2+cos(a)*rd,cvs.height/2+sin(a)*rd,w,0,2*PI);
 					ctx.fill();
 				}
-				if(++j>=delay){
+				if(++j>delay){
 					sound(v,.05);
 					await sleep(j=0);
 				}
@@ -32931,6 +33299,7 @@ function runSort(name){
 			throw"";
 		}).catch(async e=>{
 			arr=[...new Array(arr_size)].map((e,i)=>++i);
+			sortedArr=[...arr].sort((a,b)=>a-b);
 			draw();
 			if(e.stack){
 				let line=parseInt(e.stack.split(".html")[1].split(":")[1]);
