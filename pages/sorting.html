@@ -34557,6 +34557,353 @@ class Sorts{
 		}
 		await sort(arr,len);
 	}
+	async logKitaSortImplicit(len){
+		function log(v){
+			return 32-clz32(v-1);
+		}
+		function productLog(n){
+			let r=1,q=0;
+			while((r<<r)+r-1<n)r++;
+			while(1<<q<r)q++;
+			return[r,1<<q];
+		}
+		async function multiSwap(A,a,b,s){
+			while(s-->0)await swap(A,a++,b++,1,true);
+		}
+		function medOf3(A,a,b,c){
+			let d;
+			if(compareIndices(A,a,b)>0){
+				d=b;b=a;
+			}else d=a;
+			if(compareIndices(A,b,c)>0){
+				if(compareIndices(A,d,c)>0)return d;
+				return c;
+			}
+			return b;
+		}
+		function ninther(A,a,b){
+			if(b-a<10)return A[a+(b-a)/2|0];
+			let l=b-a,h=l/2|0,q=l/4|0,g=l/8|0;
+			return medOf3(A,medOf3(A,a,a+g,a+q),medOf3(A,a+q+g,a+h,a+h+g),medOf3(A,b-q,b-g,b-1));
+		}
+		function pseudomo27(A,a,b){
+				if(b-a<64)	return ninther(A,a,b);
+				else{
+					let d=(b-a+1)/8|0;
+					return medOf3(A,ninther(A,a,a+2*d),ninther(A,a+3*d,a+5*d),ninther(A,a+6*d,b));
+				}
+		}
+		function pseudomo81(A,a,b){
+				if(b-a<256)return pseudomo27(A,a,b);
+				else{
+					let d=(b-a+1)/24|0;
+					return medOf3(A,medOf3(A,ninther(A,a,a+2*d),ninther(A,a+3*d,a+5*d),ninther(A,a+6*d,a+8*d)),medOf3(A,ninther(A,a+9*d,a+11*d),ninther(A,a+12*d,a+14*d),ninther(A,a+15*d,a+17*d)),medOf3(A,ninther(A,a+18*d,a+20*d),ninther(A,a+19*d,a+21*d),ninther(A,a+22*d,b)));
+				}
+		}
+		function pseudomo243(A,a,b){
+				if(b-a<16384)return pseudomo81(A,a,b);
+				else{
+					let d=(b-a+1)/24|0;
+					return medOf3(A,medOf3(A,pseudomo27(A,a,a+2*d),pseudomo27(A,a+3*d,a+5*d),pseudomo27(A,a+6*d,a+8*d)),medOf3(A,pseudomo27(A,a+9*d,a+11*d),pseudomo27(A,a+12*d,a+14*d),pseudomo27(A,a+15*d,a+17*d)),medOf3(A,pseudomo27(A,a+18*d,a+20*d),pseudomo27(A,a+19*d,a+21*d),pseudomo27(A,a+22*d,b)));
+				}
+		}
+		function gaprank(A,a,b,g,r){
+			let re=0;
+			while(a<b){
+				if(a-r)if(compareIndices(A,a,r)<0)re++;
+				a+=g;
+			}
+			return re;
+		}
+		function rankof243s(A,a,b){
+			let s=1;
+			while(s*s<b-a)s*=2;
+			if((s=s/2|0)<2)return ninther(A,a,b);
+			let m=(b-a-1)/(2*s)+1|0,e=(b-a)/8|0,cm=a+(b-a)/2|0,cr=0;
+			for(let i=0;i<e;i+=s){
+				let p=pseudomo243(A,a+i,b-e+i),r=gaprank(A,a,b,s,p);
+				if(abs(cr-m)>abs(r-m)){
+					cm=p;
+					cr=r;
+				}
+			}
+			return cm;
+		}
+		async function encode(A,a,b,v){
+			while(v>0){
+				if(v%2)await swap(A,a,b,1,true);
+				v=v/2|0;a++;b++;
+			}
+		}
+		async function recode(A,a,x,w,fr,f,to,t){
+			let F=x+fr*w,T=x+to*w,tm,i=0;
+			while(minVal(f,t)>0){
+				if((f&t)%2){
+					tm=A[F+i];
+					await write(A,F+i,A[a+i],.3,true);
+					await write(A,a+i,A[T+i],.3,true);
+					await write(A,T+i,tm,.3,true);
+				}else if(f%2)await swap(A,a+i,F+i,1,true);
+				else if(t%2)await swap(A,a+i,T+i,1,true);
+				f=f/2|0;t=t/2|0;i++;
+			}
+			while(f>0){
+				if(f%2)await swap(A,a+i,F+i,1,true);
+				f=f/2|0;i++;
+			}
+			while(t>0){
+				if(t%2)await swap(A,a+i,T+i,1,true);
+				t=t/2|0;i++;
+			}
+		}
+		function get(A,a,p,l,c,b){
+			let v=0,i=0;
+			while(l-->0){
+				v|=(compareIndexValue(A,a+i,p)<c^b?1<<i:0);
+				i++;
+			}
+			return v;
+		}
+		async function getAndFree(A,a,x,p,l,w,c,b){
+			let v=get(A,a,p,w,c,b);
+			await encode(A,a,x+v*l,v);
+			return v;
+		}
+		async function partitionEasy(A,t,a,b,p,c){
+			let j=0;
+			for(let i=a;i<b;i++)
+				if(compareIndexValue(A,i,p)<c)await write(A,a++,A[i],.2,true);
+				else write(t,j++,A[i],0,false,true);
+			await arraycopy(t,0,A,a,j,.5,true);
+			return a;
+		}
+		async function blockcycle(A,a,m,b,l,w,p,c,i){
+			for(let k=0;k<b-1;k++){
+				let z=get(A,a+k*l,p,w,c,i);
+				while(z-k){
+					await multiSwap(A,a+k*l,a+z*l,l);
+					z=get(A,a+k*l,p,w,c,i);
+				}
+				await encode(A,a+k*l,m+k*l,k);
+			}
+			await encode(A,a+(b-1)*l,m+(b-1)*l,b-1);
+		}
+		async function partition(A,T,a,b,p,c){
+			let B=T.length+1;
+			if(b-a<B)return await partitionEasy(A,T,a,b,p,c);
+			let l=0,r=0,t=a,lb=0,rb=0;
+			for(let i=a;i<b;i++){
+				if(compareIndexValue(A,i,p)<c){
+					await write(A,t+l++,A[i],.25,true);
+					if(l==B){
+						l=0;t+=B;lb++;
+					}
+				}else if(r==B-1){
+					let t2=A[i];
+					await arraycopy(A,t,A,t+B,l,.25,true);
+					await arraycopy(T,0,A,t,r,.25,true);
+					await write(A,t+r,t2,.25,true);
+					t+=B;r=0;rb++;
+				}else write(T,r++,A[i],0,false,true);
+			}
+			let m=minVal(lb,rb);
+			if(m>0){
+				let M=log(m);
+				for(let i=0,j=0,k=0;i<m;i++){
+					while(compareIndexValue(A,a+j*B+M,p)>=c)j++;
+					while(compareIndexValue(A,a+k*B+M,p)<c)k++;
+					await encode(A,a+j++*B,a+k++*B,i);
+				}
+				if(lb<rb){
+					for(let i=lb+rb-1,j=0;i>=0;i--)
+						if(compareIndexValue(A,a+i*B+M,p)>=c)await multiSwap(A,a+i*B,a+(i+j)*B,B);
+						else j++;
+					await blockcycle(A,a,a+lb*B,lb,B,M,p,c,lb<rb);
+				}else{
+					for(let i=0,j=0;i<lb+rb;i++)if(compareIndexValue(A,a+i*B+M,p)<c)await multiSwap(A,a+i*B,a+j++*B,B);
+					await blockcycle(A,a+lb*B,a,rb,B,M,p,c,lb<rb);
+				}
+			}
+			await arraycopy(T,0,A,b-r,r,1,true);
+			if(l>0){
+				arraycopy(A,t,T,0,l,0,false,true);
+				await arraycopy(A,a+lb*B,A,a+lb*B+l,rb*B,.5,true);
+				await arraycopy(T,0,A,a+lb*B,l,.5,true);
+			}
+			return a+l+lb*B;
+		}
+		async function quickselect(A,T,a,b,r){
+			let bd=false;
+			while(b-a>20){
+				let m=A[bd?rankof243s(A,a,b):pseudomo243(A,a,b)],p=await partition(A,T,a,b,m,0);
+				if(p==a)p=await partition(A,T,a,b,m,1);
+				if(p==b)return[a,b];
+				bd=6*(p-a)<b-a||6*(b-p)<b-a;
+				if(p<=r)a=p;else b=p;
+			}
+			await binaryInsertion(A,a,b,.5);
+			let m1=r,m2=r;
+			do m1--;while(!compareIndices(A,m1,r));m1++;
+			do m2++;while(!compareIndices(A,m2,r));
+			return[m1,m2];
+		}
+		async function merge(A,T,a,m,b,t,X){
+			let l=a,r=m;
+			while(l<m&&r<b)
+				if(compareIndices(A,l,r)<1)await write(T,t++,A[l++],.5,true,X);
+				else await write(T,t++,A[r++],.5,true,X);
+			while(l<m)await write(T,t++,A[l++],.5,true,X);
+			while(r<b)await write(T,t++,A[r++],.5,true,X);
+		}
+		async function tailmerge(A,T,a,m,b){
+			arraycopy(A,m,T,0,b-m,0,false,true);
+			let l=m-1,r=b-m-1;
+			while(l>=a&&r>=0)
+				if(compareIndexValue(A,l,T[r])>0)await write(A,--b,A[l--],.5,true);
+				else await write(A,--b,T[r--],.5,true);
+			while(r>=0)await write(A,--b,T[r--],.5,true);
+		}
+		async function indexll(A,a,b,x,w,w1,p,c,y){
+			for(let i=a,j=0;j<((b-a)/w|0);j++){
+				let k=get(A,i,p,w1,c,y);
+				await recode(A,i,x,w,k,k,(i-a)/w|0,j);
+				i=a+k*w;
+			}
+			let i=a+w,i1=1;
+			for(;i<b-w;i+=w,i1++){
+				let j=get(A,i,p,w1,c,y);
+				if(!j)continue;
+				let m=i-a;
+				while(j-i1){
+					let k=get(A,a+j*w,p,w1,c,y);
+					await encode(A,i,x+m,j);
+					await multiSwap(A,i,a+(m=j*w),w);
+					j=k;
+				}
+				await encode(A,i,x+m,i1);
+			}
+			for(let j=i,k=w1;k-->0;j++)
+				if(compareIndexValue(A,j,p)<0^y){
+					await encode(A,i,x+i-a,i1);
+					break;
+				}
+		}
+		async function kitamerge(A,tmp,x,i,ib,j,jb,p,c,w,w1,y){
+			let lt=new Array(3).fill(0),rt=[ib,0,0];
+			let l=i,ln=await getAndFree(A,l,x,p,w,w1,c,y),ltc=1,lc=0,ld=0,r=j,mb=ib,rn=await getAndFree(A,r,x+j-i,p,w,w1,c,y),rtc=1,rc=0,rd=0,cc=0,bb,bt=0,ls=-1,fbt=-1,tc=0,ft=-1,sb;
+			for(;cc<2*w;cc++){
+				if(!jb||(ib>0&&compareIndices(A,l,r)<1)){
+					write(tmp,cc,A[l++],0,false,true);lc++;
+					if(++ld==w){
+						if(!--ib)continue;
+						ld=0;lt[ltc++]=ln;l=i+ln*w;ln=await getAndFree(A,l,x,p,w,w1,c,y);
+					}
+				}else{
+					write(tmp,cc,A[r++],0,false,true);rc++;
+					if(++rd==w){
+						if(!--jb)continue;
+						rd=0;rt[rtc++]=rn+mb;r=j+rn*w;rn=await getAndFree(A,r,x+j-i,p,w,w1,c,y);
+					}
+				}
+			}
+			do{
+				while(lc>=rc&&(ib>0||jb>0)){
+					bt=lt[0];lt[0]=lt[1];lt[1]=lt[2];ltc--;bb=i+bt*w;
+					for(cc=0;cc<w;cc++)
+						if(!jb||(ib>0&&compareIndices(A,l,r)<1)){
+							await write(A,bb+cc,A[l++],.5,true);lc++;
+							if(++ld==w){
+								if(!--ib)continue;
+								ld=0;lt[ltc++]=ln;l=i+ln*w;ln=await getAndFree(A,l,x,p,w,w1,c,y);
+							}
+						}else{
+							write(A,bb+cc,A[r++],0,false,true);rc++;
+							if(++rd==w){
+								if(!--jb)continue;
+								rd=0;rt[rtc++]=rn+mb;r=j+rn*w;rn=await getAndFree(A,r,x+j-i,p,w,w1,c,y);
+							}
+						}
+					lc-=w;
+					if(tc++>0)
+						if(!bt)ft=ls;
+						else await encode(A,ls,x+bt*w,bt);
+					else fbt=bt;
+					ls=bb;
+				}
+				while(lc<=rc&&(ib>0||jb>0)){
+					bt=rt[0];rt[0]=rt[1];rt[1]=rt[2];rtc--;bb=i+bt*w;
+					for(cc=0;cc<w;cc++){
+						if(!jb||(ib>0&&compareIndices(A,l,r)<1)){
+							await write(A,bb+cc,A[l++],.5,true);lc++;
+							if(++ld==w){
+								if(!--ib)continue;
+								ld=0;lt[ltc++]=ln;l=i+ln*w;ln=await getAndFree(A,l,x,p,w,w1,c,y);
+							}
+						}else{
+							await write(A,bb+cc,A[r++],.5,true);rc++;
+							if(++rd==w){
+								if(!--jb)continue;
+								rd=0;rt[rtc++]=rn+mb;r=j+rn*w;rn=await getAndFree(A,r,x+j-i,p,w,w1,c,y);
+							}
+						}
+					}
+					rc-=w;
+					if(tc++>0)await encode(A,ls,x+bt*w,bt);
+					else fbt=bt;
+					ls=bb;
+				}
+			}while(ib>0||jb>0);
+			if(ltc>0){
+				if(!fbt)fbt=lt[0];
+				if(ft>=0)await encode(A,ft,x+lt[0]*w,lt[0]);
+				await arraycopy(A,i,A,i+lt[0]*w,w,1,true);
+				sb=rtc>0?rt[0]:lt[1];
+			}else{
+				if(!fbt)fbt=rt[0];
+				if(ft>=0)await encode(A,ft,x+rt[0]*w,rt[0]);
+				await arraycopy(A,i,A,i+rt[0]*w,w,1,true);
+				sb=rt[1];
+			}
+			await arraycopy(tmp,0,A,i,w,.5,true);
+			await arraycopy(tmp,w,A,i+sb*w,w,.5,true);
+			await encode(A,i,x+sb*w,sb);
+			await encode(A,i+sb*w,x+fbt*w,fbt);
+		}
+		async function kita(A,T,a,b,x,w,p,c,iv){
+			let B=b,s=T.length/2|0;
+			b-=(b-a)%s;
+			for(let i=a;i<b;i+=16)await binaryInsertion(A,i,minVal(i+16,b),.5);
+			let j=16;
+			for(;j<=(T.length/4|0);j*=4){
+				for(let i=a;i+j<b;i+=4*j){
+					await merge(A,T,i,i+j,minVal(i+2*j,b),0,true);
+					await merge(A,T,minVal(i+2*j,b),minVal(i+3*j,b),minVal(i+4*j,b),2*j,true);
+					await merge(T,A,0,minVal(2*j,b-i),minVal(4*j,b-i),i,false);
+				}
+			}
+			for(;j<=T.length;j*=2)for(let i=a;i+j<b;i+=2*j)await tailmerge(A,T,i,i+j,minVal(i+2*j,b));
+			for(let i=a;i<b;i+=j){
+				if(i+s<b)await encode(A,i,x+s+i-a,1);
+				if(i+2*s<b)await encode(A,i+s,x+2*s+i-a,2);
+				if(i+3*s<b)await encode(A,i+2*s,x+3*s+i-a,3);
+			}
+			for(;j<b-a;j*=2)for(let i=a;i+j<b;i+=2*j)await kitamerge(A,T,x+i-a,i,j/s|0,i+j,minVal(j,b-i-j)/s|0,p,c,s,w,iv);
+			await indexll(A,a,b,x,s,w,p,c,iv);
+			if(b<B){
+				await binaryInsertion(A,b,B,.5);
+				await tailmerge(A,T,a,b,B);
+			}
+		}
+		async function logkita(A,a,b){
+			let[lg,lg2]=productLog(b-a);
+			let X=new Array(2*lg2);
+			let m=a+(b-a)/2|0;
+			let bd=await quickselect(A,X,a,b,m);
+			await kita(A,X,a,bd[0],bd[0],lg-1,A[m],0,true);
+			await kita(A,X,bd[1],b,a,lg-1,A[m],1,false);
+		}
+		await logkita(arr,0,len);
+	}
 }
 const sorts=new Sorts(),sortNames=sorts.getNames();
 let filtering=false;
