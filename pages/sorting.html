@@ -1744,6 +1744,7 @@ class GrailSorting{
 		}
 	}
 	async grailInsertSort(A,p,l){
+		//use OptimizedGnomeSort
 		await insertSort(A,p,p+l,.1);
 	}
 	grailBinSearch(A,p,n,k,d){
@@ -1762,7 +1763,7 @@ class GrailSorting{
 			if(o==f||compareIndices(A,p+d,p+r+o)){
 				await this.grailRotate(A,p+r,f,d-r-f);
 				await this.grailRotate(A,p+(r=d-f)+o,f++-o,1);
-				}
+			}
 		}
 		await this.grailRotate(A,p,r,f);
 		return f;
@@ -1794,16 +1795,18 @@ class GrailSorting{
 			if(nF==lOF){
 				if(hb)await this.grailMultiSwap(A,p+rT-bL,p+rT,lOL);
 				rT=pI;lOL=bL;
-			}else[lOL,lOF]=await this.grailSmartMergeWithBuffer(A,p+rT,lOL,lOF,bL);
+			}else if(hb)[lOL,lOF]=await this.grailSmartMergeWithBuffer(A,p+rT,lOL,lOF,bL);
+			else[lOL,lOF]=await this.grailSmartMergeWithoutBuffer(A,p+rT,lOL,lOF,bL);
 		}
 		rT=pI-lOL;
 		if(lL){
 			if(lOF){
-				await this.grailMultiSwap(A,p+rT-bL,p+rT,lOL);
+				if(hb)await this.grailMultiSwap(A,p+rT-bL,p+rT,lOL);
 				rT=pI;lOL=bL*aC;lOF=0;
 			}else lOL+=bL*aC;
-			await this.grailMergeLeft(A,p+rT,lOL,lL,-bL);
-		}else await this.grailMultiSwap(A,p+rT,p+rT-bL,lOL);
+			if(hb)await this.grailMergeLeft(A,p+rT,lOL,lL,-bL);
+			else this.grailMergeWithoutBuffer(A,p+rT,lOL,lL);
+		}else if(hb)await this.grailMultiSwap(A,p+rT,p+rT-bL,lOL);
 	}
 	async grailMergeLeft(A,p,lL,rL,d){
 		let l=0,r=lL;rL+=lL;
@@ -1890,17 +1893,41 @@ class GrailSorting{
 			await this.grailMergeLeftWithXBuf(A,p+rT,lOL,lL,-gL);
 		}else await arraycopy(A,p+rT,A,p+rT-gL,lOL,1,true);
 	}
-	async grailBuildblocks(A,p,ln,bL,eB,bP,eL){
+	async grailBuildBlocks(A,p,ln,bL,eB,bP,eL){
 		let eD,pt,bB=bL<eL?bL:eL;
 		while(bB&bB-1)bB&=bB-1;
-		for(let d=1;d<ln;d+=2){
-			eD=0;
-			if(compareIndices(A,p+d-1,p+d)>0)eD=1;
-			await this.grailSwap(A,p+d-3,p+d-1+eD);
-			await this.grailSwap(A,p+d-2,p+d-eD);
+		if(bB){
+			arraycopy(A,p-bB,eB,bP,bB,0,false,true);
+			for(let d=1;d<ln;d+=2){
+				eD=0;
+				if(compareIndices(A,p+d-1,p+d)>0)eD=1;
+				await write(A,p+d-3,A[p+d-1+eD],1,true);
+				await write(A,p+d-2,A[p+d-eD],1,true);
+			}
+			if(ln%2)await write(A,p+ln-3,A[p+ln-1],1,true);
+			for(p-=2,pt=2;pt<bB;pt*=2){
+				let l=0,r=ln-2*pt;
+				while(l<=r){
+					await this.grailMergeLeftWithXBuf(A,p+l,pt,pt,-pt);
+					l+=2*pt;
+				}
+				let rs=ln-l;
+				if(rs>pt)await this.grailMergeLeftWithXBuf(A,p+l,pt,rs-pt,-pt);
+				else for(;l<ln;l++)await write(A,p+l-pt,A[p+l],1,true);
+				p-=pt;
+			}
+			await arraycopy(eB,bP,A,p+ln,bB,1,true);
+		}else{
+			for(let d=1;d<ln;d+=2){
+				eD=0;
+				if(compareIndices(A,p+d-1,p+d)>0)eD=1;
+				await this.grailSwap(A,p+d-3,p+d-1+eD);
+				await this.grailSwap(A,p+d-2,p+d-eD);
+			}
+			if(ln%2)await this.grailSwap(A,p+ln-1,p+ln-3);
+			p-=2;pt=2
 		}
-		if(ln%2)await this.grailSwap(A,p+ln-1,p+ln-3);
-		for(p-=2,pt=2;pt<bL;pt*=2){
+		for(;pt<bL;pt*=2){
 			let l=0,r=ln-2*pt;
 			while(l<=r){
 				await this.grailMergeLeft(A,p+l,pt,pt,-pt);
@@ -1919,11 +1946,12 @@ class GrailSorting{
 			await this.grailMergeRight(A,p+lP,bL,bL,bL);
 		}
 	}
-	async grailCombineblocks(A,kP,p,ln,bL,rB,hb,br,bP){
+	async grailCombineBlocks(A,kP,p,ln,bL,rB,hb,br,bP){
 		let cL=ln/(2*bL)|0,lO=ln%(2*bL);
 		if(lO<=bL){
 			ln-=lO;lO=0;
 		}
+		if(br!=null)arraycopy(A,p-rB,br,bP,rB,0,false,true);
 		for(let i=0;i<=cL;i++){
 			if(i==cL&&!lO)break;
 			let blP=p+i*2*bL,blC=(i==cL?lO:2*bL)/rB|0;
@@ -1944,9 +1972,13 @@ class GrailSorting{
 			let alC=0,lL=0;
 			if(i==cL)lL=lO%rB;
 			if(lL)while(alC<blC&&compareIndices(A,blP+blC*rB,blP+(blC-alC-1)*rB)<0)alC++;
-			await this.grailMergeBuffersLeft(A,kP,kP+mk,blP,blC-alC,rB,hb,alC,lL);
+			if(br!=null)await this.grailMergeBuffersLeftWithXBuf(A,kP,kP+mk,blP,blC-alC,rB,alC,lL);
+			else await this.grailMergeBuffersLeft(A,kP,kP+mk,blP,blC-alC,rB,hb,alC,lL);
 		}
-		while(--ln>=0)await this.grailSwap(A,p+ln,p+ln-rB);
+		if(br!=null){
+			for(let i=ln;--i>=0;)await write(A,p+i,A[p+i-rB],1,true);
+			await arraycopy(br,bP,A,p-rB,rB,1,true);
+		}else if(hb)while(--ln>=0)await this.grailSwap(A,p+ln,p+ln-rB);
 	}
 	async grailLazyStableSort(A,p,l){
 		for(let d=1;d<l;d+=2)if(compareIndices(A,p+d-1,p+d)>0)await this.grailSwap(A,p+d-1,p+d);
@@ -1966,15 +1998,26 @@ class GrailSorting{
 		while(blL*blL<ln)blL*=2;
 		let nK=(ln-1)/blL+1|0,kF=await this.grailFindKeys(A,p,ln,nK+blL),bE=true;
 		if(kF<nK+blL){
+			if(kF<4)return await this.grailLazyStableSort(A,p,ln);
 			nK=blL;
 			while(nK>kF)nK=nK/2|0;
 			bE=false;blL=0;
 		}
 		let d=blL+nK,buL=bE?blL:nK;
-		await this.grailBuildblocks(A,p+d,ln-d,buL,br,bfP,bL);
+		await this.grailBuildBlocks(A,p+d,ln-d,buL,bE?br:null,bfP,bE?bL:0);
 		while(ln-d>(buL*=2)){
 			let rBL=blL,bBE=bE;
-			await this.grailCombineblocks(A,p,p+d,ln-d,buL,rBL,bBE,bBE&&rBL<=bL?br:null,bfP);
+			if(!bE)
+				if(nK>4&&(nK/8|0)*nK>=buL){
+					rBL=nK/2|0;bBE=true;
+				}else{
+					let cK=1,i=buL*kF/2|0;
+					while(cK<nK&&i){
+						cK*=2;i=i/8|0;
+					}
+					rBL=2*buL/cK|0;
+				}
+			await this.grailCombineBlocks(A,p,p+d,ln-d,buL,rBL,bBE,bBE&&rBL<=bL?br:null,bfP);
 		}
 		await this.grailInsertSort(A,p,d);
 		await this.grailMergeWithoutBuffer(A,p,d,ln-d);
@@ -10639,7 +10682,19 @@ class Sorts{
 	}
 	async grailSort(len){
 		const GS=new GrailSorting();
-		await GS.grailCommonSort(arr,0,len,null,0,0);
+		let bt=askForNum(0,"Buffer Type\n0:  in-place\n1:  static\n2:  dynamic",0);
+		switch(bt){
+			case 1:
+				await GS.grailCommonSort(arr,0,len,new Array(32),0,32);
+				break;
+			case 2:
+				let t=1;
+				while(t*t<len)t*=2;
+				let dex=new Array(t);
+				await GS.grailCommonSort(arr,0,len,dex,0,t);
+				break;
+			default:await GS.grailCommonSort(arr,0,len,null,0,0);
+		}
 	}
 	async optimizedLazyStableSort(len){
 		const GS=new GrailSorting();
@@ -15558,86 +15613,25 @@ class Sorts{
 		await quickSort(arr,0,len,floorLog(len));
 	}
 	async quickSPSort(len){
+		const GS=new GrailSorting();
 		async function compSwap(A,a,b){
-			if(compareIndices(A,--a,--b)>0)
-				await swap(A,a,b,0,true);
-		}
-		async function grailSwap(A,a,b){
-			await swap(A,a,b,1,true);
-		}
-		async function grailMultiSwap(A,a,b,l){
-			while(l--)
-				await grailSwap(A,a++,b++);
-		}
-		function grailBinSearch(A,p,ln,kP,L){
-			let l=-1,r=ln;
-			while(l<r-1){
-				let m=l+((r-l)>>1);
-				if(compareIndices(A,kP,p+m)<(L?1:0))r=m;
-				else l=m;
-			}
-			return r;
-		}
-		async function grailRotate(A,p,lA,lB){
-			while(lA&&lB){
-				if(lA<=lB){
-					await grailMultiSwap(A,p,p+lA,lA);
-					p+=lA;
-					lB-=lA;
-				}else{
-					await grailMultiSwap(A,p+lA-lB,p+lA,lB);
-					lA-=lB;
-				}
-			}
-		}
-		async function grailMergeWithoutBuffer(A,p,l1,l2){
-			if(l1<l2){
-				while(l1){
-					let o=grailBinSearch(A,p+l1,l2,p,true);
-					if(o){
-						await grailRotate(A,p,l1,o);
-						p+=o;
-						l2-=o;
-					}
-					if(!l2)break;
-					do{
-						p++;
-						l1--;
-					}while(l1&&compareIndices(A,p,p+l1)<1);
-				}
-			}else{
-				while(l2){
-					let o=grailBinSearch(A,p,l1,p+l1+l2-1,false);
-					if(o-l1){
-						await grailRotate(A,p+o,l1-o,l2);
-						l1=o;
-					}
-					if(!l1)break;
-					do l2--;while(l2&&compareIndices(A,p+l1-1,p+l1+l2-1)<1);
-				}
-			}
+			if(compareIndices(A,--a,--b)>0)await swap(A,a,b,0,true);
 		}
 		function ipMerge(A,a,m,b){
-			return grailMergeWithoutBuffer(A,a,m-a,b-m);
+			return GS.grailMergeWithoutBuffer(A,a,m-a,b-m);
 		}
 		async function quickSPSort2(A,l,r){
-			if(r-l<12){
-				for(let i=l;i<=r;i++)
-					for(let j=i;j<=r;j++)
-						await compSwap(A,i,j);
-			}else{
+			if(r-l<12)for(let i=l;i<=r;i++)for(let j=i;j<=r;j++)await compSwap(A,i,j);
+			else{
 				let rb=l+ceil(sqrt(1+r-l)),m,j;
-				for(let i=l;i<=rb;i++)
-					for(j=i;j<=r;j++)
-						await compSwap(A,i,j);
+				for(let i=l;i<=rb;i++)for(j=i;j<=r;j++)await compSwap(A,i,j);
 				m=A[rb];
 				j=1+rb;
-				for(let i=1+rb;i<=r;i++){
+				for(let i=1+rb;i<=r;i++)
 					if(compareValues(A[i-1],m)<0){
 						m=A[i-1];
 						await swap(A,i-1,j++,0.125,true);
 					}
-				}
 				await reversal(A,rb,j-1,1,true);
 				await quickSPSort2(A,1+j,r);
 				await ipMerge(A,rb,j,r);
@@ -17311,37 +17305,10 @@ class Sorts{
 		await quickSort(arr,0,len,floorLog(len),false);
 	}
 	async blockInsertionSort(len){
-		function grailRotate(A,p,a,b){
+		const GS=new GrailSorting();
+		GS.setRotation((A,p,a,b)=>{
 			return Rotations.holyGriesMills(A,p,a,b,.5,true);
-		}
-		function grailBinSearch(A,p,ln,kP,iL){
-			let l,r;
-			for(l=-1,r=ln;l<r-1;){
-				let m=l+(r-l>>1);
-				if(compareIndices(A,kP,p+m)<(iL?1:0))r=m;
-				else l=m;
-			}
-			return r;
-		}
-		async function grailMergeWithoutBuffer(A,p,l1,l2){
-			if(l1<l2)while(l1){
-				let o=grailBinSearch(A,p+l1,l2,p,true);
-				if(o){
-					await grailRotate(A,p,l1,o);
-					p+=o;l2-=o;
-				}
-				if(!l2)break;
-				do{p++;l1--;}while(l1&&compareIndices(A,p,p+l1)<1);
-			}else while(l2){
-				let o=grailBinSearch(A,p,l1,p+l1+l2-1,false);
-				if(o-l1){
-					await grailRotate(A,p+o,l1-o,l2);
-					l1=o;
-				}
-				if(!l1)break;
-				do l2--;while(l2&&compareIndices(A,p+l1-1,p+l1+l2-1)<1);
-			}
-		}
+		});
 		async function insert1(A,a,l){
 			let t=A[l--];
 			while(l>=a&&compareValues(A[l],t)>0)
@@ -17349,13 +17316,10 @@ class Sorts{
 			await write(A,l+1,t,1,true);
 		}
 		async function insert2(A,a,l,r){
-			let tL=A[l--];
-			let tR=A[r];
-			while(l>=a&&compareValues(A[l],tR)>0)
-				await write(A,l+2,A[l--],1,true);
+			let tL=A[l--],tR=A[r];
+			while(l>=a&&compareValues(A[l],tR)>0)await write(A,l+2,A[l--],1,true);
 			await write(A,l+2,tR,1,true);
-			while(l>=a&&compareValues(A[l],tL)>0)
-				await write(A,l+1,A[l--],1,true);
+			while(l>=a&&compareValues(A[l],tL)>0)await write(A,l+1,A[l--],1,true);
 			await write(A,l+1,tL,1,true,false);
 		}
 		async function findRun(A,a,b){
@@ -17370,12 +17334,11 @@ class Sorts{
 		async function insertion(A,a,b){
 			let i=await findRun(A,a,b),j,l;
 			while(i<b){
-				j=await findRun(A,i,b);
-				l=j-i;
+				j=await findRun(A,i,b);l=j-i;
 				if(l<3){
 					if(l>1)await insert2(A,a,i,i+1);
 					else await insert1(A,a,i);
-				}else await grailMergeWithoutBuffer(A,a,i-a,l);
+				}else await GS.grailMergeWithoutBuffer(A,a,i-a,l);
 				i=j;
 			}
 		}
@@ -19528,76 +19491,18 @@ class Sorts{
 		await sort(arr,0,len);
 	}
 	async grimmageSort(len){
+		const GS=new GrailSorting();
 		async function seek(A,s,e){
 			let k=s+1,d=compareIndices(A,s,s+1);
 			if(!d)d=-1;
-			for(let i=s+2;i<e&&k<e-1;i++)
-				if(compareIndices(A,k,i)==d)
-					await multiSwap(A,i,++k,0.01,true);
+			for(let i=s+2;i<e&&k<e-1;i++)if(compareIndices(A,k,i)==d)await multiSwap(A,i,++k,0.01,true);
 			if(d>0)await reversal(A,s,k,.1,true);
 			return k;
 		}
-		async function grailSwap(A,a,b){
-			await swap(A,a,b,1,true);
-		}
-		async function grailMultiSwap(A,a,b,l){
-			while(l--)
-				await grailSwap(A,a++,b++);
-		}
-		function grailBinSearch(A,p,ln,kP,L){
-			let l=-1,r=ln;
-			while(l<r-1){
-				let m=l+((r-l)>>1);
-				if(compareIndices(A,kP,p+m)<(L?1:0))r=m;
-				else l=m;
-			}
-			return r;
-		}
-		async function grailRotate(A,p,lA,lB){
-			while(lA&&lB){
-				if(lA<=lB){
-					await grailMultiSwap(A,p,p+lA,lA);
-					p+=lA;
-					lB-=lA;
-				}else{
-					await grailMultiSwap(A,p+lA-lB,p+lA,lB);
-					lA-=lB;
-				}
-			}
-		}
-		async function grailMergeWithoutBuffer(A,p,l1,l2){
-			if(l1<l2){
-				while(l1){
-					let o=grailBinSearch(A,p+l1,l2,p,true);
-					if(o){
-						await grailRotate(A,p,l1,o);
-						p+=o;
-						l2-=o;
-					}
-					if(!l2)break;
-					do{
-						p++;
-						l1--;
-					}while(l1&&compareIndices(A,p,p+l1)<1);
-				}
-			}else{
-				while(l2){
-					let o=grailBinSearch(A,p,l1,p+l1+l2-1,false);
-					if(o-l1){
-						await grailRotate(A,p+o,l1-o,l2);
-						l1=o;
-					}
-					if(!l1)break;
-					do l2--;while(l2&&compareIndices(A,p+l1-1,p+l1+l2-1)<1);
-				}
-			}
-		}
 		let k=0,r=1;
 		while(k<len){
-			let t=k;
-			k=await seek(arr,k,len);
-			if(r++>1)
-				await grailMergeWithoutBuffer(arr,0,t,k-t);
+			let t=k;k=await seek(arr,k,len);
+			if(r++>1)await GS.grailMergeWithoutBuffer(arr,0,t,k-t);
 		}
 	}
 	async adaptiveSwapMergeSort(len){
@@ -19869,6 +19774,10 @@ class Sorts{
 			}
 	}
 	async lazixioSort(len){
+		const GS=new GrailSorting();
+		GS.setRotation((A,p,l1,l2)=>{
+			return Rotations.neon(A,p,l1,l2,0.5,true);
+		});
 		function runs(n){
 			let j=1,l=0;
 			while(j<n){
@@ -19895,52 +19804,6 @@ class Sorts{
 			}
 			return l;
 		}
-		function grailRotate(A,p,l1,l2){
-			return Rotations.neon(A,p,l1,l2,0.5,true);
-		}
-		async function grailSwap(A,a,b){
-			await swap(A,a,b,1,true);
-		}
-		async function grailMultiSwap(A,a,b,l){
-			while(l--)
-				await grailSwap(A,a++,b++);
-		}
-		function grailBinSearch(A,p,ln,kP,L){
-			let l=-1,r=ln;
-			while(l<r-1){
-				let m=l+((r-l)>>1);
-				if(compareIndices(A,kP,p+m)<(L?1:0))r=m;
-				else l=m;
-			}
-			return r;
-		}
-		async function grailMergeWithoutBuffer(A,p,l1,l2){
-			if(l1<l2){
-				while(l1){
-					let o=grailBinSearch(A,p+l1,l2,p,true);
-					if(o){
-						await grailRotate(A,p,l1,o);
-						p+=o;
-						l2-=o;
-					}
-					if(!l2)break;
-					do{
-						p++;
-						l1--;
-					}while(l1&&compareIndices(A,p,p+l1)<1);
-				}
-			}else{
-				while(l2){
-					let o=grailBinSearch(A,p,l1,p+l1+l2-1,false);
-					if(o-l1){
-						await grailRotate(A,p+o,l1-o,l2);
-						l1=o;
-					}
-					if(!l1)break;
-					do l2--;while(l2&&compareIndices(A,p+l1-1,p+l1+l2-1)<1);
-				}
-			}
-		}
 		async function stableSegmentReversal(A,s,e){
 			if(e-s<3)await swap(A,s,e,.5,true);
 			else await reversal(A,s,e,.5,true);
@@ -19958,8 +19821,7 @@ class Sorts{
 		}
 		async function findRun(A,st,m){
 			if(st>=m-1)return st+1;
-			let c=compareIndices(A,st,++st),s=st-1,d=c;
-			let sR=false;
+			let c=compareIndices(A,st,++st),s=st-1,d=c,sR=false;
 			if(!c){
 				sR=true;
 				c=-1;
@@ -19980,72 +19842,29 @@ class Sorts{
 			while(r<e){
 				let y=await findRun(A,r,e);
 				if(y>=r+x){
-					await grailMergeWithoutBuffer(A,st,s-st,r-s);
-					await grailMergeWithoutBuffer(A,st,r-st,y-r);
+					await GS.grailMergeWithoutBuffer(A,st,s-st,r-s);
+					await GS.grailMergeWithoutBuffer(A,st,r-st,y-r);
 					s=r=y;
 					d=0;
 					continue;
 				}
-				if(d>0)
-					await grailMergeWithoutBuffer(A,s,r-s,y-r);
+				if(d>0)await GS.grailMergeWithoutBuffer(A,s,r-s,y-r);
 				if(d+1==z){
-					await grailMergeWithoutBuffer(A,st,s-st,y-s);
+					await GS.grailMergeWithoutBuffer(A,st,s-st,y-s);
 					s=y;
 				}
 				r=y;
 				d=(d+1)%z;
 			}
-			if(d>0)await grailMergeWithoutBuffer(A,st,s-st,r-s);
+			if(d>0)await GS.grailMergeWithoutBuffer(A,st,s-st,r-s);
 		}
 		await mergeRuns(arr,0,len);
 	}
 	async blockInsertionSortNeon(len){
-		function grailRotate(A,p,a,b){
+		const GS=new GrailSorting();
+		GS.setRotation((A,p,a,b)=>{
 			return Rotations.neon(A,p,a,b,1,true);
-		}
-		async function grailSwap(A,a,b){
-			await swap(A,a,b,1,true);
-		}
-		async function grailMultiSwap(A,a,b,l){
-			while(l--)
-				await grailSwap(A,a++,b++);
-		}
-		function grailBinSearch(A,p,ln,kP,L){
-			let l=-1,r=ln;
-			while(l<r-1){
-				let m=l+((r-l)>>1);
-				if(compareIndices(A,kP,p+m)<(L?1:0))r=m;
-				else l=m;
-			}
-			return r;
-		}
-		async function grailMergeWithoutBuffer(A,p,l1,l2){
-			if(l1<l2){
-				while(l1){
-					let o=grailBinSearch(A,p+l1,l2,p,true);
-					if(o){
-						await grailRotate(A,p,l1,o);
-						p+=o;
-						l2-=o;
-					}
-					if(!l2)break;
-					do{
-						p++;
-						l1--;
-					}while(l1&&compareIndices(A,p,p+l1)<1);
-				}
-			}else{
-				while(l2){
-					let o=grailBinSearch(A,p,l1,p+l1+l2-1,false);
-					if(o-l1){
-						await grailRotate(A,p+o,l1-o,l2);
-						l1=o;
-					}
-					if(!l1)break;
-					do l2--;while(l2&&compareIndices(A,p+l1-1,p+l1+l2-1)<1);
-				}
-			}
-		}
+		});
 		async function insert1(A,a,l){
 			let t=A[l--],k=0;
 			while(l>=a&&compareValues(A[l],t)>0){
@@ -20084,7 +19903,7 @@ class Sorts{
 				if(l<3)
 					if(l>1)await insert2(A,a,i,i+1);
 					else await insert1(A,a,i);
-				else await grailMergeWithoutBuffer(A,a,i-a,l);
+				else await GS.grailMergeWithoutBuffer(A,a,i-a,l);
 				i=j;
 			}
 		}
@@ -20092,62 +19911,19 @@ class Sorts{
 		await sort(arr,0,len);
 	}
 	async lazionSort(len){
+		const GS=new GrailSorting();
 		let base=askForNum(2,"Base");//lwk
+		GS.setRotation((A,p,a,b)=>{
+			return Rotations.neon(A,p,a,b,.5,true);
+		});
 		function powlte(v,b){
 			let n;
 			for(n=1;n<=v;n*=b);
 			return n/b|0;
 		}
-		function grailRotate(A,p,lA,lB){
-			return Rotations.neon(A,p,lA,lB,.5,true);
-		}
-		async function grailSwap(A,a,b){
-			await swap(A,a,b,1,true);
-		}
-		async function grailMultiSwap(A,a,b,l){
-			while(l--)
-				await grailSwap(A,a++,b++);
-		}
-		function grailBinSearch(A,p,ln,kP,L){
-			let l=-1,r=ln;
-			while(l<r-1){
-				let m=l+((r-l)>>1);
-				if(compareIndices(A,kP,p+m)<(L?1:0))r=m;
-				else l=m;
-			}
-			return r;
-		}
-		async function grailMergeWithoutBuffer(A,p,l1,l2){
-			if(l1<l2){
-				while(l1){
-					let o=grailBinSearch(A,p+l1,l2,p,true);
-					if(o){
-						await grailRotate(A,p,l1,o);
-						p+=o;
-						l2-=o;
-					}
-					if(!l2)break;
-					do{
-						p++;
-						l1--;
-					}while(l1&&compareIndices(A,p,p+l1)<1);
-				}
-			}else{
-				while(l2){
-					let o=grailBinSearch(A,p,l1,p+l1+l2-1,false);
-					if(o-l1){
-						await grailRotate(A,p+o,l1-o,l2);
-						l1=o;
-					}
-					if(!l1)break;
-					do l2--;while(l2&&compareIndices(A,p+l1-1,p+l1+l2-1)<1);
-				}
-			}
-		}
 		async function merge(A,s,e,b){
 			let bL=(e-s)/b|0;
-			for(let i=s;i+bL<e;i+=bL)
-				await grailMergeWithoutBuffer(A,s,i-s+bL,bL);
+			for(let i=s;i+bL<e;i+=bL)await GS.grailMergeWithoutBuffer(A,s,i-s+bL,bL);
 		}
 		async function insert1(A,a,l){
 			let t=A[l--];
@@ -20158,7 +19934,7 @@ class Sorts{
 					await sleep(k=0);
 				}
 			}
-			await write(A,l+1,t,1,true,false);
+			await write(A,l+1,t,1,true);
 		}
 		async function insert2(A,a,l,r){
 			let tL=A[l--],tR=A[r];
@@ -20194,11 +19970,10 @@ class Sorts{
 			while(i<b){
 				j=await findRun(A,i,b);
 				l=j-i;
-				if(l<3){
+				if(l<3)
 					if(l>1)await insert2(A,a,i,i+1);
 					else await insert1(A,a,i);
-				}else
-					await grailMergeWithoutBuffer(A,a,i-a,l);
+				else await GS.grailMergeWithoutBuffer(A,a,i-a,l);
 				i=j;
 			}
 		}
@@ -20210,10 +19985,9 @@ class Sorts{
 				l=i;
 				while(!compareIndices(A,i,i+1)&&i<e)i++;
 				r=i;
-				if(l-r){
+				if(l-r)
 					if(r-l<3)await swap(A,l,r,1,true);
 					else await reversal(A,l,r,1,true);
-				}
 				i++;
 			}
 		}
@@ -20279,8 +20053,7 @@ class Sorts{
 			else await nonBn(A,s,e);
 		}
 		let k=0,kn=sqrt(len),bL=powlte(kn|0,base),i;
-		for(i=0;i+bL<=len;i+=bL)
-			await pdbinsert(arr,i,i+bL);
+		for(i=0;i+bL<=len;i+=bL)await pdbinsert(arr,i,i+bL);
 		if(i<len)await pdbinsert(arr,i,len);
 		await mergesLen(arr,0,len,bL,base);
 	}
@@ -22344,6 +22117,7 @@ class Sorts{
 		await mergeSort(arr,0,len);
 	}
 	async lazicciSortAdaRot(len){
+		const GS=new GrailSorting();
 		function runs(n){
 			let j=1,l=0;
 			while(j<n){
@@ -22370,39 +22144,9 @@ class Sorts{
 			}
 			return l;
 		}
-		function grailRotate(A,p,a,b){
+		GS.setRotation((A,p,a,b)=>{
 			return Rotations.adaptable(A,p,a,b,.5,true);
-		}
-		function grailBinSearch(A,p,ln,kP,L){
-			let l=-1,r=ln;
-			while(l<r-1){
-				let m=l+(r-l>>1);
-				if(compareIndices(A,kP,p+m)<(L?1:0))r=m;
-				else l=m;
-			}
-			return r;
-		}
-		async function grailMergeWithoutBuffer(A,p,l1,l2){
-			if(l1<l2)while(l1){
-				let o=grailBinSearch(A,p+l1,l2,p,true);
-				if(o){
-					await grailRotate(A,p,l1,o);
-					p+=o;l2-=o;
-				}
-				if(!l2)break;
-				do{
-					p++;l1--;
-				}while(l1&&compareIndices(A,p,p+l1)<1);
-			}else while(l2){
-				let o=grailBinSearch(A,p,l1,p+l1+l2-1,false);
-				if(o-l1){
-					await grailRotate(A,p+o,l1-o,l2);
-					l1=o;
-				}
-				if(!l1)break;
-				do l2--;while(l2&&compareIndices(A,p+l1-1,p+l1+l2-1)<1);
-			}
-		}
+		});
 		async function stableSegmentReversal(A,s,e){
 			if(e-s<3)await swap(A,s,e,.1,true);
 			else await reversal(A,s,e,.1,true);
@@ -22422,7 +22166,7 @@ class Sorts{
 				if(!d)sR=true;
 				l++;
 			}
-			if(c==1)
+			if(c>0)
 				if(sR)await stableSegmentReversal(A,s,l-1);
 				else await reversal(A,s,l-1,1,true);
 			return l;
@@ -22439,7 +22183,7 @@ class Sorts{
 					s=r=y;d=0;
 					continue;
 				}
-				if(d>0)await grailMergeWithoutBuffer(A,s,r-s,y-r);
+				if(d>0)await GS.grailMergeWithoutBuffer(A,s,r-s,y-r);
 				if(++d==z)s=y;
 				r=y;d%=z;
 			}
@@ -22448,7 +22192,7 @@ class Sorts{
 		async function blockBack(A,s,u,e){
 			while(u>s){
 				let r=findSortedRunBW(A,s,u);
-				await grailMergeWithoutBuffer(A,r,u-r,e-u);
+				await GS.grailMergeWithoutBuffer(A,r,u-r,e-u);
 				u=r;
 			}
 		}
@@ -22694,105 +22438,49 @@ class Sorts{
 		await cycleSort(arr,0,len);
 	}
 	async zeroMergeSort(len){
-		let buf,bz;
-		function grailRotate(A,p,a,b){
+		const GS=new GrailSorting();
+		GS.setRotation((A,p,a,b)=>{
 			return IndexedRotations.neon(A,p,p+a,p+a+b,1,true);
-		}
-		async function grailSwap(A,a,b){
-			await swap(A,a,b,1,true);
-		}
-		async function grailMultiSwap(A,a,b,l){
-			while(l--)
-				await grailSwap(A,a++,b++);
-		}
-		function grailBinSearch(A,p,ln,kP,L){
-			let l=-1,r=ln;
-			while(l<r-1){
-				let m=l+((r-l)>>1);
-				if(compareIndices(A,kP,p+m)<(L?1:0))r=m;
-				else l=m;
-			}
-			return r;
-		}
-		async function grailMergeWithoutBuffer(A,p,l1,l2){
-			if(l1<l2){
-				while(l1){
-					let o=grailBinSearch(A,p+l1,l2,p,true);
-					if(o){
-						await grailRotate(A,p,l1,o);
-						p+=o;
-						l2-=o;
-					}
-					if(!l2)break;
-					do{
-						p++;
-						l1--;
-					}while(l1&&compareIndices(A,p,p+l1)<1);
-				}
-			}else{
-				while(l2){
-					let o=grailBinSearch(A,p,l1,p+l1+l2-1,false);
-					if(o-l1){
-						await grailRotate(A,p+o,l1-o,l2);
-						l1=o;
-					}
-					if(!l1)break;
-					do l2--;while(l2&&compareIndices(A,p+l1-1,p+l1+l2-1)<1);
-				}
-			}
-		}
+		});
 		async function zeromerge(A,s,m,e){
 			let l=s,r=m;
 			let lB=buf,rB=m,lSz=bz,rZ=0;
 			while(l<m||r<e){
-				while(l<m&&r<e&&lSz>0){
-					if(compareIndices(A,l,r)<1){
-						await swap(A,lB++,l++,1.25,true);
-					}else{
+				while(l<m&&r<e&&lSz>0)
+					if(compareIndices(A,l,r)<1)await swap(A,lB++,l++,1.25,true);
+					else{
 						await swap(A,lB++,r++,1.25,true);
-						lSz--;
-						rZ++;
+						lSz--;rZ++;
 					}
-				}
 				if(lSz>0){
-					while(l<m)
-						await swap(A,lB++,l++,1.25,true);
+					while(l<m)await swap(A,lB++,l++,1.25,true);
 					while(r<e&&lSz>0){
 						await swap(A,lB++,r++,1.25,true);
-						lSz--;
-						rZ++;
+						lSz--;rZ++;
 					}
 				}
-				while(l<m&&r<e&&rZ>0){
+				while(l<m&&r<e&&rZ>0)
 					if(compareIndices(A,l,r)<1){
 						await swap(A,rB++,l++,1.25,true);
-						rZ--;
-						lSz++;
-					}else
-						await swap(A,rB++,r++,1.25,true);
-				}
+						rZ--;lSz++;
+					}else await swap(A,rB++,r++,1.25,true);
 				if(rZ>0){
 					while(l<m&&rZ>0){
 						await swap(A,rB++,l++,1.25,true);
-						rZ--;
-						lSz++;
+						rZ--;lSz++;
 					}
-					while(r<e)
-						await swap(A,rB++,r++,1.25,true);
+					while(r<e)await swap(A,rB++,r++,1.25,true);
 				}
 				await IndexedRotations.neon(A,lB,m,rB+rZ,2.5,true);
-				l+=rB-m+rZ;
-				lB+=rB-m+rZ;
-				m=r=rB+rZ;
-				rZ=0;
+				l+=rB-m+rZ;lB+=rB-m+rZ;m=r=rB+rZ;rZ=0;
 			}
 			buf=e-bz;
 		}
 		async function binsertruns(A,s,e){
 			let m=maxVal(16,bz);
-			for(let i=s;i<e;i+=m)
-				await binaryInsertion(A,i,minVal(i+m,e),.1);
+			for(let i=s;i<e;i+=m)await binaryInsertion(A,i,minVal(i+m,e),.1);
 		}
+		let buf,bz;
 		async function runZero(A,s,e){
 			buf=s;bz=sqrt(e-s)|0;
 			if(bz<4)return await binaryInsertion(A,s,e,.5);
@@ -22807,7 +22495,7 @@ class Sorts{
 				buf=s;
 			}
 			await binaryInsertion(A,buf,buf+bz,.1);
-			await grailMergeWithoutBuffer(A,buf,bz,e-buf-bz);
+			await GS.grailMergeWithoutBuffer(A,buf,bz,e-buf-bz);
 		}
 		await runZero(arr,0,len);
 	}
@@ -23424,63 +23112,11 @@ class Sorts{
 		await mergeSort(arr,0,len);
 	}
 	async lazyStableSortNeon(len){
-		async function grailSwap(A,a,b){
-			await swap(A,a,b,1,true);
-		}
-		function grailBinSearch(A,p,ln,kP,L){
-			let l=-1,r=ln;
-			while(l<r-1){
-				let m=l+((r-l)>>1);
-				if(compareIndices(A,kP,p+m)<(L?1:0))r=m;
-				else l=m;
-			}
-			return r;
-		}
-		function grailRotate(A,p,a,b){
+		const GS=new GrailSorting();
+		GS.setRotation((A,p,a,b)=>{
 			return Rotations.neon(A,p,a,b,.5,true);
-		}
-		async function grailMergeWithoutBuffer(A,p,l1,l2){
-			if(l1<l2){
-				while(l1){
-					let o=grailBinSearch(A,p+l1,l2,p,true);
-					if(o){
-						await grailRotate(A,p,l1,o);
-						p+=o;
-						l2-=o;
-					}
-					if(!l2)break;
-					do{
-						p++;
-						l1--;
-					}while(l1&&compareIndices(A,p,p+l1)<1);
-				}
-			}else{
-				while(l2){
-					let o=grailBinSearch(A,p,l1,p+l1+l2-1,false);
-					if(o-l1){
-						await grailRotate(A,p+o,l1-o,l2);
-						l1=o;
-					}
-					if(!l1)break;
-					do l2--;while(l2&&compareIndices(A,p+l1-1,p+l1+l2-1)<1);
-				}
-			}
-		}
-		async function grailLazyStableSort(A,p,l){
-			for(let d=1;d<l;d+=2)
-				if(compareIndices(A,p+d-1,p+d)>0)
-					await grailSwap(A,p+d-1,p+d);
-			for(let pt=2;pt<l;pt*=2){
-				let lf=0,ri=l-2*pt;
-				while(lf<=ri){
-					await grailMergeWithoutBuffer(A,p+lf,pt,pt);
-					lf+=2*pt;
-				}
-				let r=l-lf;
-				if(r>pt)await grailMergeWithoutBuffer(A,p+lf,pt,r-pt);
-			}
-		}
-		await grailLazyStableSort(arr,0,len);
+		});
+		await GS.grailLazyStableSort(arr,0,len);
 	}
 	async insertionMergeSort(len){
 		async function sort(A,a,b){
@@ -25868,71 +25504,13 @@ class Sorts{
 		await quickSort(arr,0,len);
 	}
 	async cbrtGrailSort(len){
+		const GS=new GrailSorting();
 		let kLO=0,kHO,bfO,kLL,kHL,bfL;
 		async function sort4Blocks(A,s,e){
-			for(let i=s;i<e;i+=4)
-				await insertSort(A,i,minVal(i+4,e),.25);
+			for(let i=s;i<e;i+=4)await insertSort(A,i,minVal(i+4,e),.25);
 		}
 		async function multiSwap(A,a,b,s){
-			for(let i=0;i<s;i++)
-				await swap(A,a+i,b+i,1,true);
-		}
-		function grailBinSearch(A,p,ln,kP,L){
-			let l=-1,r=ln;
-			while(l<r-1){
-				let m=l+(r-l>>1);
-				if(compareIndices(A,kP,p+m)<(L?1:0))r=m;
-				else l=m;
-			}
-			return r;
-		}
-		async function grailFindKeys(A,p,l,nK){
-			let fK=1,frK=0;
-			for(let d=1;d<l&&fK<nK;d++){
-				let o=grailBinSearch(A,p+frK,fK,p+d,true);
-				if(o==fK||compareIndices(A,p+d,p+frK+o)){
-					await grailRotate(A,p+frK,fK,d-frK-fK);
-					frK=d-fK;
-					await grailRotate(A,p+frK+o,fK++-o,1);
-				}
-			}
-			await grailRotate(A,p,frK,fK);
-			return fK;
-		}
-		async function grailRotate(A,p,lA,lB){
-			while(lA&&lB)
-				if(lA<=lB){
-					await multiSwap(A,p,p+lA,lA);
-					p+=lA;lB-=lA;
-				}else{
-					await multiSwap(A,p+lA-lB,p+lA,lB);
-					lA-=lB;
-				}
-		}
-		async function grailMergeWithoutBuffer(A,p,l1,l2){
-			if(l1<l2)
-				while(l1){
-					let o=grailBinSearch(A,p+l1,l2,p,true);
-					if(o){
-						await grailRotate(A,p,l1,o);
-						p+=o;l2-=o;
-					}
-					if(!l2)break;
-					do{
-						p++;
-						l1--;
-					}while(l1&&compareIndices(A,p,p+l1)<1);
-				}
-			else
-				while(l2){
-					let o=grailBinSearch(A,p,l1,p+l1+l2-1,false);
-					if(o-l1){
-						await grailRotate(A,p+o,l1-o,l2);
-						l1=o;
-					}
-					if(!l1)break;
-					do l2--;while(l2&&compareIndices(A,p+l1-1,p+l1+l2-1)<1);
-				}
+			for(let i=0;i<s;i++)await swap(A,a+i,b+i,1,true);
 		}
 		async function pingPongMergeFW(A,s,m,e){
 			let l=s,h=m;
@@ -26000,24 +25578,24 @@ class Sorts{
 			}
 			let fr=blL0>bfL?e:s;
 			for(let i=1;i<k0;i++)
-				if(blL0>bfL)await grailMergeWithoutBuffer(A,s+(i-1)*blL0,blL0,blL0);
+				if(blL0>bfL)await GS.grailMergeWithoutBuffer(A,s+(i-1)*blL0,blL0,blL0);
 				else fr=s+(i+1)*blL0-await fragMergeFW(A,fr,s+i*blL0,minVal(s+(i+1)*blL0,e));
 			await multiSwap(A,bfO,fr,e-fr);bfO+=e-fr;
 			await IndexedRotations.helium(A,bfO,bfO+bfL,e,1,true);bfO=e-bfL;
-			await grailMergeWithoutBuffer(A,e,lOR,lOL);
+			await GS.grailMergeWithoutBuffer(A,e,lOR,lOL);
 			await IndexedRotations.holyGriesMills(A,bfO,e,e+lOT,1,true);
-			await grailMergeWithoutBuffer(A,s,e-s,lOT);bfO+=lOT;
+			await GS.grailMergeWithoutBuffer(A,s,e-s,lOT);bfO+=lOT;
 			await insertSort(A,kLO,kLO+kLL,.1);
 		}
 		async function common(A,s,e){
 			let l=e-s,kN=0;
 			while(1<<(3*++kN)<l);
 			kN=1<<kN;bfO=s;
-			let k2=await grailFindKeys(A,kLO,l-bfO,kN);kHO=bfO+k2;
-			let k1=await grailFindKeys(A,kHO,l-kHO,kN);kLO=kHO+k1;
-			let k0=await grailFindKeys(A,kLO,l-kLO,kN);
+			let k2=await GS.grailFindKeys(A,kLO,l-bfO,kN);kHO=bfO+k2;
+			let k1=await GS.grailFindKeys(A,kHO,l-kHO,kN);kLO=kHO+k1;
+			let k0=await GS.grailFindKeys(A,kLO,l-kLO,kN);
 			kHL=k1;kLL=k0;bfL=k2;
-			if(kHL<kN||kLL<kN)await grailLazyStableSort(A,s,e-s);
+			if(kHL<kN||kLL<kN)await GS.grailLazyStableSort(A,s,e-s);
 			await IndexedRotations.helium(A,bfO,kHO,kLO+kLL,0.5,true);
 			kLO=bfO+k1;kHO=bfO;bfO+=kHL+kLL;
 			let bS=bfO;
@@ -26039,16 +25617,16 @@ class Sorts{
 			if(e<tE){
 				await insertSort(A,e,tE,.1);
 				await pingPongMergeFW(A,bfO+bfL,e,tE);
-				await grailMergeWithoutBuffer(A,kHO,kHL,kLL);
-				await grailMergeWithoutBuffer(A,kHO,kHL+kLL,e-bfO);
+				await GS.grailMergeWithoutBuffer(A,kHO,kHL,kLL);
+				await GS.grailMergeWithoutBuffer(A,kHO,kHL+kLL,e-bfO);
 				await IndexedRotations.holyGriesMills(A,s,tE-bfL,tE,1,true);
 			}else{
-				await grailMergeWithoutBuffer(A,kHO,kHL,kLL);
+				await GS.grailMergeWithoutBuffer(A,kHO,kHL,kLL);
 				await IndexedRotations.holyGriesMills(A,kHO,bfO,bfO+bfL,1,true);
-				await grailMergeWithoutBuffer(A,kHO+bfL,kHL+kLL,e-bS);
+				await GS.grailMergeWithoutBuffer(A,kHO+bfL,kHL+kLL,e-bS);
 			}
 			await insertSort(A,s,s+bfL,.1);
-			await grailMergeWithoutBuffer(A,s,bfL,l-bfL);
+			await GS.grailMergeWithoutBuffer(A,s,bfL,l-bfL);
 		}
 		await common(arr,0,len);
 	}
@@ -26210,106 +25788,6 @@ class Sorts{
 		}
 		await sort(arr,0,len);
 	}
-	async extraAdaptiveRemoteMergeSort(len){
-		async function firstPhase(A,s,e){
-			let p=e-1,kT=A[e];
-			while(p>=s&&compareValues(A[p],kT)>0)
-				await write(A,p+1,A[p--],1,true);
-			await write(A,p+1,kT,1,true);
-		}
-		async function lastPhase(A,s,e){
-			let p=s+1,kT=A[p-1];
-			while(p<e&&compareValues(A[p],kT)<0)
-				await write(A,p-1,A[p++],1,true);
-			await write(A,p-1,kT,1,true);
-		}
-		async function grailRotate(A,p,lA,lB){
-			while(lA&&lB)
-				if(lA<=lB){
-					await multiSwap(A,p,p+lA,lA);
-					p+=lA;lB-=lA;
-				}else{
-					await multiSwap(A,p+lA-lB,p+lA,lB);
-					lA-=lB;
-				}
-		}
-		function grailBinSearch(A,p,ln,kP,L){
-			let l=-1,r=ln;
-			while(l<r-1){
-				let m=l+(r-l>>1);
-				if(compareIndices(A,kP,p+m)<(L?1:0))r=m;
-				else l=m;
-			}
-			return r;
-		}
-		async function grailMergeWithoutBuffer(A,p,l1,l2){
-			if(l1<l2)
-				while(l1){
-					let o=grailBinSearch(A,p+l1,l2,p,true);
-					if(o){
-						await grailRotate(A,p,l1,o);
-						p+=o;l2-=o;
-					}
-					if(!l2)break;
-					do{
-						p++;
-						l1--;
-					}while(l1&&compareIndices(A,p,p+l1)<1);
-				}
-			else
-				while(l2){
-					let o=grailBinSearch(A,p,l1,p+l1+l2-1,false);
-					if(o-l1){
-						await grailRotate(A,p+o,l1-o,l2);
-						l1=o;
-					}
-					if(!l1)break;
-					do l2--;while(l2&&compareIndices(A,p+l1-1,p+l1+l2-1)<1);
-				}
-		}
-		async function lrMerge(A,T,s,m,e){
-			if(s==m||m==e)return;
-			if(m-s<e-m){
-				arraycopy(A,s,T,0,m-s,0,false,true);
-				let l=0,h=m,n=s;
-				while(l<m-s&&h<e){
-					if(compareValues(T[l],A[h])<1)await write(A,n++,T[l++],1,true);
-					else await write(A,n++,A[h++],1,true);
-				}
-				while(l<m-s)await write(A,n++,T[l++],1);
-				return;
-			}
-			arraycopy(A,m,T,0,e-m,0,false,true);
-			let l=m-1,h=e-m-1,n=e-1;
-			while(l>=s&&h>=0)
-				if(compareValues(A[l],T[h])>0)await write(A,n--,A[l--],1,true);
-				else await write(A,n--,T[h--],1,true);
-			while(h>=0)await write(A,n--,T[h--],1);
-		}
-		async function sort(A,ln){
-			let t=(ln+1)/2|0,m=32;
-			if(t<=m)return await binaryInsertion(A,0,ln,.2);
-			let T=new Array(maxVal(m,sqrt(t)|0));
-			for(let l=m;l<=t;l++){
-				let p=0;
-				if(l==m)
-					for(let i=0;i<ln;i+=l)
-						await binaryInsertion(A,i,minVal(i+l,ln),.2);
-				else
-					for(let i=0;i<ln;i+=l){
-						let n=minVal(i+l,ln);
-						if(i+l<=ln){
-							if(!p)await firstPhase(A,i,n-1);
-							else if(p==l-2)await lastPhase(A,i,n);
-							else await lrMerge(A,T,i,i+l-p+1,i+l);
-						}else if(i+l-p<=ln)await lrMerge(A,T,i,i+l-p-1,n);
-						p=++p%(l-1);
-					}
-			}
-			await grailMergeWithoutBuffer(A,0,t,ln-t);
-		}
-		await sort(arr,len);
-	}
 	async onlineStacklessRotateMergeSort(len){
 		function binSearch(A,l,r,k,b){
 			while(l<r){
@@ -26418,52 +25896,10 @@ class Sorts{
 		await mergeSort(arr,new Array(len/2|0),0,len);
 	}
 	async iterativeMilkSort(len){
-		function grailRotate(A,p,a,b){
+		const GS=new GrailSorting();
+		GS.setRotation((A,p,a,b)=>{
 			return Rotations.neon(A,p,a,b,1,true);
-		}
-		async function grailSwap(A,a,b){
-			await swap(A,a,b,1,true);
-		}
-		async function grailMultiSwap(A,a,b,l){
-			while(l--)
-				await grailSwap(A,a++,b++);
-		}
-		function grailBinSearch(A,p,ln,kP,L){
-			let l=-1,r=ln;
-			while(l<r-1){
-				let m=l+((r-l)>>1);
-				if(compareIndices(A,kP,p+m)<(L?1:0))r=m;
-				else l=m;
-			}
-			return r;
-		}
-		async function grailMergeWithoutBuffer(A,p,l1,l2){
-			if(l1<l2){
-				while(l1){
-					let o=grailBinSearch(A,p+l1,l2,p,true);
-					if(o){
-						await grailRotate(A,p,l1,o);
-						p+=o;
-						l2-=o;
-					}
-					if(!l2)break;
-					do{
-						p++;
-						l1--;
-					}while(l1&&compareIndices(A,p,p+l1)<1);
-				}
-			}else{
-				while(l2){
-					let o=grailBinSearch(A,p,l1,p+l1+l2-1,false);
-					if(o-l1){
-						await grailRotate(A,p+o,l1-o,l2);
-						l1=o;
-					}
-					if(!l1)break;
-					do l2--;while(l2&&compareIndices(A,p+l1-1,p+l1+l2-1)<1);
-				}
-			}
-		}
+		});
 		async function insert1(A,a,l){
 			let t=A[l--];
 			while(l>=a&&compareValues(A[l],t)>0){
@@ -26512,8 +25948,7 @@ class Sorts{
 				if(l<3){
 					if(l>1)await insert2(A,a,i,i+1);
 					else await insert1(A,a,i);
-				}else
-					await grailMergeWithoutBuffer(A,a,i-a,l);
+				}else await GS.grailMergeWithoutBuffer(A,a,i-a,l);
 				i=j;
 			}
 		}
@@ -26571,45 +26006,10 @@ class Sorts{
 		await milksort(arr,0,len);
 	}
 	async blockInsertionSortAdaRot(len){
-		function grailRotate(A,p,a,b){
+		const GS=new GrailSorting();
+		GS.setRotation((A,p,a,b)=>{
 			return a%b<1||b%a<1?Rotations.holyGriesMills(A,p,a,b,1,true):Rotations.cycleReverse(A,p,a,b,1,true);
-		}
-		function grailBinSearch(A,p,ln,kP,L){
-			let l=-1,r=ln;
-			while(l<r-1){
-				let m=l+((r-l)>>1);
-				if(compareIndices(A,kP,p+m)<(L?1:0))r=m;
-				else l=m;
-			}
-			return r;
-		}
-		async function grailMergeWithoutBuffer(A,p,l1,l2){
-			if(l1<l2){
-				while(l1){
-					let o=grailBinSearch(A,p+l1,l2,p,true);
-					if(o){
-						await grailRotate(A,p,l1,o);
-						p+=o;
-						l2-=o;
-					}
-					if(!l2)break;
-					do{
-						p++;
-						l1--;
-					}while(l1&&compareIndices(A,p,p+l1)<1);
-				}
-			}else{
-				while(l2){
-					let o=grailBinSearch(A,p,l1,p+l1+l2-1,false);
-					if(o-l1){
-						await grailRotate(A,p+o,l1-o,l2);
-						l1=o;
-					}
-					if(!l1)break;
-					do l2--;while(l2&&compareIndices(A,p+l1-1,p+l1+l2-1)<1);
-				}
-			}
-		}
+		});
 		async function findRun(A,a,b){
 			let i=a+1;
 			if(i==b)return i;
@@ -26623,54 +26023,17 @@ class Sorts{
 			let i,j,k;
 			i=await findRun(A,a,b);
 			while(i<b){
-				j=await findRun(A,i,b);
-				k=j-i;
-				await grailMergeWithoutBuffer(A,a,i-a,k);
-				i=j;
+				j=await findRun(A,i,b);k=j-i;
+				await GS.grailMergeWithoutBuffer(A,a,i-a,k);i=j;
 			}
 		}
 		await insertionSort(arr,0,len);
 	}
 	async rougeLazyStableSort(len){
-		function grailRotate(A,p,a,b){
+		const GS=new GrailSorting();
+		GS.setRotation((A,p,a,b)=>{
 			return a%b<1||b%a<1?Rotations.holyGriesMills(A,p,a,b,1,true):Rotations.cycleReverse(A,p,a,b,1,true);
-		}
-		function grailBinSearch(A,p,ln,kP,L){
-			let l=-1,r=ln;
-			while(l<r-1){
-				let m=l+((r-l)>>1);
-				if(compareIndices(A,kP,p+m)<(L?1:0))r=m;
-				else l=m;
-			}
-			return r;
-		}
-		async function grailMergeWithoutBuffer(A,p,l1,l2){
-			if(l1<l2){
-				while(l1){
-					let o=grailBinSearch(A,p+l1,l2,p,true);
-					if(o){
-						await grailRotate(A,p,l1,o);
-						p+=o;
-						l2-=o;
-					}
-					if(!l2)break;
-					do{
-						p++;
-						l1--;
-					}while(l1&&compareIndices(A,p,p+l1)<1);
-				}
-			}else{
-				while(l2){
-					let o=grailBinSearch(A,p,l1,p+l1+l2-1,false);
-					if(o-l1){
-						await grailRotate(A,p+o,l1-o,l2);
-						l1=o;
-					}
-					if(!l1)break;
-					do l2--;while(l2&&compareIndices(A,p+l1-1,p+l1+l2-1)<1);
-				}
-			}
-		}
+		});
 		async function findRun(A,a,b){
 			let i=a+1;
 			if(i==b)return i;
@@ -26681,16 +26044,13 @@ class Sorts{
 			return i;
 		}
 		async function insertionSort(A,a,b){
-			let i,j,k;
-			i=await findRun(A,a,b);
+			let i,j,k;i=await findRun(A,a,b);
 			while(i<b){
-				await grailMergeWithoutBuffer(A,a,i-a,k=(j=await findRun(A,i,b))-i);
+				await GS.grailMergeWithoutBuffer(A,a,i-a,k=(j=await findRun(A,i,b))-i);
 				i=j;
 			}
 		}
-		for(let j=2;j<=len;j++)
-			for(let i=0;i<len;i+=j)
-				await insertionSort(arr,i,minVal(i+j,len));
+		for(let j=2;j<=len;j++)for(let i=0;i<len;i+=j)await insertionSort(arr,i,minVal(i+j,len));
 	}
 	async twoNSubPrimeShellSort(len){
 		function lessPrime(n){
@@ -29104,6 +28464,7 @@ class Sorts{
 		await mergeSort(arr,0,len);
 	}
 	async cookieSort(len){
+		const GS=new GrailSorting();
 		function pow2lte(n){
 			for(var v=1;v<=n;v<<=1);
 			return v>>1;
@@ -29177,60 +28538,6 @@ class Sorts{
 			}
 			return a;
 		}
-		function grailBinSearch(A,p,ln,kP,L){
-			let l=-1,r=ln;
-			while(l<r-1){
-				let m=l+((r-l)>>1);
-				if(compareIndices(A,kP,p+m)<(L?1:0))r=m;
-				else l=m;
-			}
-			return r;
-		}
-		async function grailRotate(A,p,lA,lB){
-			let e=p+lA+lB;
-			while(lA>0&&lB>0){
-				if(lA<lB){
-					for(let i=0;i<lA;i++){
-						let t=A[p+i],j=p+i+lA;
-						for(;j<e;j+=lA)await write(A,j-lA,A[j],1,true);
-						await write(A,j-lA,t,1,true);
-					}
-					p+=lB;lB%=lA;lA-=lB;
-				}else{
-					for(let i=0;i<lB;i++){
-						let t=A[p+i+lA],j=p+i+lA-lB;
-						for(;j>=p;j-=lB)await write(A,j+lB,A[j],1,true);
-						await write(A,j+lB,t,1,true);
-					}
-					e=p+lB;lA%=lB;lB-=lA;
-				}
-			}
-		}
-		async function grailMergeWithoutBuffer(A,p,l1,l2){
-			if(l1<l2){
-				while(l1){
-					let o=grailBinSearch(A,p+l1,l2,p,true);
-					if(o){
-						await grailRotate(A,p,l1,o);
-						p+=o;l2-=o;
-					}
-					if(!l2)break;
-					do{
-						p++;l1--;
-					}while(l1&&compareIndices(A,p,p+l1)<1);
-				}
-			}else{
-				while(l2){
-					let o=grailBinSearch(A,p,l1,p+l1+l2-1,false);
-					if(o-l1){
-						await grailRotate(A,p+o,l1-o,l2);
-						l1=o;
-					}
-					if(!l1)break;
-					do l2--;while(l2&&compareIndices(A,p+l1-1,p+l1+l2-1)<1);
-				}
-			}
-		}
 		async function shellPass(A,a,b,g,p,lg){
 			if(g>=lg)return lg;
 			if(g==lg-1&&g-1)return lg;
@@ -29273,10 +28580,8 @@ class Sorts{
 			let i,j,k;
 			i=await blockFindRun(A,a,b);
 			while(i<b){
-				j=await blockFindRun(A,i,b);
-				k=j-i;
-				await grailMergeWithoutBuffer(A,a,i-a,k);
-				i=j;
+				j=await blockFindRun(A,i,b);k=j-i;
+				await GS.grailMergeWithoutBuffer(A,a,i-a,k);i=j;
 			}
 		}
 		async function pdbinsertUnstable(A,s,e){
@@ -29306,7 +28611,7 @@ class Sorts{
 			let b=s+l/2|0;
 			if(b<e)
 				if(compareIndices(A,b-1,b)>0)
-					if(e-b<=(l/8|0))await grailMergeWithoutBuffer(A,s,b-s,e-b);
+					if(e-b<=(l/8|0))await GS.grailMergeWithoutBuffer(A,s,b-s,e-b);
 					else await shellSort(A,s,e);
 		}
 		async function milkSortLen(A,s,e,ls){
@@ -29711,6 +29016,8 @@ class Sorts{
 		await quickSort(arr,0,len);
 	}
 	async optimizedNaturalRotateMergeSort(len){
+		const GS=new GrailSorting();
+		GS.setRotation(MHT.grailRotate);
 		function threeResolves(x){
 			let y=1;
 			while(1){
@@ -29720,46 +29027,12 @@ class Sorts{
 				y++;
 			}
 		}
-		function grailBinSearch(A,p,ln,kP,L){
-			let l=-1,r=ln;
-			while(l<r-1){
-				let m=l+((r-l)>>1);
-				if(compareIndices(A,kP,p+m)<(L?1:0))r=m;
-				else l=m;
-			}
-			return r;
-		}
-		async function grailMergeWithoutBuffer(A,p,l1,l2){
-			if(l1<l2){
-				while(l1){
-					let o=grailBinSearch(A,p+l1,l2,p,true);
-					if(o){
-						await MHT.grailRotate(A,p,l1,o);
-						p+=o;l2-=o;
-					}
-					if(!l2)break;
-					do{
-						p++;l1--;
-					}while(l1&&compareIndices(A,p,p+l1)<1);
-				}
-			}else{
-				while(l2){
-					let o=grailBinSearch(A,p,l1,p+l1+l2-1,false);
-					if(o-l1){
-						await MHT.grailRotate(A,p+o,l1-o,l2);
-						l1=o;
-					}
-					if(!l1)break;
-					do l2--;while(l2&&compareIndices(A,p+l1-1,p+l1+l2-1)<1);
-				}
-			}
-		}
 		async function mergeFindRun(A,a,b){
 			let i=await MHT.stableFindRun(A,a,b,.5,true);
 			let j;
 			for(;i<a+16&&i<b;i=j){
 				j=await MHT.stableFindRun(A,i,b,.5,true);
-				await grailMergeWithoutBuffer(A,a,i-a,j-i);
+				await GS.grailMergeWithoutBuffer(A,a,i-a,j-i);
 			}
 			return i;
 		}
@@ -36167,6 +35440,58 @@ class Sorts{
 			}
 			await sort(A,bZ);
 			await inPlaceMerge(A,0,bZ,l);
+		}
+		await sort(arr,len);
+	}
+	async extraAdaptiveRemoteMergeSort(len){
+		const GS=new GrailSorting();
+		async function firstPhase(A,s,e){
+			let p=e-1,t=A[e];
+			while(p>=s&&compareValues(A[p],t)>0)await write(A,p+1,A[p--],1,true);
+			await write(A,p+1,t,1,true);
+		}
+		async function lastPhase(A,s,e){
+			let p=s+1,t=A[p-1];
+			while(p<e&&compareValues(A[p],t)<0)await write(A,p-1,A[p++],1,true);
+			await write(A,p-1,t,1,true);
+		}
+		async function lrMerge(A,T,s,m,e){
+			if(s==m||m==e)return;
+			if(m-s<e-m){
+				arraycopy(A,s,T,0,m-s,0,false,true);
+				let l=0,h=m,n=s;
+				while(l<m-s&&h<e)
+					if(compareValues(T[l],A[h])<1)await write(A,n++,T[l++],1,true);
+					else await write(A,n++,A[h++],1,true);
+				while(l<m-s)await write(A,n++,T[l++],1,true);
+				return;
+			}
+			arraycopy(A,m,T,0,e-m,0,false,true);
+			let l=m-1,h=e-m-1,n=e-1;
+			while(l>=s&&h>=0)
+				if(compareValues(A[l],T[h])>0)await write(A,n--,A[l--],1,true);
+				else await write(A,n--,T[h--],1,true);
+			while(h>=0)await write(A,n--,T[h--],1,true);
+		}
+		async function sort(A,ln){
+			let t=(ln+1)/2|0,m=32;
+			if(t<=m)return await binaryInsertion(A,0,ln,.2);
+			let T=new Array(maxVal(m,sqrt(t)|0));
+			for(let l=m;l<=t;l++){
+				let p=0;
+				if(l==m)for(let i=0;i<ln;i+=l)await binaryInsertion(A,i,minVal(i+l,ln),.25);
+				else
+					for(let i=0;i<ln;i+=l){
+						let n=minVal(i+l,ln);
+						if(i+l<=ln){
+							if(!p)await firstPhase(A,i,n-1);
+							else if(p==l-2)await lastPhase(A,i,n);
+							else await lrMerge(A,T,i,i+l-p-1,i+l);
+						}else if(i+l-p<=ln)await lrMerge(A,T,i,i+l-p-1,n);
+						p=++p%(l-1);
+					}
+			}
+			await GS.grailMergeWithoutBuffer(A,0,t,ln-t);
 		}
 		await sort(arr,len);
 	}
