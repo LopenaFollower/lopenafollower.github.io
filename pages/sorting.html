@@ -2676,9 +2676,9 @@ class MultiWayMergeSorting{
 	}
 }
 class HeapSorting{
-	j=0;
 	constructor(isMax){
 		this.m=isMax;
+		this.j=0;
 	}
 	async siftDown(A,r,d,s,sl){
 		let v=this.m?-1:1;
@@ -2694,8 +2694,7 @@ class HeapSorting{
 	}
 	async heapify(A,l,h,sl){
 		let n=h-l;
-		for(let i=n/2|0;i>=1;i--)
-			await this.siftDown(A,i,n,l,sl);
+		for(let i=n/2|0;i>=1;i--)await this.siftDown(A,i,n,l,sl);
 	}
 	async sort(A,s,l,sl=1){
 		await this.heapify(A,s,l,sl);
@@ -2730,8 +2729,7 @@ class BlockMergeSorting{
 		await write(A,a,t,0.5,true);
 	}
 	async multiSwap(A,a,b,l){
-		for(let i=0;i<l;i++)
-			await swap(A,a+i,b+i,1,true);
+		for(let i=0;i<l;i++)await swap(A,a+i,b+i,1,true);
 	}
 	async rotate(A,a,m,b){
 		await IndexedRotations.cycleReverse(A,a,m,b,1,true);
@@ -2753,19 +2751,16 @@ class BlockMergeSorting{
 		return a;
 	}
 	async buildRuns(A,a,b){
-		let S=true;
-		let i=a+1,j=a;
+		let S=true,i=a+1,j=a;
 		while(i<b){
 			if(compareIndices(A,i-1,i++)>0){
 				while(i<b&&compareIndices(A,i-1,i)>0)i++;
 				await reversal(A,j,i-1,1,true);
 			}else while(i<b&&compareIndices(A,i-1,i)<1)i++;
 			if(i<b){
-				S=false;
-				j=i-(i-j-1)%16-1;
+				S=false;j=i-(i-j-1)%16-1;
 			}
-			while(i-j<16&&i<b)
-				await this.insertTo(A,i,this.rightBinSearch(A,j,i,A[i++]));
+			while(i-j<16&&i<b)await this.insertTo(A,i,this.rightBinSearch(A,j,i,A[i++]));
 			j=i++;
 		}
 		return S;
@@ -2773,14 +2768,11 @@ class BlockMergeSorting{
 	async findKeys(A,a,b,nK,n){
 		let p=a,pE=a+nK;
 		for(let i=pE;i<b&&nK<n;i++){
-			let loc=this.leftBinSearch(A,p,pE,A[i]);
-			if(pE==loc||compareIndices(A,i,loc)){
+			let o=this.leftBinSearch(A,p,pE,A[i]);
+			if(pE==o||compareIndices(A,i,loc)){
 				await this.rotate(A,p,pE,i);
-				let inc=i-pE;
-				p+=inc;
-				pE+=inc;
-				await this.insertTo(A,pE++,loc+=inc);
-				nK++;
+				let n=i-pE;p+=n;pE+=n;nK++;
+				await this.insertTo(A,pE++,o+=n);
 			}
 		}
 		await this.rotate(A,a,p,pE);
@@ -37579,6 +37571,155 @@ class Sorts{
 			await innerSort(A,a,b);
 		}
 		await quickSort(arr,0,len);
+	}
+	async sussyBakaSort(len){
+		let mode=askForNum(1,"0 or 1",0,1);
+		function cmp(A,a,b){
+			return-(compareIndices(A,b,a)>>31);
+		}
+		function medof3a(A,l){
+			let a=cmp(A,l,l+1),b=cmp(A,l+(a^1),l+2);b+=(a^1)|b;
+			let c=cmp(A,l+b,l+a);
+			return l+((c-1&a)|(-c&b));
+		}
+		function medof3b(A,l,l1,l2){
+			let s=[l,l1,l2],a=cmp(A,l,l1),b=cmp(A,s[a^1],l2);b+=(a^1)|b;
+			let c=cmp(A,s[b],s[a]);
+			return s[(c-1&a)|(-c&b)];
+		}
+		function ninther(A,a,b){
+			if(b-a<4)return a+(b-a)/2|0;
+			if(b-a<8)return medof3a(A,a+(b-a-1)/2|0);
+			let d=(b-a+1)/8|0;
+			return medof3b(A,medof3b(A,a,a+d,a+2*d),medof3b(A,a+3*d,a+4*d,a+5*d),medof3b(A,a+6*d,a+7*d,b));
+		}
+		function pseudomo27(A,a,b){
+			if(b-a<81)return ninther(A,a,b);
+			let d=(b-a+1)/8|0;
+			return medof3b(A,ninther(A,a,a+2*d),ninther(A,a+3*d,a+5*d),ninther(A,a+6*d,b));
+		}
+		function pseudomo81(A,a,b){
+			if(b-a<324)return pseudomo27(A,a,b);
+			let d=(b-a+1)/24|0;
+			return medof3b(A,medof3b(A,ninther(A,a,a+2*d),ninther(A,a+3*d,a+5*d),ninther(A,a+6*d,a+8*d)),medof3b(A,ninther(A,a+9*d,a+11*d),ninther(A,a+12*d,a+14*d),ninther(A,a+15*d,a+17*d)),medof3b(A,ninther(A,a+18*d,a+20*d),ninther(A,a+19*d,a+21*d),ninther(A,a+22*d,b)));
+		}
+		async function ternarysplitOOP(A,T,s,e){
+			if(s>=e)return;
+			let p,pi;
+			switch(mode){
+				case 0:default:
+					let z=A[s]^A[e];
+					if(z<(s^e))p=(z^(A[s]&(s^e)))%(e-s)+s;
+					else p=(z^(A[e]&~(s-e)))%(e-s)+s;
+					break;
+				case 1:
+					p=pseudomo81(A,s,e);
+					break;
+			}
+			pi=A[p];
+			let a=s,b=e,j=0,i=s,n=A[a];
+			let aE=true;
+			innerpartition:while(a<=b){
+				A[a]=-1;
+				switch(compareValues(n,pi)){
+					case-1:
+						await write(A,i++,n,0,true,aE=false);
+						break;
+					case 0:
+						while(a<b&&!compareIndexValue(A,b,pi))b--;
+						let v=A[b];
+						await write(A,b--,n,0,true);n=v;
+						continue innerpartition;
+					case 1:
+						write(T,j++,n,0,aE=false,true);
+						break;
+				}
+				n=A[++a];
+			}
+			if(aE)return;b=i+j-1;
+			await arraycopy(T,0,A,i,j,1,true);
+			await ternarysplitOOP(A,T,i,b);
+			await IndexedRotations.cycleReverse(A,i,b+1,e+1,1,true);
+			await ternarysplitOOP(A,T,s,i-1);
+		}
+		await ternarysplitOOP(arr,new Array(len),0,len-1);
+	}
+	async logNaryHeapSort(len){
+		function log2(n){
+			let l=0;
+			while(n>>=1)++l;
+			return l;
+		}
+		async function siftDown(A,v,i,p,n,b){
+			while(b*i+1<n){
+				let m=v,nx=i,c=b*i+1;
+				for(let j=c;j<minVal(c+b,n);j++)if(compareValues(A[p+j],m)>0)m=A[p+(nx=j)];
+				if(nx==i)break;
+				await write(A,p+i,m,1,true);
+				i=nx;
+			}
+			await write(A,p+i,v,1,true);
+		}
+		async function heapSort(A,a,b){
+			let n=b-a,bs=maxVal(log2(n),2);
+			for(let i=(n-1)/bs|0;i>=0;i--)await siftDown(A,A[a+i],i,a,n,bs);
+			for(let i=n-1;i>0;i--){
+				let t=A[a+i];
+				await write(A,a+i,A[a],1,true);
+				await siftDown(A,t,0,a,i,bs);
+			}
+		}
+		await heapSort(arr,0,len);
+	}
+	async inverseSelectionSort(len){
+		async function insertTo(A,a,b){
+			let t=A[a],d=a>b?-1:1,j=0;
+			for(let i=a;i-b;i+=d){
+				write(A,i,A[i+d]);
+				if(++j>sqrt((b-a)*d))await mark(i,j=0);
+			}
+			if(a-b)await write(A,b,t,.05,true);
+		}
+		async function selectionSort(A,a,b){
+			for(let i=a;i<b;i++){
+				let mI=i;
+				for(let j=i+1;j<b;j++)if(compareIndices(A,mI,j)<1)mI=j;
+				await insertTo(A,mI,a);
+			}
+		}
+		await selectionSort(arr,0,len);
+	}
+	async heapHunterSort(len){
+		const HS=new HeapSorting(false);
+		for(let j=0;j<len;j++){
+			let k=len-1;
+			while(compareIndices(arr,j,k)<1&&k>j)k--;
+			if(k-j)await HS.heapify(arr,j,k+1,.5);
+		}
+	}
+	async inverseSmoothSelectionSort(len){
+		async function multiSwap(A,a,b,s){
+			while(s-->0)await swap(A,a++,b++,1,true);
+		}
+		async function sort(A,l){
+			for(let i=0;i<l-1;i++){
+				let sI=i,qZ=0;
+				for(let j=i+1;j<l;j++){
+					let c=compareIndices(A,j,sI);
+					if(c<1){
+						if(j-++sI)await swap(A,j,sI,1,true);
+						if(!c)qZ++;
+						else qZ=0;
+					}
+				}
+				if(sI==l-1){
+					await reversal(A,i,l-1,1,true);
+					break;
+				}
+				await multiSwap(A,i,sI-qZ,qZ+1);i+=qZ;
+			}
+		}
+		await sort(arr,len);
 	}
 }
 const sorts=new Sorts(),sortNames=sorts.getNames();
