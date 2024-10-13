@@ -498,7 +498,7 @@ function draw(bypass){
 			if(i<1)ctx.beginPath();
 			ctx.lineTo(i*w,cvs.height-(v-1)*h);
 			if(i+1==arr_size){
-				ctx.lineTo(arr_size*w,0);
+				ctx.lineTo(arr_size*w+1,cvs.height-(arr.at(-1)-1)*h);
 				ctx.stroke();
 			}
 		}else if(6==renMd||7==renMd){
@@ -36875,6 +36875,344 @@ class Sorts{
 			}else await innerSort(A,a,b);
 		}
 		await quickSort(arr,0,len);
+	}
+	async unstableLogPartitionSort(len){
+		const GS=new GrailSorting();
+		async function log(v){
+			return 32-clz32(v-1);
+		}
+		class BitArray{
+			constructor(A,a,b,z,w){
+				this.A=A;this.a=a;this.b=b;this.z=z;this.w=w;
+			}
+			async flipBit(a,b){
+				await swap(this.A,a,b,.1,true);
+			}
+			getBit(a,b){
+				return compareIndices(this.A,a,b)>0;
+			}
+			async xor(d,u){
+				if(d<0||d>=this.z)return;
+				let s=d*this.w,i1=this.a+s+this.w;
+				for(let i=this.a+s,j=this.b+s;i<i1;i++,j++,u>>=1)if(u&1)await this.flipBit(i,j);
+			}
+			get(d){
+				if(d<0||d>=this.z)return;
+				let r=0,s=d*this.w;
+				for(let k=0,i=this.a+s,j=this.b+s;k<this.w;k++,i++,j++)r|=(this.getBit(i,j)?1:0)<<k;
+				return r;
+			}
+			async incr(d){
+				if(d<0||d>=this.z)return;
+				let s=d*this.w,i1=this.a+s+this.w;
+				for(let i=this.a+s,j=this.b+s;i<i1;i++,j++){
+					await this.flipBit(i,j);
+					if(this.getBit(i,j))return;
+				}
+			}
+		}
+		function medOf3(A,a,b,c){
+			let d;
+			if(compareIndices(A,a,b)>0)[d,b]=[b,a];
+			else d=a;
+			if(compareIndices(A,b,c)>0){
+				if(compareIndices(A,d,c)>0)return d;
+				return c;
+			}
+			return b;
+		}
+		function ninther(A,a,b){
+			if(b-a<10)return A[a+(b-a)/2|0];
+			let l=b-a,h=l/2|0,q=l/4|0,e=l/8|0;
+			return medOf3(A,medOf3(A,a,a+e,a+q),medOf3(A,a+q+e,a+h,a+h+e),medOf3(A,b-q,b-e,b-1));
+		}
+		async function partition(A,a,b,p){
+			let c=a,d=--b,c1=0,d1=0,C=0;
+			for(;;){
+				while(a<=b&&(C=compareIndexValue(A,a,p))<1){
+					if(!C){
+						await swap(A,c++,a,.25,true);
+						c1++;
+					}
+					a++;
+				}
+				while(a<=b&&(C=compareIndexValue(A,b,p))+1){
+					if(!C){
+						await swap(A,d--,b,.25,true);
+						d1++;
+					}
+					b--;
+				}
+				if(a==b)b--;
+				if(a<b)await swap(A,a++,b--,1,true);
+				else{
+					for(let i=c;c1-->0;)await swap(A,b--,--i,.1,true);
+					for(let i=d;d1-->0;)await swap(A,a++,++i,.1,true);
+					return[b+1,a-1];
+				}
+			}
+		}
+		async function quickselect(A,a,b,r){
+			let j=0;
+			while(b-a>24){
+				let p=ninther(A,a,b),[m0,m1]=await partition(A,a,b,A[p]);
+				if(m0<=r&&r<=m1)return j;
+				else if(r<m0)b=m0;
+				else a=m1+1;j++;
+			}
+			await insertSort(A,a,b,.1,true);
+			return j;
+		}
+		async function merge(A,a,b,p){
+			let m=16,q=false;
+			for(let i=a;i<b;i+=m)await insertSort(A,i,minVal(i+m,b),.1,true);
+			for(;m<b-a;m*=2){
+				let t=q?p:a,f=q?a:p;
+				for(let i=t;i<t+b-a;i+=2*m){
+					let l=i,le=minVal(i+m,t+b-a),r=le,e=minVal(r+m,t+b-a);
+					while(l<le&&r<e)
+						if(compareIndices(A,l,r)<1)await swap(A,l++,f++,1,true);
+						else await swap(A,r++,f++,1,true);
+					while(l<le)await swap(A,l++,f++,1,true);
+					while(r<e)await swap(A,r++,f++,1,true);
+				}
+				q=!q;
+			}
+			if(q)for(let i=a;i<b;i++)await swap(A,i,p+i-a,1,true);
+		}
+		function bin(A,a,b,v,r){
+			while(a<b){
+				let m=a+(b-a)/2|0;
+				if(compareIndices(A,v,m)<(r?1:0))b=m;
+				else a=m+1;
+			}
+			return a;
+		}
+		function idx(A,v,p,a1,z,iv){
+			return v<a1+2*(z+1)*z&&(compareIndices(A,v,p+v-a1)>0^iv)?p+v-a1:v;
+		}
+		async function why(A,a,b,p,iv){
+			let z=await log(b-a),a1=a+z;
+			if(z+2*(z+1)*z>=b-a||z<2)return await insertSort(A,a,b,.1,true);
+			let c=new BitArray(A,iv?p:a1,iv?a1:p,z+1,z);
+			let ps=new BitArray(A,(iv?p:a1)+(z+1)*z,(iv?a1:p)+(z+1)*z,z+1,z);
+			for(let i=a1,j=a;i<b;i+=(b-a)/z-1|0)await swap(A,j++,i,1,true);
+			await merge(A,a,a1,a1);
+			for(let i=a1;i<b;i++){
+				let j=bin(A,a,a1,idx(A,i,p,a1,z,iv),false)-a;
+				await c.incr(j);
+			}
+			for(let i=0,s=0;i<=z;i++){
+				let v=i==z?0:c.get(i);
+				await ps.xor(i,s);s+=v;
+			}
+			for(let i=0;i<=z;i++){
+				let v1=ps.get(i),v=v1+a1,w=c.get(i),w1=w;
+				while(w>0){
+					let v2=idx(A,v,p,a1,z,iv),x=bin(A,a,a1,v2,false)-a;
+					while(x!=i){
+						let y=ps.get(x),w2=c.get(x),w3=w2,t=y,t1,b2;
+						while((b2=bin(A,a,a1,t1=idx(A,t+a1,p,a1,z,iv),false)-a)==x){
+							t++;if(--w3<1)break;
+						}
+						if(w3<1){
+							t1=idx(A,t+a1,p,a1,z,iv);w3=0;
+						}else w3--;
+						await swap(A,v2,t1,1,true);
+						await ps.xor(x,y^++t);
+						await c.xor(x,w2^w3);
+						if(((v-a1)/z|0)%(z+1)==x)v2=idx(A,v,p,a1,z,iv);
+						x=b2;
+					}
+					v++;w--;
+				}
+				await c.xor(i,w1);
+				await ps.xor(i,v1);
+			}
+			let i=a1;
+			for(let j=a;j<a1;j++){
+				let i1=bin(A,a1,b,j,true);
+				await run(A,i,i=i1);
+			}
+			await run(A,i,b);
+			await GS.grailMergeWithoutBuffer(A,a,z,b-a-z);
+		}
+		async function run(A,a,b){
+			let m1=a+(b-a)/2|0,m2=m1,z=await quickselect(A,a,b,m1);
+			if(!z&&!compareIndices(A,a,b-1))return;
+			let p=A[m1];
+			do m1--;while(!compareIndexValue(A,m1,p));m1++;
+			do m2++;while(!compareIndexValue(A,m2,p));m2--;
+			let l=m1-a,r=b-m2;
+			if(l>r){
+				await merge(A,m2,b,a);
+				await why(A,a,m1,m1,false);
+			}else{
+				await merge(A,a,m1,m2);
+				await why(A,m2,b,a,true);
+			}
+		}
+		await run(arr,0,len);
+	}
+	async lazyStableTernaryQuickSort(len){
+		function floorLog(n){
+			let l=0;
+			while(n>>=1)++l;
+			return l;
+		}
+		function medianOf3(A,v0,v1,v2){
+			let t0=0,t1=0,v;
+			v=(compareIndices(A,v0,v1)>0)?1:0;t0=v;t1=v^1;
+			v=(compareIndices(A,v0,v2)>0)?1:0;t0+=v;
+			if(t0==1)return v0;
+			v=(compareIndices(A,v1,v2)>0)?1:0;t1+=v;
+			return t1==1?v1:v2;
+		}
+		function medianOf9(A,a,b){
+			let v0,v1,v2,d=(b-a)/9|0;
+			return medianOf3(A,medianOf3(A,a,a+d*1,a+d*2),medianOf3(A,a+d*3,a+d*4,a+d*5),medianOf3(A,a+d*6,a+d*7,a+d*8));
+		}
+		function leftBinSearch(A,a,b,val){
+			while(a<b){
+				let m=a+(b-a)/2|0;
+				if(compareValues(val,A[m])<1)b=m;
+				else a=m+1;
+			}
+			return a;
+		}
+		function rightBinSearch(A,a,b,v){
+			while(a<b){
+				let m=a+(b-a)/2|0;
+				if(compareValues(v,A[m])<0)b=m;
+				else a=m+1;
+			}
+			return a;
+		}
+		function rightExpSearch(A,a,b,v){
+			let i=1;
+			while(b-i>=a&&compareValues(v,A[b-i])<0)i*=2;
+			return rightBinSearch(A,maxVal(a,b-i+1),b-i/2|0,v);
+		}
+		function leftBoundSearch(A,a,b,val){
+			let i=1;
+			while(a-1+i<b&&compareValues(v,A[a-1+i])+1)i*=2;
+			return rightBinSearch(A,a+i/2|0,minVal(b,a-1+i),v);
+		}
+		function rightBoundSearch(A,a,b,v){
+			let i=1;
+			while(b-i>=a&&compareValues(v,A[b-i])<1)i*=2;
+			return leftBinSearch(A,maxVal(a,b-i+1),b-i/2|0,v);
+		}
+		async function insertTo(A,a,b){
+			let t=A[a],c=false;
+			while(a>b)await write(A,a,A[--a],.5,c=true);
+			if(c)await write(A,b,t,.5,true);
+		}
+		async function rotate(A,a,m,b){
+			await IndexedRotations.holyGriesMills(A,a,m,b,.1,true);
+		}
+		async function insertSort(A,a,b){
+			let i=a+1;
+			if(compareIndices(A,i-1,i++)>0){
+				while(i<b&&compareIndices(A,i-1,i)>0)i++;
+				await reversal(A,a,i-1,1,true);
+			}else while(i<b&&compareIndices(A,i-1,i)<1)i++;
+			for(;i<b;i++)await insertTo(A,i,rightExpSearch(A,a,i,A[i]));
+		}
+		async function partialInsert(A,a,b){
+			if(a==b)return true;
+			let c=0;
+			for(let i=a+1;i<b;i++){
+				if(c>8)return false;
+				if(compareIndices(A,i-1,i)>0){
+					let t=A[i],j=i;
+					do await write(A,j,A[--j],.1,true);while(j>a&&compareValues(A[j-1],t)>0);
+					await write(A,j,t,.1,true);
+					c+=i-j;
+				}
+			}
+			return true;
+		}
+		async function buildRuns(A,a,b,mR){
+			let i=a+1,j=a,nS=true;
+			while(i<b){
+				if(compareIndices(A,i-1,i++)>0){
+					while(i<b&&compareIndices(A,i-1,i)>0)i++;
+					await reversal(A,j,i-1,1,true);
+				}else while(i<b&&compareIndices(A,i-1,i)<1)i++;
+				if(i<b){
+					nS=false;j=i-(i-j-1)%mR-1;
+				}
+				while(i-j<mR&&i<b)await insertTo(A,i,rightBinSearch(A,j,i,A[i++]));
+				j=i++;
+			}
+			return nS;
+		}
+		async function inPlaceMergeFW(A,a,m,b){
+			let i=a,j=m,k;
+			while(i<j&&j<b)
+				if(compareIndices(A,i,j)>0){
+					k=leftBinSearch(A,j+1,b,A[i]);
+					await rotate(A,i,j,k);
+					i+=k-j;j=k;
+				}else i++;
+		}
+		async function inPlaceMergeBW(A,a,m,b){
+			let i=m-1,j=b-1,k;
+			while(j>i&&i>=a)
+				if(compareIndices(A,i,j)>0){
+					k=rightBinSearch(A,a,i,A[j]);
+					await rotate(A,k,i+1,j+1);
+					j-=i+1-k;i=k-1;
+				}else j--;
+		}
+		async function smartInPlaceMerge(A,a,m,b){
+			if(compareIndices(A,m-1,m)<1)return;
+			a=leftBoundSearch(A,a,m,A[m]);
+			b=rightBoundSearch(A,m,b,A[m-1]);
+			if(compareIndices(A,a,b-1)>0)await rotate(A,a,m,b);
+			else if(b-m<m-a)await inPlaceMergeBW(A,a,m,b);
+			else await inPlaceMergeFW(A,a,m,b);
+		}
+		async function lazyStableSort(A,a,b){
+			let mR=b-a;
+			for(;mR>31;mR=++mR/2|0);
+			if(await buildRuns(A,a,b,mR))return;
+			for(let i,j=mR;j<(b-a);j*=2){
+				for(i=a;i+2*j<=b;i+=2*j)await smartInPlaceMerge(A,i,i+j,i+2*j);
+				if(i+j<b)await smartInPlaceMerge(A,i,i+j,b);
+			}
+		}
+		async function partition(A,a,b,pI){
+			let p=A[pI],pa=a,pb=a,c=compareIndexValue(A,a,p);
+			for(let i=a;i<b;){
+				let j=i;
+				if(c<0){
+					do c=compareIndexValue(A,++j,p);while(j<b&&c<0);
+					await rotate(A,pa,i,j);pa+=j-i;pb+=j-i;i=j;
+				}else if(!c){
+					do c=compareIndexValue(A,++j,p);while(j<b&&!c);
+					await rotate(A,pb,i,j);pb+=j-i;i=j;
+				}else do c=compareIndexValue(A,++i,p);while(i<b&&c>0);
+			}
+			return[pa,pb];
+		}
+		async function quickSort(A,a,b,d){
+			while(b-a>16){
+				if(!d)return await lazyStableSort(A,a,b);
+				let p=medianOf3(A,a,a+(b-a)/2,b-1),[pa,pb]=await partition(A,a,b,p),l=pa-a,r=b-pb,qL=pb-pa;
+				if(qL==b-a)return;
+				if(!l||!r||((l/r|0)>15||(r/l|0)>15)){
+					p=medianOf9(A,a,b);[pa,pb]=await partition(A,a,b,p);l=pa-a;r=b-pb;qL=pb-pa;
+					if(qL==b-a)return;
+				}
+				if(await partialInsert(A,a,pa)&&await partialInsert(A,pb,b))return;
+				if(l>r)await quickSort(A,pb,b,--d,b=pa);
+				else await quickSort(A,a,pa,--d,a=pb);
+			}
+			await insertSort(A,a,b);
+		}
+		await quickSort(arr,0,len,2*floorLog(len));
 	}
 }
 const sorts=new Sorts(),sortNames=sorts.getNames();
