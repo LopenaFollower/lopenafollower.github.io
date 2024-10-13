@@ -37800,6 +37800,61 @@ class Sorts{
 			await makeGeap(arr,0,len);
 		}
 	}
+	async swapfulCycleSort(len){
+		function countLesser(A,a,b,d){
+			let r=a;
+			for(let i=a+1;i<b;i++)r+=compareIndices(A,i,d)<0;
+			return r;
+		}
+		async function sort(A,a,b){
+			for(let i=a;i<b-1;i++){
+				let r=countLesser(A,i,b,i);
+				if(r-i)
+					do{
+						while(!compareIndices(A,r,i))r++;
+						await swap(A,i,r,.02,true);
+						r=countLesser(A,i,b,i);
+					}while(r!=i);
+			}
+		}
+		await sort(arr,0,len);
+	}
+	async stableDemoDerbySort(len){
+		for(let i=0;i<len-1;i++){
+			let l,s;
+			do{
+				l=s=0;
+				for(let j=i+1;j<len;j++){
+					let c=compareIndices(arr,j,i);
+					if(c<0)l++;
+					else if(!c){
+						await multiSwap(arr,j,s+i++,.005,true);
+						l--;
+					}
+				}
+				if(l<1&&s>0){
+					i+=s;
+					break;
+				}
+				await Rotations.holyGriesMills(arr,i,s+1,l,.01,true);
+			}while(l>0);
+		}
+	}
+	async instinctCocktailSandpaperSort(len){
+		for(let i=0,k=0;i<len-1;i++){
+			for(let j=i+1;j<len;j++){
+				swap(arr,i,j);
+				if(compareIndices(arr,i,j)>0)swap(arr,i,j);
+				if(++k>sqrt(len))await markSwap(i,j,k=0);
+			}
+			i++;
+			for(let j=len-1;j>i;j--){
+				swap(arr,i,j);
+				if(compareIndices(arr,i,j)>0)swap(arr,i,j);
+				if(++k>sqrt(len))await markSwap(i,j,k=0);
+			}
+		}
+	}
 }
 const sorts=new Sorts(),sortNames=sorts.getNames();
 let filtering=false;
