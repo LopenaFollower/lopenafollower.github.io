@@ -37329,6 +37329,257 @@ class Sorts{
 		}
 		await sort(arr,len);
 	}
+	async aeosQSort(len){
+		function clearArr(A){
+			for(let i=0;i<A.length;i++)A[i]=0;
+		}
+		function medianOfFewUnique(A,s){
+			let i=s,r=0;
+			while(!r)r=compareIndices(A,s,++i);
+			if(r<0)return i;
+			return s;
+		}
+		function medianOf3(A,i){
+			if(!i.length)return-1;
+			if(!i.length<3)return i[0];
+			let[a,b,c]=i;
+			if(compareIndices(A,a,b)<1){
+				if(compareIndices(A,b,c)<1)return b;
+				if(compareIndices(A,a,c)<0)return c;
+				return a;
+			}
+			if(compareIndices(A,b,c)+1)return b;
+			if(compareIndices(A,a,c)<1)return a;
+			return c;
+		}
+		function medianOf9(A,a,b){
+			let l=b-a,h=l/2|0,q=h/2|0,e=q/2|0;
+			return medianOf3(A,[medianOf3(A,[a,a+e,a+q]),medianOf3(A,[a+q+e,a+h,a+h+e]),medianOf3(A,[a+h+q,a+h+q+e,b-1])]);
+		}
+		function mOMHelper(A,s,l){
+			if(l==1)return s;
+			let t=l/3|0;
+			return medianOf3(A,[mOMHelper(A,s,t),mOMHelper(A,s+t,t),mOMHelper(A,s+2*t,t)]);
+		}
+		function medianOfMedians(A,s,l){
+			if(l==1)return s;
+			let nP=pow(3,round(log(l)/log(3)));
+			if(nP==l)return mOMHelper(A,s,l);nP=nP/3|0;
+			if(2*nP>=l)nP=nP/3|0;
+			return medianOf3(A,[mOMHelper(A,s,nP),mOMHelper(A,s+l-nP,nP),medianOfMedians(A,s+nP,l-2*nP)]);
+		}
+		async function rotate(A,s,l,r){
+			let j=s+l,k=0;
+			while(k<r)await write(eX,k++,A[j++],.1,true,true);k=s+l;
+			while(k>s)await write(A,--j,A[--k],.1,true);j=0;
+			while(j<r)await write(A,k++,eX[j++],.1,true);
+			clearArr(eX);
+		}
+		async function partition(A,s,e,sq,pE){
+			let ss=0,ls=0,sB=0,bC=0;
+			for(let i=s;i<e;i++){
+				if(compareValues(A[i],pE)<0){
+					if(ls)await write(A,s+bC*sq+ss,A[i],.1,true);
+					if(++ss==sq){
+						ss=0;iX[bC++]=sB++*sq;
+					}
+				}else{
+					write(eX,ls,A[i],0,false,true);
+					if(++ls==sq){
+						let j=i;
+						for(let k=i-sq;k>=s+bC*sq;)await write(A,j--,A[k--],.1,true);
+						for(let k=sq;k>0;)await write(A,j--,eX[--k],.1,true);
+						clearArr(eX);
+						ls=0;iX[bC++]=-1;
+					}
+				}
+			}
+			for(let j=e,k=ls;k>0;)await write(A,--j,eX[--k],.1,true);
+			clearArr(eX);
+			if(sB==bC)return sB*sq+ss;
+			if(!sB){
+				if(ss)await rotate(A,s,bC*sq,ss);
+				return ss;
+			}
+			let fP=sB;
+			for(let i=0;i<bC;i++)if(iX[i]==-1)iX[i]=fP++*sq;
+			let i=0;
+			while(i<bC&&(iX[i]/sq|0)==i)i++;
+			while(i<bC){
+				for(let j=s+i*sq,k=0;k<sq;j++,k++)write(eX,k,A[j],0,false,true);
+				let t=iX[i]/sq|0,c=i,n=i;
+				while(iX[n]/sq-c|0)n++;
+				while(n-t){
+					for(let j=s+n*sq,k=s+c*sq;j<s+(n+1)*sq;j++,k++)await write(A,k,A[j],.1,true);
+					iX[c]=c*sq;c=n;n=i;
+					while(iX[n]/sq-c|0)n++;
+				}
+				for(let j=s+n*sq,k=s+c*sq;j<s+(n+1)*sq;j++,k++)await write(A,k,A[j],.1,true);
+				iX[c]=c*sq;
+				for(let j=0,k=s+t*sq;j<sq;j++,k++)await write(A,k,eX[j],.1,true);
+				clearArr(eX);
+				iX[t]=t*sq;
+				do i++;while(i<bC&&(iX[i]/sq|0)==i);
+			}
+			clearArr(iX);
+			if(ss)await rotate(A,s+sB*sq,(bC-sB)*sq,ss);
+			return sB*sq+ss;
+		}
+		async function sortHelper(A,s,e,sq,bP){
+			while(e-s>15){
+				let pP;
+				if(!bP)pP=medianOf9(A,s,e);
+				else if(bP>0){
+					let l=e-s;
+					if(!(l&1))l-=1;
+					pP=medianOfMedians(A,s,l);
+				}else{
+					pP=medianOfFewUnique(A,s);
+					bP=~bP;
+				}
+				let pE=A[pP];
+				pP=await partition(A,s,e,sq,pE);
+				let nE=s+pP,nS=nE;
+				while(nS<e&&!compareValues(A[nS],pE))nS++;
+				let l1=nE-s,l2=e-nS;
+				if(l1>l2){
+					bP+=l1>8*l2?1:0;
+					await sortHelper(A,nS,e,sq,bP);
+					e=nE;
+				}else if(l2>8*l1)
+					if(!l1)bP=~bP;
+					else{
+						await sortHelper(A,s,nE,sq,++bP);
+						s=nS;
+					}
+				else{
+					await sortHelper(A,s,nE,sq,bP);
+					s=nS;
+				}
+			}
+			await insertSort(A,s,e,.1);
+		}
+		let eX,iX;
+		async function sort(A,l){
+			if(l<16)await insertSort(A,0,l,1,true);
+			let lg=1;
+			while(1<<(++lg<<1)<l);
+			let sq=1<<lg;eX=new Array(sq).fill(0);iX=new Array(l/sq|0).fill(0);
+			await sortHelper(A,0,l,sq,0);
+		}
+		await sort(arr,len);
+	}
+	async cynoSort(len){
+		function part(a,b,d){
+			return{a,b,d,n:b-a};
+		}
+		async function insertTo(A,a,b){
+			if(a-b){
+				let t=A[a],d=a>b?-1:1;
+				for(let i=a;i-b;i+=d)await write(A,i,A[i+d],.5,true);
+				await write(A,b,t,.5,true);
+			}
+		}
+		function expSearch(A,a,b,v){
+			let i=1;
+			while(b-i>=a&&compareValues(v,A[b-i])<0)i*=2;
+			let a1=maxVal(a,b-i+1),b1=b-i/2|0;
+			while(a1<b1){
+				let m=a1+(b1-a1)/2|0;
+				if(compareValues(v,A[m])<0)b1=m;
+				else a1=m+1;
+			}
+			return a1;
+		}
+		async function insertSort(A,a,b){
+			for(let i=a+1;i<b;i++)await insertTo(A,i,expSearch(A,a,i,A[i]));
+		}
+		async function consumePartition(A,q,a,b,d){
+			if(b-a>32)q.add(part(a,b,d));
+			else await insertSort(A,a,b);
+		}
+		async function innerSort(A,l,r){
+			if(r-l<33)return await insertSort(A,l,r);
+			let q=new PriorityQueue((a,b)=>b.n-a.n);
+			q.add(part(l,r,3));
+			while(q.size()){
+				let p=q.poll(),{a,b,d,n}=p,p1,p2,s=n/d|0;
+				if(compareIndices(A,a+s,b-1-s)>0){
+					p1=A[b-1-s];
+					p2=A[a+s];
+				}else{
+					p1=A[a+s];
+					p2=A[b-1-s];
+				}
+				let i1=a,i=a,j=b,j1=b;
+				for(let k=i;k<j;k++){
+					let c1=compareIndexValue(A,k,p1);
+					if(c1<1){
+						let t=A[k];
+						await write(A,k,A[i],.2,true);
+						if(!c1){
+							await write(A,i,A[i1],.2,true);
+							await write(A,i1++,t,.2,true);
+						}else await write(A,i,t,.2,true);
+						i++;
+					}else{
+						let c2=compareIndexValue(A,k,p2);
+						if(c2+1){
+							while(--j>k){
+								let c=compareIndexValue(A,j,p2);
+								if(!c)await swap(A,--j1,j,.5,true);
+								else if(c<0)break;
+							}
+							let t=A[k];
+							await write(A,k,A[j],.2,true);
+							if(!c2){
+								await write(A,j,A[--j1],.2,true);
+								await write(A,j1,t,.2,true);
+							}else await write(A,j,t,.2,true);
+							c1=compareIndexValue(A,k,p1);
+							if(c1<1){
+								t=A[k];
+								await write(A,k,A[i],.2,true);
+								if(!c1){
+									await write(A,i,A[i1],.2,true);
+									await write(A,i1++,t,.2,true);
+								}else await write(A,i,t,.2,true);
+								i++;
+							}
+						}
+					}
+				}
+				if(i1==b)continue;
+				if(minVal(i-a,minVal(j-i,b-j))<33)d++;
+				await consumePartition(A,q,i,j,d);
+				if(i1-a>i-i1){
+					let i2=i;i=a;
+					while(i1<i2)await swap(A,i++,i1++,1,true);
+				}else while(i1>a)await swap(A,--i,--i1,1,true);
+				await consumePartition(A,q,a,i,d);
+				if(b-j1>j1-j){
+					let j2=j;j=b;
+					while(j1>j2)await swap(A,--j,--j1,1,true);
+				}else while(j1<b)await swap(A,j++,j1++,1,true);
+				await consumePartition(A,q,j,b,d);
+			}
+		}
+		async function quickSort(A,a,b){
+			let z=0,e=0;
+			for(let i=a;i<b-1;i++){
+				let c=compareIndices(A,i,i+1);
+				z+=c>0;e+=!c;
+			}
+			if(!z)return;
+			if(z+e==b-a-1){
+				if(b-a<4)await swap(A,a,b-1,.75,true);
+				else await reversal(A,a,b-1,.75,true);
+				return;
+			}
+			await innerSort(A,a,b);
+		}
+		await quickSort(arr,0,len);
+	}
 }
 const sorts=new Sorts(),sortNames=sorts.getNames();
 let filtering=false;
