@@ -10,8 +10,8 @@
 				margin:0;
 			}
 			::-webkit-scrollbar{
-				width:5px;
 				height:5px;
+				width:5px;
 			}
 			::-webkit-scrollbar-thumb{
 				border-radius:10px;
@@ -405,10 +405,8 @@ class Gradient{
 		for(i=0;i<l;i++){
 			let c=[];
 			a+=1/l;
-			for(j=0;j<3;j++)
-				c[j]=s[j]*a+(1-a)*e[j];
+			for(j=0;j<3;j++)c[j]=s[j]*a+(1-a)*e[j];
 			r.push("#"+this.convertToHex(c));
-	
 		}
 		return r;
 	}
@@ -7842,10 +7840,10 @@ class Sorts{
 					}
 				}
 			}
-			if(i>=m&&leftAD==blL&&tC>0){	
+			if(i>=m&&leftAD==blL&&tC>0){
 				await multiSwap(A,left,right-blL,blL,ext)
 			}else{
-				if(i<m){							
+				if(i<m){
 					await rotate(A,left,m,right)
 					left+=right-m;
 				}
@@ -9821,7 +9819,7 @@ class Sorts{
 				let bL=leftBlockSearch(A,p+14,pE-15,A[i]);
 				if(compareIndices(A,i,bL)){
 					let qE=rightBlockSearch(A,bL+15,pE-15,A[i]);
-					bL+=rng.nextInt((qE-bL)/15|0)*15;						
+					bL+=rng.nextInt((qE-bL)/15|0)*15;
 				}
 				let o=rightBinSearch(A,bL-14,bL,v,w);
 				if(o==bL){
@@ -9927,7 +9925,7 @@ class Sorts{
 			await weaveInsert(A,n,x+1);
 		}
 		async function weaveMergeSort(A,n,x){
-			if(x-n==0){	
+			if(x-n==0){
 			}else if(x-n==1){
 				if(compareIndices(A,n,x)>0)
 					await swap(A,n,x,0.01,true);
@@ -11183,9 +11181,9 @@ class Sorts{
 			await binaryInsertion(a,i,n);
 			while(s<n){
 				await mergePass(a,b,s,n,true);
-				s+=s;			
+				s+=s;
 				await mergePass(b,a,s,n,false);
-				s+=s;			
+				s+=s;
 			}
 		}
 		await stableSort(arr,len);
@@ -17623,7 +17621,7 @@ class Sorts{
 						if(compareIndices(A,i-1+l,i+l)>0){
 							i+=2;
 							continue;
-						}	
+						}
 						await swap(A,i+l,i+1+l,1,true);
 					}
 					break;
@@ -22354,7 +22352,7 @@ class Sorts{
 			let rem=bL-c,b1=minVal(j,b-rem);
 			await bms.multiSwap(A,k-rem,b1,rem);
 			r-=rem;
-			await bms.multiSwap(A,m-l,a,l);	
+			await bms.multiSwap(A,m-l,a,l);
 			await bms.multiSwap(A,b1-r,a+l,r);
 			await binaryInsertion(A,a,a+uL,.5);
 			await blockSelect(A,a+uL,b1,bL);
@@ -37448,7 +37446,7 @@ runSort(unfiltered.pop());
 let lowercased=[...sortNames].map(e=>e.toLowerCase());
 let to_do=[],dupes=to_do.filter(e=>lowercased.includes(e.toLowerCase()));
 if(dupes.length)console.log(dupes.join("\n"));
-//clean-up marathon at 50k lines, lets see how many lines we can reduce
+//clean-up marathon at 40k lines, lets see how many lines we can reduce
 		</script>
 	</body>
 </html>
