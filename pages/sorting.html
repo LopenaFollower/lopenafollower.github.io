@@ -241,6 +241,7 @@ github.com/Gaming32/ArrayV/tree/c90c065805d682b3e92a8a056f891765fe1992f0/src/mai
 github.com/Gaming32/ArrayV-Extra-Sorts/tree/main/src/main/java/io/github/arrayv/sorts
 github.com/PCBoyGames/ArrayV-v4.0/tree/PCBoy's-Personal-Build/src/sorts
 github.com/smaybius/ArrayV/blob/712a17411cd47e19719f6268080c234aafdf6442/src/main/java/io/github/arrayv/sorts
+github.com/w0rthy/SortingVisualizer/tree/master/SortingVisualizer/sorts
 */
 function ctz(n){n|=n;let b=n.toString(2);return parseInt(b)?(b.match(/0*$/)||"").length:32}
 const ctx=cvs.getContext("2d"),{random,ceil,floor,round,sqrt,cbrt,log,log1p,log2,log10,cos,abs,pow,clz32,PI,sin,sign,trunc,min:minVal,max:maxVal}=Math;
@@ -39456,9 +39457,8 @@ class Sorts{
 			else await fragmentedMergeFW(A,a,m,b,s);
 		}
 		async function mergeSort(A,a,b){
-			let l=b-a;
+			let l=b-a,s=ceilCbrt(l),s1=s*s;
 			if(l<32)return await buildRuns(A,a,b,b-a);
-			let s=ceilCbrt(l),s1=s*s;
 			if(await buildRuns(A,a,b,s))return;
 			for(let i=a+s,j=a;i<b;i+=s){
 				if(i-j==s1){
@@ -39469,6 +39469,413 @@ class Sorts{
 			for(let i=a+s1;i<b;i+=s1)await fragmentedMerge(A,a,i,minVal(i+s1,b),s);
 		}
 		await mergeSort(arr,0,len);
+	}
+	async lithiumSort(len){
+		class BitArray{
+			constructor(A,a,b,z,w){
+				this.A=A;this.a=a;this.b=b;this.z=z;this.w=w;this.l=z*w;
+			}
+			async flipBit(a,b){
+				await swap(A,a,b,.5,true);
+			}
+			getBit(a,b){
+				return compareIndices(this.A,a,b)>0;
+			}
+			async setBit(a,b,t){
+				if(this.getBit(a,b)^t)await this.flipBit(a,b);
+			}
+			async free(){
+				let i1=this.a+this.l;
+				for(let i=this.a,j=this.b;i<i1;i++,j++)await this.setBit(i,j,false);
+			}
+			async set(d,v){
+				if(d<0||d>=this.z)return;
+				let s=d*this.w,i1=this.a+s+this.w;
+				for(let i=this.a+s,j=this.b+s;i<i1;i++,j++,v>>=1)await this.setBit(i,j,(v&1)>0);
+			}
+			get(d){
+				if(d<0||d>=this.z)return;
+				let r=0,s=d*this.w;
+				for(let k=0,i=this.a+s,j=this.b+s;k<this.w;k++,i++,j++)r|=(this.getBit(i,j)?1:0)<<k;
+				return r;
+			}
+			async swap(a,b){
+				if(a<0||a>=this.z)return;if(b<0||b>=this.z)return;
+				let t=this.get(a);
+				await this.set(a,this.get(b));
+				await this.set(b,t);
+			}
+		}
+		async function blockSwapFW(A,a,b,l){
+			for(let i=0;i<l;i++)await swap(A,a+i,b+i,.5,true);
+		}
+		async function blockSwapBW(A,a,b,l){
+			for(let i=l-1;i>=0;i--)await swap(A,a+i,b+i,.5,true);
+		}
+		async function insertToLeft(A,f,t){
+			let n=A[f];
+			for(let i=f-1;i>=t;i--)await write(A,i+1,A[i],.25,true);
+			await write(A,t,n,.25,true);
+		}
+		async function insertToRight(A,f,t){
+			let n=A[f];
+			for(let i=f;i<t;i++)await write(A,i,A[i+1],.25,true);
+			await write(A,t,n,.25,true);
+		}
+		async function rotate(A,a,m,b){
+			let rl=b-m,ll=m-a;
+			while(rl>1&&ll>1)
+				if(rl<ll){
+					await blockSwapFW(A,a,m,rl);
+					a+=rl;ll-=rl;
+				}else{
+					rl-=ll;
+					await blockSwapBW(A,a,b-=ll,ll);
+				}
+			if(rl==1)await insertToLeft(A,m,a);
+			else if(ll==1)await insertToRight(A,a,b-1);
+		}
+		function binarySearch(A,a,b,v,l){
+			while(a<b){
+				let m=a+(b-a)/2|0,c=compareIndexValue(A,m,v);
+				if(l?c+1:c>0)b=m;
+				else a=m+1;
+			}
+			return a;
+		}
+		async function findKeys(A,a,b,q){
+			let n=1,p=b-1;
+			for(let i=p;i>a&&n<q;i--){
+				let l=binarySearch(A,p,p+n,A[i-1],true)-p;
+				if(l==n||compareIndices(A,i-1,p+l)<0){
+					await rotate(A,i,p,p+n++);
+					await insertToRight(A,p=i-1,p+l);
+				}
+			}
+			await rotate(A,p,p+n,b);
+			return n;
+		}
+		async function insertSort(A,a,b){
+			for(let i=a+1;i<b;i++)if(compareIndices(A,i,i-1)<0)await insertToLeft(A,i,binarySearch(A,a,i,A[i],false));
+		}
+		async function sortRuns(A,a,b){
+			let i;
+			for(i=a;i<b-32;i+=32)await insertSort(A,i,i+32);
+			if(i<b)await insertSort(A,i,b);
+		}
+		async function mergeInPlaceBW(A,a,m,b,L){
+			let s=b-1,l=m-1;
+			while(s>l&&l>=a){
+				let c=compareIndices(A,l,s);
+				if(L?c>0:c+1){
+					let p=binarySearch(A,a,l,A[s],!L);
+					await rotate(A,p,l+1,s+1);
+					s-=l+1-p;l=p-1;
+				}else s--;
+			}
+		}
+		async function mergeWithBufferBW(A,a,m,b,L){
+			let rl=b-m;
+			if(rl<17||rl>FL)return await mergeInPlaceBW(A,a,m,b,L);
+			await blockSwapBW(A,m,FP,rl);
+			let l=m-1,r=FP+rl-1,o=b-1;
+			for(;l>=a&&r>=FP;o--){
+				let c=compareIndices(A,r,l);
+				if(L?c+1:c>0)await swap(A,o,r--,.5,true);
+				else await swap(A,o,l--,.5,true);
+			}
+			while(r>=FP)await swap(A,o--,r--,.5,true);
+		}
+		async function mergeWithScrollingBufferBW(A,a,m,b){
+			let l=m-1,r=b-1,o=r+m-a;
+			while(r>=m&&l>=a)
+				if(compareIndices(A,r,l)+1)await swap(A,o--,r--,.5,true);
+				else await swap(A,o--,l--,.5,true);
+			while(r>=m)await swap(A,o--,r--,.5,true);
+			while(l>=a)await swap(A,o--,l--,.5,true);
+		}
+		async function shift(A,a,m,b,l){
+			if(l){
+				if(m==b)return;
+				while(m>a)await swap(A,--b,--m,.5,true);
+			}else{
+				if(m==a)return;
+				while(m<b)await swap(A,a++,m++,.5,true);
+			}
+		}
+		async function dualMergeFW(A,a,m,b,r){
+			let i=a,j=m,k=a-r;
+			while(k<i&&i<m)
+				if(compareIndices(A,i,j)<1)await swap(A,k++,i++,.5,true);
+				else await swap(A,k++,j++,.5,true);
+			if(k<i)await shift(A,j-r,j,b,false);
+			else{
+				let i2=m-1,j2=b-1;k=i2+b-j;
+				while(i2>=i&&j2>=j)
+					if(compareIndices(A,i2,j2)>0)await swap(A,k--,i2--,.5,true);
+					else await swap(A,k--,j2--,.5,true);
+				while(j2>=j)await swap(A,k--,j2--,.5,true);
+			}
+		}
+		async function swapKeys(A,bs,a,b){
+			if(bs==null)await swap(A,KP+a,KP+b,1,true);
+			else await bs.swap(a,b);
+		}
+		function compareKeys(A,bs,a,b){
+			return bs==null?compareIndices(A,KP+a,KP+b):compareValues(bs.get(a),bs.get(b));
+		}
+		async function blockSelect(A,bs,a,lB,rB,bL){
+			let i1=0,tm=lB,j1=tm,k=0,tb=tm+rB;
+			while(k<j1&&j1<tb)
+				if(compareIndices(A,a+(i1+1)*bL-1,a+(j1+1)*bL-1)<1){
+					if(i1>k)await blockSwapFW(A,a+k*bL,a+i1*bL,bL);
+					await swapKeys(A,bs,k++,i1);i1=k;
+					for(let i=maxVal(k+1,tm);i<j1;i++)if(compareKeys(A,bs,i,i1)<0)i1=i;
+				}else{
+					await blockSwapFW(A,a+k*bL,a+j1*bL,bL);
+					await swapKeys(A,bs,k,j1++);
+					if(i1==k++)i1=j1-1;
+				}
+			while(k<j1-1){
+				if(i1>k)await blockSwapFW(A,a+k*bL,a+i1*bL,bL);
+				await swapKeys(A,bs,k++,i1);i1=k;
+				for(let i=k+1;i<j1;i++)if(compareKeys(A,bs,i,i1)<0)i1=i;
+			}
+		}
+		function compareMidKey(A,bs,i,mK){
+			return bs==null?compareIndexValue(A,KP+i,mK)<0:compareValues(bs.get(i),mK)<0;
+		}
+		async function mergeBlocks(A,a,mK,bQ,bL,lL,bs){
+			let f=a,l=compareMidKey(A,bs,0,mK);
+			for(let i=1;i<bQ;i++)
+				if(l^compareMidKey(A,bs,i,mK)){
+					let n=a+i*bL,nE=binarySearch(A,n,n+bL,A[n-1],l);
+					await mergeWithBufferBW(A,f,n,f=nE,l);
+					l=!l;
+				}
+			if(l&&lL){
+				let lF=a+bQ*BL;
+				await mergeWithBufferBW(A,f,lF,lF+lL,l);
+			}
+		}
+		async function blockCycle(A,a,b,bL,bs){
+			let t=(b-a)/bL|0;
+			for(let i=0;i<t;i++){
+				let k=bs.get(i);
+				if(k-i){
+					let j=i;
+					do{
+						await blockSwapFW(A,a+k*bL,a+j*bL,bL);
+						await bs.set(j,j);
+						k=bs.get(j=k);
+					}while(k-i);
+					await bs.set(j,j);
+				}
+			}
+		}
+		async function kotaMerge(A,a,m,b,bL,bs){
+			let c=0,t=2,i=a,j=m,k=FP,l=0,r=0;
+			while(c++<FL)
+				if(compareIndices(A,i,j)<1){
+					await swap(A,k++,i++,.5,true);l++;
+				}else{
+					await swap(A,k++,j++,.5,true);r++;
+				}
+			let L=l>=r;k=L?i-l:j-r;c=0;
+			do{
+				if(i<m&&(j==b||compareIndices(A,i,j)<1)){
+					await swap(A,k++,i++,.5,true);l++;
+				}else{
+					await swap(A,k++,j++,.5,true);r++;
+				}
+				if(++c==bL){
+					await bs.set(t++,(k-a)/bL-1|0);
+					if(L)l-=bL;
+					else r-=bL;
+					L=l>=r;k=L?i-l:j-r;c=0;
+				}
+			}while(i<m||j<b);
+			let b1=b-c;
+			await blockSwapFW(A,k-c,b1,c);r-=c;t=0;k=FP;
+			while(l>0){
+				await blockSwapFW(A,k,m-l,bL);
+				await bs.set(t++,(m-a-l)/bL|0);
+				k+=bL;l-=bL;
+			}
+			while(r>0){
+				await blockSwapFW(A,k,b1-r,bL);
+				await bs.set(t++,(b1-a-r)/bL|0);
+				k+=bL;r-=bL;
+			}
+		}
+		function log2(n){
+			return 32-clz32(n);
+		}
+		async function prepareKeys(bs,q){
+			for(let i=0;i<q;i++)await bs.set(i,i);
+		}
+		async function combine(A,a,m,b,bs){
+			if(b-m<=FL)return await mergeWithBufferBW(A,a,m,b,true);
+			if(DB){
+				await kotaMerge(A,a,m,b,BL,bs);
+				await blockCycle(A,a,b,BL,bs);
+			}else{
+				let lB=(m-a)/BL|0,rB=(b-m)/BL|0,bQ=lB+rB,fr=b-a-bQ*BL,mK;
+				if(bs==null){
+					await insertSort(A,KP,KP+bQ+1);
+					mK=A[KP+lB];
+				}else{
+					await prepareKeys(bs,bQ);
+					mK=lB;
+				}
+				await blockSelect(A,bs,a,lB,rB,BL);
+				await mergeBlocks(A,a,mK,bQ,BL,fr,bs);
+			}
+		}
+		function strat3BLenCalc(tR,r){
+			let sT=1;
+			for(;sT*sT<tR;sT*=2);
+			for(;(tR/sT|0)>(r/(2*(log2(tR/sT|0)+1))|0);sT*=2);
+			BL=sT;
+		}
+		function noBitsBLenCalc(tR){
+			let kL=KL,kB=(kL+(kL&1))/2|0,bL=1,t;
+			if(kB>=(tR/kB|0)){
+				FL=kB;FP=KP+KL-kB;t=kB;
+			}else{
+				FL=0;t=tR/kL|0;
+			}
+			for(;bL<=t;bL*=2);
+			BL=bL;
+		}
+		function resetBuf(){
+			FP=KP;FL=KL;BL=OBL;
+		}
+		function checkValidBitArray(A,a,b,c){
+			return compareIndices(A,a+c,b-c)<0;
+		}
+		async function firstMerge(A,a,m,b,s3){
+			if(b-m<=FL)return await mergeWithBufferBW(A,a,m,b,true);
+			let m1=a+(m-a)/2|0,m2=binarySearch(A,m,b,A[m1],true),m3=m1+m2-m;
+			await rotate(A,m1,m,m2);
+			let tR=b-m3;
+			if(s3)strat3BLenCalc(tR,m1-a);
+			let nW=tR/BL|0,w=log2(nW)+1,z=nW*w;
+			if(checkValidBitArray(A,a,m1,z)){
+				m3=m2-((m2-m3)/BL|0)*BL;
+				let bs=new BitArray(A,a,m1-z,nW,w);
+				await combine(A,m3,m2,b,bs);
+				await bs.free();
+			}else{
+				noBitsBLenCalc(twoR);
+				m3=m2-((m2-m3)/BL|0)*BL;
+				let dB=DB;DB=false;
+				await combine(A,m3,m2,b,null);
+				DB=dB;
+				resetBuf();
+			}
+			tR=m3-a;
+			if(s3)strat3BLenCalc(twoR,b-m3);
+			nW=twoR/BL|0;w=log2(nW)+1;z=nW*w;
+			let fr,m4,m5;
+			if(checkValidBitArray(A,m3,b,z)){
+				m4=a+((m1-a)/BL|0)*BL;
+				m5=m3-m1+m4;
+				fr=m4-m1;
+				if(fr)await rotate(A,m4,m1,m3);
+				let bs=new BitArray(A,m3,b-z,nW,w);
+				await combine(A,a,m4,m5,bs);
+				await bs.free();
+			}else{
+				noBitsBLenCalc(tR);
+				m4=a+((m1-a)/BL|0)*BL;
+				m5=m3-m1+m4;
+				fr=m4-m1;
+				if(fr)await rotate(A,m4,m1,m3);
+				let dB=DB;DB=false;
+				await combine(A,a,m4,m5,null);
+				DB=dB;
+				resetBuf();
+			}
+			if(fr)await mergeWithBufferBW(A,a,m3,m5,false);
+		}
+		async function lithiumLoop(A,a,b){
+			let r=32,e=b-KL;
+			while(r<=FL){
+				let tR=2*r,i;
+				for(i=a;i<e-tR;i+=tR);
+				if(i+r<e)await mergeWithScrollingBufferBW(A,i,i+r,e);
+				else await shift(A,i,e,e+r,true);
+				for(i-=tR;i>=a;i-=tR)await mergeWithScrollingBufferBW(A,i,i+r,i+tR);
+				let oR=r;r=tR;tR*=2;
+				for(i=a+oR;i+tR<e+oR;i+=tR)await dualMergeFW(A,i,i+r,i+tR,oR);
+				if(i+r<e+oR)await dualMergeFW(A,i,i+r,e+oR,oR);
+				else await shift(A,i-oR,i,e+oR,false);
+				r=tR;
+			}
+			b=e;e+=KL;
+			let s3=!BL,tR=r*2;
+			while(tR<b-a){
+				let i=a+tR;
+				await firstMerge(A,a,a+r,i,s3);
+				if(s3)strat3BLenCalc(twoR,r);
+				let nW=tR/BL|0,w=log2(nW)+1,z=nW*w,bs,dB=DB;
+				if(checkValidBitArray(A,a,a+tR,z))bs=new BitArray(A,a,a+tR-z,nW,w);
+				else{
+					bs=null;DB=false;
+					noBitsBLenCalc(tR);
+				}
+				for(;i<b-tR;i+=tR)await combine(A,i,i+r,i+tR,bs);
+				if(i+r<b)await combine(A,i,i+r,b,bs);
+				if(bs==null){
+					resetBuf();
+					DB=dB;
+				}else await bs.free();
+				r=tR;tR*=2;
+			}
+			await firstMerge(A,a,a+r,b,s3);
+			await insertSort(A,b,e);
+			r=binarySearch(A,a,b,A[e-1],false);
+			await rotate(A,r,b,e);
+			let d=b-r;e-=d;b-=d;
+			let b0=b+(e-b)/2|0;r=binarySearch(A,a,b,A[b0-1],false);
+			await rotate(A,r,b,b0);
+			d=b-r;b0-=d;b-=d;
+			await mergeInPlaceBW(A,b0,b0+d,e,true);
+			await mergeInPlaceBW(A,a,b,b0,true);
+		}
+		async function inPlaceMergeSort(A,a,b){
+			await sortRuns(A,a,b);
+			let r=32;
+			while(r<b-a){
+				let t=r*2,i;
+				for(i=a;i<b-t;i+=t)await mergeInPlaceBW(A,i,i+r,i+t,true);
+				if(i+r<b)await mergeInPlaceBW(A,i,i+r,b,true);
+				r=t;
+			}
+		}
+		let OBL,BL,FP,FL,KP,KL,DB;
+		async function sort(A,a,b,db){
+			let n=b-a,sn=1;
+			if(n<257)return await inPlaceMergeSort(A,a,b);
+			for(;sn*sn<n;sn*=2);
+			let d=db?2*sn:sn,kF=await findKeys(A,a,b,d);
+			if(kF<9)return await inPlaceMergeSort(A,a,b);
+			FP=b-kF;FL=kF;KL=kF;KP=FP;OBL=sn;
+			if(kF==d&&db){
+				BL=sn;
+				DB=true;
+			}else if(kF>=sn){
+				BL=sn;
+				DB=false;
+			}else{
+				BL=0;
+				DB=false;
+			}
+			await sortRuns(A,a,b-kF);
+			await lithiumLoop(A,a,b);
+		}
+		await sort(arr,0,len,true);
 	}
 }
 const sorts=new Sorts(),sortNames=sorts.getNames();
