@@ -39090,6 +39090,42 @@ class Sorts{
 		}
 		await mergeSort(arr,0,len);
 	}
+	async pureFibHeapSort(len){
+		function genFib(){
+			FIB[0]=FIB[1]=1;
+			for(let i=2;i<FIB.length;i++)FIB[i]=FIB[i-2]+FIB[i-1];
+		}
+		async function sift(A,a,b){
+			let o=2,n=b-1;
+			while(1){
+				let f=FIB[o-2],j=b-f;
+				if(j<a)return;
+				else{
+					let l=j,m=b-FIB[o-1];
+					if(m<a)m=a;
+					for(let i=m;i<j;i++)if(i>=a&&compareIndices(A,l,i)>0)l=i;
+					await swap(A,l,n,1,true);
+					n=l;o=toByte(o+1);
+				}
+			}
+		}
+		async function fibHeapify(A,s,e){
+			genFib();
+			let j=1;
+			while(FIB[j]<=e-s)j++;
+			for(let i=s+1;i<=e;i++)await sift(A,s,i);
+		}
+		let FIB=new Array(46).fill(0);
+		async function sort(A,l){
+			await fibHeapify(A,0,l);
+			for(let i=0;i<l;i++){
+				await swap(A,i,l-1,1,true);
+				await sift(A,i+1,l);
+			}
+			await insertSort(A,0,l,1,true);
+		}
+		await sort(arr,len);
+	}
 }
 const sorts=new Sorts(),sortNames=sorts.getNames();
 let filtering=false;
