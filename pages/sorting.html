@@ -31987,7 +31987,7 @@ class Sorts{
 		await insertSort(arr,0,len,.5);
 	}
 	async advancedLogMergeSort(len){
-		let base=askForNum(1,"Block size");
+		let base=askForNum(1,"Block size",1);
 		class BitArray{
 			constructor(A,a,b,z,w){
 				this.A=A;this.a=a;this.b=b;this.z=z;this.w=w;
