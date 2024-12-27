@@ -28,16 +28,15 @@ const f62=s=>[...s,"0"].reverse().reduce((a,b,i)=>{
 const decompress=s=>{
 	const c=s.split(",").map(e=>{
 		let p=e.split("|"),[p0,p1]=p.map(f62),L=p.length;
-		return{d:L>1?L>2?p0:p0:0,l:L>1?L>2?p1:p0:0,n:L>1?L>2?p[2]:p[1]:p};
+		return{d:L>1?p0:0,l:L>1?L>2?p1:p0:0,n:L>1?L>2?p[2]:p[1]:p};
 	});
 	const d=[];
-	for(let e of c)
-		if(e.d+e.l<1)d.push(e.n);
-		else{
-			let s=d.length-e.d;
-			for(let i=0;i<e.l;i++)d.push(d[s+i]);
-			d.push(e.n);
-		}
+	for(let e of c)if(e.d+e.l<1)d.push(e.n);
+	else{
+		let s=d.length-e.d;
+		for(let i=0;i<e.l;i++)d.push(d[s+i]);
+		d.push(e.n);
+	}
 	return d.join("");
 }
 const download=function(){
@@ -53,14 +52,9 @@ const download=function(){
 const info=function(){
 	var size="";
 	switch(file.value){
-		case"57.zip":
-			size="100 Yottabytes";
-			break;
-		case"66.zip":
-			size="4 Brontobytes";
-			break;
-		case"95.zip":
-			size="400,000 Geopbytes"
+		case"57.zip":size="100 Yottabytes";break;
+		case"66.zip":size="4,000 Yottabytes";break;
+		case"95.zip":size="400,000,000,000 Yottabytes";break;
 	}
 	cont.textContent=`~${size} decompressed.`;
 }
