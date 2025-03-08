@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title></title>
+		<meta name="viewport"content="width=device-width,initial-scale=1">
+		<style>
+			body{
+				margin:0;
+				overflow:hidden;
+				background:#070a17;
+				font-family:SFMono-Regular,monospace;
+			}
+			#holder{
+				width:1920px;
+				height:960px;
+			}
+			#reel{
+				position:absolute;
+				border:1px solid #474947;
+				width:40.3691381%;
+				height:31px;
+				background-image:linear-gradient(to right,#040a17,#000a14,#000a10,#00090c,#000707,#000707,#000708,#000708,#00090d,#000a11,#000a15,#040a18);
+				top:786px;
+				left:572px;
+			}
+			#bar{
+				position:relative;
+				background:#fff;
+				top:-5.52px;
+				left:-1px;
+				border-radius:2px;
+				height:129.999995%;
+				.head1{
+					background:#848587;
+					transform:rotate(45deg);
+					width:5.5px;
+					height:20.5px;
+					position:relative;
+					top:4.4px;
+					left:29.1px;
+				}
+				.head2{
+					background:#848587;
+					transform:rotate(45deg);
+					height:5.5px;
+					width:20.5px;
+					position:relative;
+					top:2px;
+					left:22.1px;
+				}
+				.shaft{
+					background:#848587;
+					height:5.5px;
+					width:26.5px;
+					position:relative;
+					top:-9px;
+					left:25px;
+				}
+			}
+			#fish{
+				position:relative;
+				width:.999999978%;
+				border:.3px solid #546575;
+				background:#434B5B;
+				height:200%;
+				top:-58px;
+				left:169.5px;
+				border-radius:2.6px;
+			}
+			#progress{
+				position:relative;
+				background:#000707;
+				width:53.8538992%;
+				border:.01px solid #fff9;
+				top:-37.9px;
+				left:177.2px;
+				height:26.9269526%;
+				#fill{
+					width:50%;
+					height:100%;
+					background:#fff;
+					position:relative;
+				}
+			}
+			.noSel{
+				user-select:none;
+			}
+			#settingsPanel{
+				background:#fff9;
+				width:fit-content;
+				padding:3px;
+				max-width:250px;
+			}
+			.note{
+				font-size:90%;
+				color:#0f0f0f;
+			}
+		</style>
+	</head>
+	<body class=noSel>
+		<div id=holder>
+			<div id=settingsPanel>
+				<select class=noSel id=ctrlSl onchange="setControl(+this.value)">
+					<option selected disabled hidden>Choose Control</option>
+					<option title="Long">-0.1</option>
+					<option title="Resourceful">-0.01</option>
+					<option title="Magma, Fungal, Fortune, Rapid, Nocturnal, Scurvy, Midas, Trident, Precision, Destiny, Voyager, Buddy Bond">0</option>
+					<option title="Candy Cane">0.01</option>
+					<option title="Antler">0.02</option>
+					<option title="Seasons">0.03</option>
+					<option title="North-Star">0.04</option>
+					<option title="Fischer's, Carbon, Fast, Lucky, Steady, Magnet, Reinforced, Phoenix, Mythical, Wisdom, Auric, Riptide, Haunted, Relic, Frost Warden, Fischmas, Astral, Event Horizon">0.05</option>
+					<option title="Artic, Aurora">0.06</option>
+					<option title="Celestial">0.07</option>
+					<option title="The Lost, Frostfire">0.08</option>
+					<option title="Volcanic, Leviathan's Fang">0.1</option>
+					<option title="Avalanche, Crystalized, Kings, Ice Warpers, Rod Of The Depths, Rod Of The Exalted One, Sunken, Zeus, Tempest, Rod Of The Zenith, Krampus's, Firework, Sovereign Doombringer">0.15</option>
+					<option title="Depthseeker">0.17</option>
+					<option title="Rod Of The Eternal King">0.175</option>
+					<option title="Training, Challenger's, Poseidon, Heaven's, Kraken">0.2</option>
+					<option title="Rod Of The Forgotten Fang">0.22</option>
+					<option title="No-Life">0.23</option>
+					<option title="Champions, Summit, Ethereal Prism, Seraphic, Clickbait Caster">0.25</option>
+					<option title="Abyssal Specter">0.3</option>
+					<option title="Brick">0.35</option>
+				</select><br>
+				<input type=checkbox id=usingControl oninput="setControl(+ctrlSl.value||0)">Control Enchant</input>
+				<br><span class=note>Physics may be a bit off, need some tuning.</span>
+			</div>
+			<div id=reel>
+				<div id=bar>
+					<div id=arrowL><div class=head1></div><div class=head2></div><div class=shaft></div></div>
+					<div id=arrowR style="display:none;position:relative;transform:scaleX(-1);"><div class=head1></div><div class=head2></div><div class=shaft></div></div>
+				</div>
+				<div id=fish></div>
+				<div id=progress><div id=fill></div></div>
+			</div>
+		</div>
+		<script>
+class Physics{
+	constructor(){
+		this.y=0.5;
+		this.vel=0;
+		this.accel=0;
+		this.maxVel=200/400;
+		this.maxLift=0.65/400;
+		this.g=0.35/400;
+		this.lift=0.2/400;
+		this.damp=-0.35;
+	}
+	step(){
+		this.accel=isHeld?Math.max(this.accel-this.lift,-this.maxLift):0;
+		this.vel=Math.min(this.vel+this.g+this.accel,this.maxVel);
+		this.y+=this.vel;
+		if(this.y>1){
+			this.y=1;
+			this.vel*=this.damp;
+		}
+		if(this.y<0){
+			this.y=0;
+			this.vel*=this.damp;
+		}
+		return 1-this.y;
+	}
+}
+const WW=window.innerWidth;
+//["#592f29", "#59302a", "#59312a", "#59312b", "#59322c", "#5a332d", "#5a342d", "#5a342e", "#5a352f", "#5a362f", "#5a3730", "#5a3731", "#5a3831", "#5b3932", "#5b3a33", "#5b3a34", "#5b3b34", "#5b3c35", "#5b3d36", "#5b3d36", "#5b3e37", "#5c3f38", "#5c4038", "#5c4039", "#5c413a", "#5c423b", "#5c433b", "#5c443c", "#5c443d", "#5c453d", "#5d463e", "#5d473f", "#5d473f", "#5d4840", "#5d4941", "#5d4a42", "#5d4a42", "#5d4b43", "#5e4c44", "#5e4d44", "#5e4d45", "#5e4e46", "#5e4f46", "#5e5047", "#5e5048", "#5e5149", "#5f5249", "#5f534a", "#5f534b", "#5f544b", "#5f554c", "#5f564c", "#5f574d", "#5f574d", "#5f584e", "#5e594e", "#5e5a4f", "#5e5a4f", "#5e5b4f", "#5e5c50", "#5e5d50", "#5e5d51", "#5e5e51", "#5d5f51", "#5d6052", "#5d6052", "#5d6153", "#5d6253", "#5d6354", "#5d6354", "#5d6454", "#5c6555", "#5c6655", "#5c6656", "#5c6756", "#5c6857", "#5c6957", "#5c6a57", "#5c6a58", "#5c6b58", "#5b6c59", "#5b6d59", "#5b6d59", "#5b6e5a", "#5b6f5a", "#5b705b", "#5b705b", "#5b715c", "#5a725c", "#5a735c", "#5a735d", "#5a745d", "#5a755e", "#5a765e", "#5a765e", "#5a775f", "#59785f", "#597960", "#597960", "#597a61"];
+const unstableColors=["#592f29", "#59302a", "#59312a", "#59312b", "#59322c", "#5a332d", "#5a342d", "#5a342e", "#5a352f", "#5a362f", "#5a3730", "#5a3831", "#5a3832", "#5b3932", "#5b3a33", "#5b3b34", "#5b3b34", "#5b3c35", "#5b3d36", "#5b3e37", "#5b3f37", "#5c3f38", "#5c4039", "#5c4139", "#5c423a", "#5c423b", "#5c433c", "#5c443c", "#5c453d", "#5d453e", "#5d463e", "#5d473f", "#5d4840", "#5d4941", "#5d4941", "#5d4a42", "#5d4b43", "#5e4c43", "#5e4c44", "#5e4d45", "#5e4e46", "#5e4f46", "#5e5047", "#5e5048", "#5e5148", "#5f5249", "#5f534a", "#5f534b", "#5f544b", "#5f554c", "#5f554c", "#5f564c", "#5f574d", "#5f574d", "#5f584e", "#5e594e", "#5e5a4f", "#5e5a4f", "#5e5b4f", "#5e5c50", "#5e5d50", "#5e5e51", "#5e5e51", "#5d5f52", "#5d6052", "#5d6152", "#5d6153", "#5d6253", "#5d6354", "#5d6454", "#5d6555", "#5c6555", "#5c6655", "#5c6756", "#5c6856", "#5c6857", "#5c6957", "#5c6a58", "#5c6b58", "#5b6b58", "#5b6c59", "#5b6d59", "#5b6e5a", "#5b6f5a", "#5b6f5b", "#5b705b", "#5b715b", "#5a725c", "#5a725c", "#5a735d", "#5a745d", "#5a755e", "#5a765e", "#5a765e", "#5a775f", "#59785f", "#597960", "#597960", "#597a61", "#597b61"];
+const physics=new Physics();
+let isHeld=false;
+function getAbsRect(el){
+	let rec=el.getBoundingClientRect();
+	rec.w=rec.width;rec.h=rec.height;
+	return rec;
+}
+function getRelRect(el){
+	let par=getAbsRect(el.parentNode),chd=getAbsRect(el);
+	return{x:chd.x-par.x,y:chd.y-par.y,right:chd.right-par.right,bottom:chd.bottom-par.bottom,width:chd.width,w:chd.width,height:chd.height,h:chd.height};
+}
+function setControl(c){
+	if(usingControl.checked)c+=.05;
+	bar.style.width=(.3+c)*100+"%";
+	barPos(+bar.dataset.pos);
+}
+function barPos(p){
+	let d=getAbsRect(reel),b=getRelRect(bar);
+	let np=(d.w-b.w)*p-1,dr=b.x>np;
+	bar.style.left=np+"px";
+	bar.dataset.pos=p;
+}
+document.addEventListener("DOMContentLoaded",()=>{
+	setControl(0);
+	barPos(.5);
+});
+function hold(b){
+	isHeld=b;
+	arrowL.style.display=b?"none":"block";
+	arrowR.style.display=b?"block":"none";
+}
+window.addEventListener("mouseup",e=>hold(0));
+window.addEventListener("mousedown",e=>hold(1));
+window.addEventListener("keyup",e=>e.key==" "&&hold(0));
+window.addEventListener("keydown",e=>e.key==" "&&hold(1));
+function render(){
+	requestAnimationFrame(render);
+	let wb=getAbsRect(bar),fb=getAbsRect(fish);
+	if(Math.abs(wb.x+wb.w/2-fb.x-fb.w/2)<wb.w/2)bar.style.background="#fff";
+	else bar.style.background=unstableColors[Math.round(getAbsRect(fill).width/(getAbsRect(progress).width-2)*100)];
+	barPos(physics.step());
+}
+render();
+		</script>
+	</body>
+</html>
