@@ -95,6 +95,12 @@
 				font-size:90%;
 				color:#0f0f0f;
 			}
+			table{
+				border-collapse:collapse;
+				td{
+					border:1px solid #000;
+				}
+			}
 		</style>
 	</head>
 	<body class=noSel>
@@ -126,6 +132,21 @@
 				</select><br>
 				<input type=checkbox id=usingControl oninput="setControl(+ctrlSl.value||0)">Control Enchant</input>
 				<br><span class=note>Physics may be a bit off, need some tuning.</span>
+				<fieldset>
+					<table>
+						<tr><td>BarX</td><td></td></tr>
+						<tr><td>FishX</td><td></td></tr>
+						<tr><td>Velocity</td><td></td></tr>
+						<tr><td>Acceleration</td><td></td></tr>
+						<tr><td>Gravity</td><td></td></tr>
+						<tr><td>Conserved Momentum</td><td></td></tr>
+						<tr><td>BarMovDir</td><td></td></tr>
+						<tr><td>FishMovDir</td><td></td></tr>
+						<tr><td>Dist</td><td></td></tr>
+						
+					</table>
+					<table id=editorHolder></table>
+				</fieldset>
 			</div>
 			<div id=reel>
 				<div id=bar>
@@ -137,20 +158,54 @@
 			</div>
 		</div>
 		<script>
+const stats={};
+function displayStats(){
+	let key={"BarX":"barX","FishX":"fishX","Velocity":"v","Acceleration":"a","Gravity":"g","Conserved Momentum":"dm","BarMovDir":"barMovDir","FishMovDir":"fishMovDir","Dist":"dist"};
+	[...document.querySelector("tbody").children].forEach(e=>{
+		let c=e.children;
+		c[1].innerText=stats[key[c[0].innerText]].toString().substr(0,10);
+	});
+}
 class Physics{
 	constructor(){
 		this.y=0.5;
 		this.vel=0;
 		this.accel=0;
-		this.maxVel=200/400;
+		this.maxVel=50/400;
 		this.maxLift=0.65/400;
 		this.g=0.35/400;
 		this.lift=0.2/400;
-		this.damp=-0.35;
+		this.damp=-80/400;
+	}
+	editor(k,rn,rx){
+		let p=editorHolder;
+		this["def_"+k]=this[k];
+		let tr1=document.createElement("tr"),tr2=document.createElement("tr");
+		let td1=document.createElement("td"),td2=document.createElement("td"),td3=document.createElement("td"),td4=document.createElement("td");
+		let inp=document.createElement("input"),val=document.createElement("span"),btn=document.createElement("button");
+		td4.colSpan=3;
+		td1.style.width=td2.style.width=td3.style.width="33%";inp.style.width="100%";
+		inp.type="range";inp.min=rn;inp.max=rx;inp.step=0.001;
+		inp.oninput=v=>{
+			let vl=v.target.value;
+			val.innerText=vl;
+			this[k]=vl/400;
+		}
+		inp.oninput({target:{value:inp.value=this["def_"+k]*400}});
+		btn.innerText="reset";
+		btn.onclick=e=>{
+			this[k]=this["def_"+k]/400;
+			inp.oninput({target:{value:inp.value=this["def_"+k]*400}});
+		}
+		p.appendChild(tr1);p.appendChild(tr2);tr1.appendChild(td1);tr1.appendChild(td2);tr1.appendChild(td3);tr2.appendChild(td4);td1.append(k);td2.appendChild(val);td3.appendChild(btn);td4.appendChild(inp);
 	}
 	step(){
 		this.accel=isHeld?Math.max(this.accel-this.lift,-this.maxLift):0;
+		stats.a=this.accel*400;
+		stats.g=this.g*400;
+		stats.dm=this.damp*400;
 		this.vel=Math.min(this.vel+this.g+this.accel,this.maxVel);
+		stats.v=this.vel*400;
 		this.y+=this.vel;
 		if(this.y>1){
 			this.y=1;
@@ -163,10 +218,18 @@ class Physics{
 		return 1-this.y;
 	}
 }
+class Fish{
+	constructor(){
+		this.res=50;
+	}
+	step(){
+		return 0.5
+	}
+}
 const WW=window.innerWidth;
 //["#592f29", "#59302a", "#59312a", "#59312b", "#59322c", "#5a332d", "#5a342d", "#5a342e", "#5a352f", "#5a362f", "#5a3730", "#5a3731", "#5a3831", "#5b3932", "#5b3a33", "#5b3a34", "#5b3b34", "#5b3c35", "#5b3d36", "#5b3d36", "#5b3e37", "#5c3f38", "#5c4038", "#5c4039", "#5c413a", "#5c423b", "#5c433b", "#5c443c", "#5c443d", "#5c453d", "#5d463e", "#5d473f", "#5d473f", "#5d4840", "#5d4941", "#5d4a42", "#5d4a42", "#5d4b43", "#5e4c44", "#5e4d44", "#5e4d45", "#5e4e46", "#5e4f46", "#5e5047", "#5e5048", "#5e5149", "#5f5249", "#5f534a", "#5f534b", "#5f544b", "#5f554c", "#5f564c", "#5f574d", "#5f574d", "#5f584e", "#5e594e", "#5e5a4f", "#5e5a4f", "#5e5b4f", "#5e5c50", "#5e5d50", "#5e5d51", "#5e5e51", "#5d5f51", "#5d6052", "#5d6052", "#5d6153", "#5d6253", "#5d6354", "#5d6354", "#5d6454", "#5c6555", "#5c6655", "#5c6656", "#5c6756", "#5c6857", "#5c6957", "#5c6a57", "#5c6a58", "#5c6b58", "#5b6c59", "#5b6d59", "#5b6d59", "#5b6e5a", "#5b6f5a", "#5b705b", "#5b705b", "#5b715c", "#5a725c", "#5a735c", "#5a735d", "#5a745d", "#5a755e", "#5a765e", "#5a765e", "#5a775f", "#59785f", "#597960", "#597960", "#597a61"];
 const unstableColors=["#592f29", "#59302a", "#59312a", "#59312b", "#59322c", "#5a332d", "#5a342d", "#5a342e", "#5a352f", "#5a362f", "#5a3730", "#5a3831", "#5a3832", "#5b3932", "#5b3a33", "#5b3b34", "#5b3b34", "#5b3c35", "#5b3d36", "#5b3e37", "#5b3f37", "#5c3f38", "#5c4039", "#5c4139", "#5c423a", "#5c423b", "#5c433c", "#5c443c", "#5c453d", "#5d453e", "#5d463e", "#5d473f", "#5d4840", "#5d4941", "#5d4941", "#5d4a42", "#5d4b43", "#5e4c43", "#5e4c44", "#5e4d45", "#5e4e46", "#5e4f46", "#5e5047", "#5e5048", "#5e5148", "#5f5249", "#5f534a", "#5f534b", "#5f544b", "#5f554c", "#5f554c", "#5f564c", "#5f574d", "#5f574d", "#5f584e", "#5e594e", "#5e5a4f", "#5e5a4f", "#5e5b4f", "#5e5c50", "#5e5d50", "#5e5e51", "#5e5e51", "#5d5f52", "#5d6052", "#5d6152", "#5d6153", "#5d6253", "#5d6354", "#5d6454", "#5d6555", "#5c6555", "#5c6655", "#5c6756", "#5c6856", "#5c6857", "#5c6957", "#5c6a58", "#5c6b58", "#5b6b58", "#5b6c59", "#5b6d59", "#5b6e5a", "#5b6f5a", "#5b6f5b", "#5b705b", "#5b715b", "#5a725c", "#5a725c", "#5a735d", "#5a745d", "#5a755e", "#5a765e", "#5a765e", "#5a775f", "#59785f", "#597960", "#597960", "#597a61", "#597b61"];
-const physics=new Physics();
+const physics=new Physics(),fishBehavior=new Fish();
 let isHeld=false;
 function getAbsRect(el){
 	let rec=el.getBoundingClientRect();
@@ -184,21 +247,28 @@ function setControl(c){
 }
 function barPos(p){
 	let d=getAbsRect(reel),b=getRelRect(bar);
-	let np=(d.w-b.w)*p-1,dr=b.x>np;
+	let np=(d.w-b.w)*p-1;
 	bar.style.left=np+"px";
 	bar.dataset.pos=p;
+	stats.barX=p;
+	stats.barMovDir=Math.sign(np-b.x+1);
 }
-document.addEventListener("DOMContentLoaded",()=>{
-	setControl(0);
-	barPos(.5);
-});
+function fishPos(p){
+	let d=getAbsRect(reel),f=getRelRect(fish);
+	let off=0.9921875;
+	let np=(d.w-f.w)*p-1;
+	fish.style.left=np+"px";
+	fish.dataset.pos=p;
+	stats.fishX=p;
+	stats.fishMovDir=Math.sign(np-f.x+off);
+}
 function hold(b){
 	isHeld=b;
 	arrowL.style.display=b?"none":"block";
 	arrowR.style.display=b?"block":"none";
 }
-window.addEventListener("mouseup",e=>hold(0));
-window.addEventListener("mousedown",e=>hold(1));
+window.addEventListener("mouseup",e=>!e.button&&hold(0));
+window.addEventListener("mousedown",e=>!e.button&&hold(1));
 window.addEventListener("keyup",e=>e.key==" "&&hold(0));
 window.addEventListener("keydown",e=>e.key==" "&&hold(1));
 function render(){
@@ -207,8 +277,17 @@ function render(){
 	if(Math.abs(wb.x+wb.w/2-fb.x-fb.w/2)<wb.w/2)bar.style.background="#fff";
 	else bar.style.background=unstableColors[Math.round(getAbsRect(fill).width/(getAbsRect(progress).width-2)*100)];
 	barPos(physics.step());
+	fishPos(fishBehavior.step());
+	stats.dist=Math.abs(fish.dataset.pos-bar.dataset.pos);
+	displayStats();
 }
-render();
+document.addEventListener("DOMContentLoaded",()=>{
+	setControl(0);
+	barPos(.5);
+	fishPos(.5);
+	render();
+	[["maxVel",0,50],["maxLift",0,2],["g",0,2],["lift",0,1],["damp",-400,0]].forEach(e=>physics.editor(...e));
+});
 		</script>
 	</body>
 </html>
