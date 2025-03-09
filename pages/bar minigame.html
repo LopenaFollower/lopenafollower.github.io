@@ -275,8 +275,9 @@ window.addEventListener("keydown",e=>e.key==" "&&hold(1));
 function render(){
 	requestAnimationFrame(render);
 	let wb=getAbsRect(bar),fb=getAbsRect(fish);
-	if(Math.abs(wb.x+wb.w/2-fb.x-fb.w/2)<wb.w/2)bar.style.background="#fff";
-	else bar.style.background=unstableColors[Math.round(getAbsRect(fill).width/(getAbsRect(progress).width-2)*100)];
+	let uh=Math.abs(wb.x+wb.w/2-fb.x-fb.w/2)<wb.w/2;
+	bar.style.background=uh?"#fff":unstableColors[Math.round(getAbsRect(fill).width/(getAbsRect(progress).width-2)*100)];
+	bar.style.opacity=uh?1:.8;
 	barPos(physics.step());
 	fishPos(fishBehavior.step());
 	stats.dist=Math.abs(fish.dataset.pos-bar.dataset.pos);
