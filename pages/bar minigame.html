@@ -200,12 +200,13 @@ class Physics{
 		p.appendChild(tr1);p.appendChild(tr2);tr1.appendChild(td1);tr1.appendChild(td2);tr1.appendChild(td3);tr2.appendChild(td4);td1.append(k);td2.appendChild(val);td3.appendChild(btn);td4.appendChild(inp);
 	}
 	step(){
-		this.accel=isHeld?Math.max(this.accel-this.lift,-this.maxLift):0;
 		stats.a=this.accel*400;
 		stats.g=this.g*400;
 		stats.dm=this.damp*400;
-		this.vel=Math.min(this.vel+this.g+this.accel,this.maxVel);
 		stats.v=this.vel*400;
+
+		this.accel=isHeld?Math.max(this.accel-this.lift,-this.maxLift):0;
+		this.vel=Math.min(this.vel+this.g+this.accel,this.maxVel);
 		this.y+=this.vel;
 		if(this.y>1){
 			this.y=1;
