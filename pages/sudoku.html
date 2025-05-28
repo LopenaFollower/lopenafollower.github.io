@@ -8,10 +8,6 @@
 			body{margin:0}
 			@media(orientation:landscape){#cvs{width:auto}}
 			@media(orientation:portrait){#cvs{width:98%}}
-			#cvs{
-				margin:1%;
-				border:1px solid #346;
-			}
 			table{
 				border-collapse:collapse;
 				table-layout:fixed;
@@ -23,6 +19,9 @@
 				font-size:150%;
 				width:calc(100%/9);
 				height:40px;
+			}
+			sup{
+				opacity:.5;
 			}
 		</style>
 	</head>
@@ -44,20 +43,28 @@
 						<td onclick='place(9)'>9</td>
 					</tr>
 				</table>
+				<sup>or use 0-9 keys</sup>
 				<br><button onclick='newGame()'>New Game</button>
+				<br><select onchange="theme=this.value">
+					<option>light</option>
+					<option>dark</option>
+					<option>lsd</option>
+				</select>
 			</fieldset>
-			<select onchange="theme=this.value">
-				<option>light</option>
-				<option>dark</option>
-				<option>lsd</option>
-			</select>
 		</div>
 		<script>
 const ctx=cvs.getContext("2d"),{random,min:minVal,max:maxVal}=Math;
+let isMobile=(function(){
+	let e,o=/(android|bb\d+|meego).+mobile|avantgo|bada\/|bla(ckberry|zer)|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series[46]0|symbian|treo|up\.(browser|link)|vodafone|wap|windows (ce|phone)|xda|xiino|android|ipad|playbook|silk/i;
+	return(e=navigator.userAgent)&&e.headers&&"string"==typeof e.headers["user-agent"]&&(e=e.headers["user-agent"]),"string"==typeof e&&(!!(navigator.maxTouchPoints&&navigator.maxTouchPoints>2&&/MacIntel/.test(navigator.platform))||o.test(e));
+})();
 window.onresize=function(){
 	cvs.width=cvs.height=Math.min(window.innerWidth,window.innerHeight);
 }
 window.onresize();
+function isNum(n){
+	return(typeof n=="number"&&n-n===0)||(typeof n=="string"&&Number.isFinite(+n)&&n.trim()!="");
+}
 function RGB(s=1){
 	let c=[255,0,0],i=0,j=1,d=s,l=setInterval(()=>(d<0?c[i]>-1-d:c[j]<255-d)?c[d<0?i:j]+=d:s+(d=-d)&&(i=++i%3,j=++j%3));
 	this.getDecimal=function(r=0,g=1,b=2){
@@ -119,7 +126,7 @@ const{place,newGame}=(function(){
 		constructor(K){
 			this.K=K;
 		}
-		isValid(b,x,y,n){
+		valid(b,x,y,n){
 			for(let i=0;i<9;i++)if(b[x][i]==n||b[i][y]==n||b[3*(x/3|0)+(i/3|0)][3*(y/3|0)+i%3]==n)return;
 			return 1;
 		}
@@ -128,7 +135,7 @@ const{place,newGame}=(function(){
 			const rec=()=>{
 				if(s>1)return;
 				for(let x=0;x<9;x++)for(let y=0;y<9;y++)if(!b[x][y]){
-					for(let n=1;n<10;n++)if(this.isValid(b,x,y,n)){
+					for(let n=1;n<10;n++)if(this.valid(b,x,y,n)){
 						b[x][y]=n;
 						rec();
 						b[x][y]=0;
@@ -140,11 +147,11 @@ const{place,newGame}=(function(){
 			rec();
 			return s;
 		}
-		generateFullBoard(){
+		generateFull(){
 			const fill=()=>{
 				for(let x=0;x<9;x++)for(let y=0;y<9;y++)if(!this.mat[x][y]){
 					let ns=[1,2,3,4,5,6,7,8,9].sort(_=>random()-.5);
-					for(let n of ns)if(this.isValid(this.mat,x,y,n)){
+					for(let n of ns)if(this.valid(this.mat,x,y,n)){
 						this.mat[x][y]=n;
 						if(fill())return 1;
 						this.mat[x][y]=0;
@@ -156,7 +163,7 @@ const{place,newGame}=(function(){
 			fill();
 		}
 		generateUnique(){
-			this.generateFullBoard();
+			this.generateFull();
 			this.#key=JSON.parse(JSON.stringify(this.mat));
 			const cs=[];
 			for(let i=0;i<81;i++)cs.push(i);
@@ -245,7 +252,8 @@ const{place,newGame}=(function(){
 		const s=cvs.width;
 		let m=s/150,fs=s/12;
 		ctx.font=fs+"px sans-serif";
-		ctx.clearRect(0,0,s,s);
+		fill(colors[theme].bg);
+		ctx.fillRect(0,0,s,s);
 		fill(colors[theme].text);
 		ctx.fillText("Mistakes: "+sudoku.getMistakes(),m,m+fs);
 		ctx.fillText("Difficulty: "+(sudoku.K/6.3|0)*10+" / 100",m,m+fs*2);
@@ -278,6 +286,10 @@ const{place,newGame}=(function(){
 			e.style.opacity=ms[i-1]/9;
 		});
 		requestAnimationFrame(update);
+	});
+	if(!isMobile)window.addEventListener("keydown",e=>{
+		if(isNum(e.key))place(+e.key);
+		else place(0);
 	});
 	return{place,newGame};
 })();
