@@ -3,6 +3,7 @@
 	<head>
 		<title>Sudoku</title>
 		<meta name="viewport"content="width=device-width,initial-scale=1">
+		<meta name="color-scheme"content="light dark">
 		<style>
 			body{margin:0}
 			@media(orientation:landscape){#cvs{width:auto}}
@@ -45,6 +46,11 @@
 				</table>
 				<br><button onclick='newGame()'>New Game</button>
 			</fieldset>
+			<select onchange="theme=this.value">
+				<option>light</option>
+				<option>dark</option>
+				<option>lsd</option>
+			</select>
 		</div>
 		<script>
 const ctx=cvs.getContext("2d"),{random,min:minVal,max:maxVal}=Math;
@@ -52,90 +58,115 @@ window.onresize=function(){
 	cvs.width=cvs.height=Math.min(window.innerWidth,window.innerHeight);
 }
 window.onresize();
+function RGB(s=1){
+	let c=[255,0,0],i=0,j=1,d=s,l=setInterval(()=>(d<0?c[i]>-1-d:c[j]<255-d)?c[d<0?i:j]+=d:s+(d=-d)&&(i=++i%3,j=++j%3));
+	this.getDecimal=function(r=0,g=1,b=2){
+		return(1<<24)|(c[r]<<16)|(c[g]<<8)|c[b];
+	}
+	this.getHex=function(pattern="rgb"){
+		return"#"+this.getDecimal(...pattern.replaceAll("r",0).replaceAll("g",1).replaceAll("b",2)).toString(16).slice(1);
+	}
+	this.stop=function(){
+		clearInterval(l);
+	}
+}
+const rgb=new RGB();
+var theme="light";
+const colors={
+	light:{
+		grid1x1:"#777",
+		grid3x3:"#111",
+		bg:"#fff",
+		border:"#346",
+		selected:"#aaa",
+		adjacent:"#dadada",
+		num_fixed:"#346",
+		num_correct:"#35a",
+		num_wrong:"#f00",
+		text:"#000"
+	},
+	dark:{
+		grid1x1:"#555",
+		grid3x3:"#aaa",
+		bg:"#1a1a1a",
+		border:"#8fd",
+		selected:"#666",
+		adjacent:"#333",
+		num_fixed:"#07f",
+		num_correct:"#3a7",
+		num_wrong:"#f33",
+		text:"#ddd"
+	},
+	lsd:{}
+}
+Object.defineProperties(colors.lsd,{
+	grid1x1:{get(){return rgb.getHex("rgb")}},
+	grid3x3:{get(){return rgb.getHex("gbr")}},
+	bg:{get(){return rgb.getHex("rbg")}},
+	border:{get(){return rgb.getHex("brb")}},
+	selected:{get(){return rgb.getHex("ggg")}},
+	adjacent:{get(){return rgb.getHex("bbb")}},
+	num_fixed:{get(){return rgb.getHex("grb")}},
+	num_correct:{get(){return rgb.getHex("bgr")}},
+	num_wrong:{get(){return rgb.getHex("brg")}},
+	text:{get(){return rgb.getHex("rrr")}}
+});
 const{place,newGame}=(function(){
 	class Sudoku{
-		#key=Array(9).fill().map(e=>Array(9));
+		#key=[];
 		mat=Array(9).fill().map(e=>Array(9));
 		#mistakes=0;
 		constructor(K){
 			this.K=K;
 		}
-		fillValues(){
-			this.fillDiagonal();
-			this.fillRemaining(0,3);
-			this.removeKDigits();
-			if(this.#key.flat().indexOf(0)+1){
-				this.mat=Array(9).fill().map(e=>Array(9));
-				this.fillValues();
-			}
+		isValid(b,x,y,n){
+			for(let i=0;i<9;i++)if(b[x][i]==n||b[i][y]==n||b[3*(x/3|0)+(i/3|0)][3*(y/3|0)+i%3]==n)return;
+			return 1;
 		}
-		fillDiagonal(){
-			for(let i=0;i<9;i+=3)
-				this.fillBox(i,i);
-		}
-		unUsedInBox(x,y,n){
-			for(let i=0;i<3;i++)
-				for(let j=0;j<3;j++)
-					if(this.mat[x+i][y+j]==n)
-						return;
-			return true;
-		}
-		fillBox(x,y){
-			let n=0;
-			for(let i=0;i<3;i++){
-				for(let j=0;j<3;j++){
-					while(1){
-						n=this.rng(9);
-						if(this.unUsedInBox(x,y,n))break;
+		solve(b){
+			let s=0;
+			const rec=()=>{
+				if(s>1)return;
+				for(let x=0;x<9;x++)for(let y=0;y<9;y++)if(!b[x][y]){
+					for(let n=1;n<10;n++)if(this.isValid(b,x,y,n)){
+						b[x][y]=n;
+						rec();
+						b[x][y]=0;
 					}
-					this.#key[x+i][y+j]=n;
-					this.mat[x+i][y+j]=n;
-				}
-			}
-		}
-		rng(n){
-			return random()*++n|0;
-		}
-		checkIfSafe(i,j,n){
-			return this.unUsedInRow(i,n)&&this.unUsedInCol(j,n)&&this.unUsedInBox(i-i%3,j-j%3,n);
-		}
-		unUsedInRow(i,n){
-			for(let j=0;j<9;j++)
-				if(this.mat[i][j]==n)
 					return;
-			return true;
+				}
+				s++;
+			}
+			rec();
+			return s;
 		}
-		unUsedInCol(j,n){
-			for(let i=0;i<9;i++)
-				if(this.mat[i][j]==n)
+		generateFullBoard(){
+			const fill=()=>{
+				for(let x=0;x<9;x++)for(let y=0;y<9;y++)if(!this.mat[x][y]){
+					let ns=[1,2,3,4,5,6,7,8,9].sort(_=>random()-.5);
+					for(let n of ns)if(this.isValid(this.mat,x,y,n)){
+						this.mat[x][y]=n;
+						if(fill())return 1;
+						this.mat[x][y]=0;
+					}
 					return;
-			return true;
-		}
-		fillRemaining(i,j){
-			if(j==9){
-				if(++i==9)return true;
-				j=0;
-			}
-			if(this.mat[i][j])
-				return this.fillRemaining(i,j+1);
-			for(let n=1;n<10;n++){
-				if(this.checkIfSafe(i,j,n)){
-					this.mat[i][j]=n;
-					this.#key[i][j]=n;
-					if(this.fillRemaining(i,j+1))return true;
-					this.mat[i][j]=0;
 				}
+				return 1;
 			}
+			fill();
 		}
-		removeKDigits(){
-			let c=this.K;
-			while(c){
-				let i=this.rng(8);
-				let j=this.rng(8);
-				if(this.mat[i][j]){
-					c--;
-					this.mat[i][j]=0;
-				}
+		generateUnique(){
+			this.generateFullBoard();
+			this.#key=JSON.parse(JSON.stringify(this.mat));
+			const cs=[];
+			for(let i=0;i<81;i++)cs.push(i);
+			cs.sort(_=>random()-0.5);
+			let r=0;
+			for(let i=0;i<cs.length&&r<this.K;i++){
+				const x=cs[i]/9|0,y=cs[i]%9,t=this.mat[x][y];
+				this.mat[x][y]=0;
+				const c=this.mat.map(r=>r.slice()),s=this.solve(c);
+				if(s-1)this.mat[x][y]=t;else r++;
 			}
 		}
 		getCopy(){
@@ -154,24 +185,21 @@ const{place,newGame}=(function(){
 		}
 		countMissing(a){
 			let c=Array(9).fill(0);
-			for(let i=0;i<9;i++)
-				for(let j=0;j<9;j++)
-					if(a[i][j]-this.#key[i][j])
-						c[this.#key[i][j]-1]++;
+			for(let i=0;i<9;i++)for(let j=0;j<9;j++)if(a[i][j]-this.#key[i][j])c[this.#key[i][j]-1]++;
 			return c;
 		}
 	}
 	let sudoku=new Sudoku(56),selected,won,startTime=Date.now(),endTime;
-	sudoku.fillValues();
+	sudoku.generateUnique();
 	let current=sudoku.getCopy();
 	function getPS(){
 		const s=cvs.width;
 		return 149*s/1350;
 	}
 	function newGame(){
-		let dif=minVal(63,maxVal(1,Number(prompt("Missing Count(1-63)",56).replaceAll(/[^\d]/g,""))));
+		let dif=minVal(63,maxVal(1,Number(prompt("Missing Count(1-63)",56).replaceAll(/\D/g,""))));
 		sudoku=new Sudoku(dif);
-		sudoku.fillValues();
+		sudoku.generateUnique();
 		selected=null;
 		won=0;
 		startTime=Date.now();
@@ -183,33 +211,29 @@ const{place,newGame}=(function(){
 	function displayBoard(){
 		const s=cvs.width;
 		let grid=sudoku.mat;
-		fill("#777");
+		fill(colors[theme].grid1x1);
 		ctx.fillRect(0,0,s,s);
-		let margin=s/150;
-		let p=getPS();
+		let margin=s/150,p=getPS();
 		for(let i=0;i<4;i++){
-			if(i&&i<3)fill("#111");else fill("#346");
+			if(i&&i<3)fill(colors[theme].grid3x3);else fill(colors[theme].border);
 			ctx.fillRect(0,p*3*i,s,margin);
 			ctx.fillRect(p*3*i,0,margin,s);
 		}
 		ctx.font=p/1.25+"px sans-serif";
-		for(let y=0;y<9;y++){
-			for(let x=0;x<9;x++){
-				fill();
-				if(selected){
-					let[n,i,j]=selected;
-					let p=!n;
-					if(x==i||y==j)fill("#dadada");
-					if(p&&x==i&&y==j||(!p||p&&current[y][x])&&current[y][x]==current[j][i])fill("#aaa");
+		for(let y=0;y<9;y++)for(let x=0;x<9;x++){
+			fill(colors[theme].bg);
+			if(selected){
+				let[n,i,j]=selected;
+				if(x==i||y==j)fill(colors[theme].adjacent);
+				if(!n&&x==i&&y==j||(n||!n&&current[y][x])&&current[y][x]==current[j][i])fill(colors[theme].selected);
+			}
+			ctx.fillRect(margin+x*p,margin+y*p,p-margin,p-margin);
+			if(current[y][x]){
+				if(info(x,y)[0]==current[y][x])fill(colors[theme].num_fixed);else{
+					if(sudoku.correct(current[y][x],x,y,0))
+					fill(colors[theme].num_correct);else fill(colors[theme].num_wrong);
 				}
-				ctx.fillRect(margin+x*p,margin+y*p,p-margin,p-margin);
-				if(current[y][x]){
-					if(info(x,y)[0]==current[y][x])fill("#346");else{
-						if(sudoku.correct(current[y][x],x,y,0))
-						fill("#35a");else fill("#f00");
-					}
-					ctx.fillText(current[y][x],x*p+p/3.3,(y+1)*p-margin*2.9);
-				}
+				ctx.fillText(current[y][x],x*p+p/3.3,(y+1)*p-margin*2.9);
 			}
 		}
 	}
@@ -222,13 +246,13 @@ const{place,newGame}=(function(){
 		let m=s/150,fs=s/12;
 		ctx.font=fs+"px sans-serif";
 		ctx.clearRect(0,0,s,s);
-		fill("#000");
+		fill(colors[theme].text);
 		ctx.fillText("Mistakes: "+sudoku.getMistakes(),m,m+fs);
 		ctx.fillText("Difficulty: "+(sudoku.K/6.3|0)*10+" / 100",m,m+fs*2);
 		ctx.fillText("Time: "+getTime(endTime-startTime),m,m+fs*3);
 	}
 	function place(n){
-		if(!selected)return;
+		if(!selected||document.querySelectorAll("td")[n].style.opacity=="0")return;
 		let[p,x,y]=selected;
 		if(p||n==current[y][x]||won)return;
 		current[y][x]=n;
