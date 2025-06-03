@@ -215,6 +215,10 @@ const{place,newGame}=(function(){
 	function fill(c="#fff"){
 		ctx.fillStyle=c;
 	}
+	const RO=(_=>{
+		let evil=random()/2;
+		return()=>random()*evil-evil/2;
+	})();
 	function displayBoard(){
 		const s=cvs.width;
 		let grid=sudoku.mat;
@@ -231,7 +235,7 @@ const{place,newGame}=(function(){
 			fill(colors[theme].bg);
 			if(selected){
 				let[n,i,j]=selected;
-				if(x==i||y==j)fill(colors[theme].adjacent);
+				if(x==i||y==j||(x/3|0)==(i/3|0)&&(y/3|0)==(j/3|0))fill(colors[theme].adjacent);
 				if(!n&&x==i&&y==j||(n||!n&&current[y][x])&&current[y][x]==current[j][i])fill(colors[theme].selected);
 			}
 			ctx.fillRect(margin+x*p,margin+y*p,p-margin,p-margin);
@@ -240,7 +244,7 @@ const{place,newGame}=(function(){
 					if(sudoku.correct(current[y][x],x,y,0))
 					fill(colors[theme].num_correct);else fill(colors[theme].num_wrong);
 				}
-				ctx.fillText(current[y][x],x*p+p/3.3,(y+1)*p-margin*2.9);
+				ctx.fillText(current[y][x],x*p+10*p/33-RO(),y*p+28*p/33-RO());
 			}
 		}
 	}
