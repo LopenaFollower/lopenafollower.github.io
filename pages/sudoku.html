@@ -181,7 +181,7 @@ const{place,newGame}=(function(){
 		}
 		correct(n,x,y,m){
 			let b=n==this.#key[y][x];
-			if(!b&&m)this.#mistakes++;
+			if(!b&&m&&+n)this.#mistakes++;
 			return b;
 		}
 		getMistakes(){
