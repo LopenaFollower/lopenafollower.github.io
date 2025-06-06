@@ -292,7 +292,7 @@ const{place,newGame}=(function(){
 		requestAnimationFrame(update);
 	});
 	if(!isMobile)window.addEventListener("keydown",e=>{
-		if(isNum(e.key))place(+e.key);
+		if(isNum(e.key))place(e.key);
 		else place(0);
 	});
 	return{place,newGame};
