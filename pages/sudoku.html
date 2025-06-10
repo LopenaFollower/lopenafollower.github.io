@@ -221,7 +221,6 @@ const{place,newGame}=(function(){
 	})();
 	function displayBoard(){
 		const s=cvs.width;
-		let grid=sudoku.mat;
 		fill(colors[theme].grid1x1);
 		ctx.fillRect(0,0,s,s);
 		let margin=s/150,p=getPS();
@@ -240,10 +239,7 @@ const{place,newGame}=(function(){
 			}
 			ctx.fillRect(margin+x*p,margin+y*p,p-margin,p-margin);
 			if(current[y][x]){
-				if(info(x,y)[0]==current[y][x])fill(colors[theme].num_fixed);else{
-					if(sudoku.correct(current[y][x],x,y,0))
-					fill(colors[theme].num_correct);else fill(colors[theme].num_wrong);
-				}
+				if(info(x,y)[0]==current[y][x])fill(colors[theme].num_fixed);else fill(sudoku.correct(current[y][x],x,y,0)?colors[theme].num_correct:colors[theme].num_wrong);
 				ctx.fillText(current[y][x],x*p+10*p/33-RO(),y*p+28*p/33-RO());
 			}
 		}
@@ -292,7 +288,7 @@ const{place,newGame}=(function(){
 		requestAnimationFrame(update);
 	});
 	if(!isMobile)window.addEventListener("keydown",e=>{
-		if(isNum(e.key))place(e.key);
+		if(isNum(e.key))place(+e.key);
 		else place(0);
 	});
 	return{place,newGame};
