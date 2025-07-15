@@ -25,12 +25,21 @@ nav a:hover{
 .semi-bold{
 	opacity:.75;
 }
+.justify{
+	text-align:justify;
+}
+sub,sup{
+	opacity:.7;
+}
 .container{
 	box-shadow:0 0 10px rgba(0,0,0,.1);
 	margin:2rem auto;
 	background:white;
 	max-width:800px;
 	padding:1.5rem;
+}
+img{
+	box-shadow:0 0 15px .75px rgba(0,0,0,.19)
 }
 .post{
 	border-top:1px solid #000;
@@ -56,4 +65,24 @@ nav a:hover{
 		list-style-type:none;
 		margin-top:8px;
 	}
+}
+.left,.right{
+	float:left;
+}
+.left{
+	width:calc(60% - 15px);
+}
+.right{
+	width:40%;
+}
+@media screen and (max-width:800px){
+	.left,.right{
+		width: 100%;
+	}
+}
+iframe{
+	aspect-ratio:16/9;
+	margin-right:5%;
+	margin-left:5%;
+	width:90%;
 }
