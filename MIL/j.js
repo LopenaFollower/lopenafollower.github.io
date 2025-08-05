@@ -186,10 +186,5 @@ const{$}=(function(){
 		//targetPage.style.translate=focused?"-150% 0%":"-100% 0%";
 		render();
 	});
-  document.querySelectorAll(".front").forEach((e,i)=>{
-		e.querySelector("img").src=front[i];
-	});
-	document.querySelectorAll(".back").forEach((e,i)=>{
-		e.querySelector("img").src=back[i];
-	});
 })();
+
