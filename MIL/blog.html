@@ -8,7 +8,7 @@
 		<header>
 			<h1>Mariv's Blog</h1>
 			<nav>
-				<a onclick="$('#hm')">Home</a><a onclick="$('#bs')">Blogs</a><a onclick="$('#cvs')"style="opacity:0;user-select:none">Secret</a>
+				<a onclick="$('#hm')">Home</a><a onclick="$('#bs')">Blogs</a><a onclick="$('#tesseract')"style="opacity:0;user-select:none">Secret</a>
 			</nav>
 		</header>
 		<div id="hm"class="container">
@@ -22,6 +22,20 @@
 		</div>
 		<div id="bs"class="container">
 			<h2>Latest Posts</h2>
+			<div class="post"style="display:none">
+				<h3><a onclick="$('#b4')"class="post-title">Blog #5: Podcast</a></h3>
+				<p class="post-date">1753235719000</p>
+				<div class="content-mask">
+					<p class="post-content">[WIP]</p>
+				</div>
+			</div>
+			<div class="post">
+				<h3><a onclick="$('#b4')"class="post-title">Blog #4: Magazine Making</a></h3>
+				<p class="post-date">1753055852000</p>
+				<div class="content-mask">
+					<p class="post-content">✨ Telling Stories Through Media, One Page at a Time ✨</p>
+				</div>
+			</div>
 			<div class="post">
 				<h3><a onclick="$('#b3')"class="post-title">Blog #3: Promotional Video</a></h3>
 				<p class="post-date">1752197604000</p>
@@ -63,7 +77,6 @@
 			</ul>
 		</div>
 		<div id="b2"class="container">
-			<span id="b2-top"></span>
 			<h2>Blog Post #2: Media Timeline</h2>
 			<p>For the second blog, we were tasked to create a timeline that highlights the different stages of media and how it has evolved over time.</p>
 			<p>Media, as we know it today, has come a long way, dating back to prehistoric times, when its simplest form was through cave paintings using symbols. It has eventually developed to what we have now with the help of technological breakthroughs. Presented below are the significant stages of media and their breakthroughs.</p>
@@ -96,14 +109,8 @@
 			<hr>
 			<div>
 				<table>
-					<tr>
-						<td style="font-weight:900;font-size:1.5em;margin-top:.83em;margin-bottom:.83em;">Industrial Age</td>
-					</tr>
-					<tr>
-						<td>
-							<p>As civilizations and technology have advanced further, mass printing of early pamphlets and newspapers were possible with Gutenberg's printing press.</p>
-						</td>
-					</tr>
+					<tr><td style="font-weight:900;font-size:1.5em;margin-top:.83em;margin-bottom:.83em;">Industrial Age</td></tr>
+					<tr><td><p>As civilizations and technology have advanced further, mass printing of early pamphlets and newspapers were possible with Gutenberg's printing press.</p></td></tr>
 				</table>
 				<ul>
 					<li>In Western Europe, around the late 1590s, the first newspaper was printed.</li>
@@ -144,14 +151,60 @@
 				<li>Emergence of the internet in the 1960s, an effort by the US Government, NASA.</li>
 				<li>Computer related industries such as Apple by Steve Jobs and Steve Wozniak, IBM company, also known as Bill Gates of Windows, introducing different models of hardware and software devices in the 1970s and 1980s.</li>
 			</ul>
-			<span id="b2-bottom">&#10240;</span>
 		</div>
 		<div id="b3"class="container">
 			<h2>Blog Post #3: Promotional Video</h2>
 			<p>This is a grouped task, assigned to create a promotional video on a selected aspect related to MIL. The main premise and objective is to promote the MIL subject to guide people when it comes to media literacy by hosting a seminar for the selected aspect.</p>
 			<iframe src="https://drive.google.com/file/d/1rLowY7J1teQXBXsuFUSdITwBlysnijd1/preview"allow="autoplay"></iframe>
 		</div>
-		<canvas id="cvs"></canvas>
+		<div id="b4"class="container">
+			<h2>Blog Post #4: Magazine Making</h2>
+			<div>
+				✨ Telling Stories Through Media, One Page at a Time ✨<br><br>In a world driven by constant communication, media plays a powerful role in shaping how we see, think, and respond to the world around us. As part of our exploration of “Understanding the Forms of Media” in our Media and Information Literacy class, we were challenged to create and publish the very first-ever online magazine of St. Louis School of Don Bosco.<br><br>Our magazine features original content and visuals that reflect our thoughts, interests, and voices as students living in today’s digital age. From layout design to editorial choices, every detail was crafted with creativity, collaboration, and a deeper understanding of how media shapes society.<br><br>This post is submitted in partial fulfillment of our Performance Task in Media and Information Literacy under the guidance of Mr. Hardy Allen L. Villarosa.
+				<br><br><br>---<br><br>Hogwarts House: Gryffindor<br><br>Group Members: 
+				<ul>
+					<li>Josh Matthew Amarado</li>
+					<li>Mariv Isaac Centeno</li>
+					<li>Carlos Ortiz</li>
+					<li>John Kevin Cadorna</li>
+					<li>Carina Sophia Maraya</li>
+					<li>Charmaigne Maree Rangaig</li>
+					<li>Philomena Faith Nazareno</li>
+					<li>Jessel Ann Nacillia</li>
+				</ul><br><br>Magazine Title: “Mission: Responsible”<br><br>#MIL #OnlineMagazine  #SLSDB #PerformanceTask #MILinAction
+			</div>
+			<center>
+				<div class="wrapper">
+					<div class="book">
+						<div class="page">
+							<div class="front"><img/></div>
+							<div class="back"><img/></div>
+						</div>
+						<div class="page">
+							<div class="front"><img/></div>
+							<div class="back"><img/></div>
+						</div>
+						<div class="page">
+							<div class="front"><img/></div>
+							<div class="back"><img/></div>
+						</div>
+						<div class="page">
+							<div class="front"><img/></div>
+							<div class="back">
+								<img/>
+							</div>
+						</div>
+						<div class="page">
+							<div class="front"><img/></div>
+							<div class="back"><img/></div>
+						</div>
+					</div>
+				</div>
+			</center>
+			<span title="will make crossword interactible">*</span>
+			<canvas id="crossword"style="display:none"></canvas>
+		</div>
+		<canvas id="tesseract"></canvas>
 		<script src="j.js"></script>
 	</body>
 </html>

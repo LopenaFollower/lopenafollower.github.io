@@ -19,7 +19,7 @@ nav a{
 nav a:hover{
 	text-decoration:underline;
 }
-#cvs{
+#tesseract{
 	background:#000;
 }
 .semi-bold{
@@ -37,9 +37,6 @@ sub,sup{
 	background:white;
 	max-width:800px;
 	padding:1.5rem;
-}
-img{
-	box-shadow:0 0 14px .95px rgba(0,0,0,.19)
 }
 .post{
 	border-top:1px solid #000;
@@ -66,14 +63,24 @@ img{
 		margin-top:8px;
 	}
 }
-.left,.right{
-	float:left;
-}
-.left{
-	width:calc(60% - 15px);
-}
-.right{
-	width:40%;
+#b2{
+	.left,.right{
+		float:left;
+	}
+	.left{
+		width:calc(60% - 15px);
+	}
+	.right{
+		width:40%;
+	}
+	@media screen and (max-width:800px){
+		.left,.right{
+			width:100%;
+		}
+	}
+	img{
+		box-shadow:0 0 14px .95px #0003;
+	}
 }
 iframe{
 	aspect-ratio:16/9;
@@ -81,8 +88,66 @@ iframe{
 	margin-left:5%;
 	width:90%;
 }
-@media screen and (max-width:800px){
-	.left,.right{
-		width:100%;
+#b4{
+	.wrapper{
+		--sp:1s;
+		--size:400px;
+		display:flex;
+		width:fit-content;
+		perspective:650px;
+		font:16px/1.4 sans-serif;
+		transition-duration:1s;
+		transition-timing-function:ease-out;
+		margin-bottom:calc(var(--size)/4);
+		*{
+			box-sizing:border-box;
+		}
+		.book{
+			--p:0;
+			display:flex;
+			margin:auto;
+			width:var(--size);
+			transform-style:preserve-3d;
+			transition:translate var(--sp), rotate var(--sp);
+			transition-timing-function:cubic-bezier(.6,.1,.4,.9);
+			translate:calc(min(var(--p),1 + round((var(--p)/2)/var(--pc)))*50%)0%;
+			rotate:1 0 0 2deg;
+		}
+		.page{
+			flex:none;
+			display:flex;
+			width:100%;
+			transform-style:preserve-3d;
+			border:1px solid #0008;
+			transform-origin:left center;
+			transition:transform var(--sp),rotate var(--sp)cubic-bezier(.4,.3,.6,.7)calc((min(var(--i),var(--p)) - max(var(--i),var(--p)))*.05s),border-color 1s;
+			translate:calc(var(--i)*-100%) 0px 0px;
+			transform:translateZ(calc((var(--p) - var(--i) - .5)*4.5px));
+			rotate:0 1 0 calc(clamp(0,var(--p) - var(--i),1)*-180deg);
+			img{
+				object-fit:cover;
+				width:100%;
+				height:100%;
+			}
+			.front,.back{
+				flex:none;
+				width:100%;
+				background-color:#fff;
+				transition-duration:1s;
+				backface-visibility:hidden;
+				transition-timing-function:ease-out;
+			}
+			.back{
+				background-image:linear-gradient(to right,#fff 75%,#dedede 100%);
+				rotate:0 1 0 180deg;
+				translate:-100% 0;
+			}
+			#crossword{
+				border:1px solid #000;
+				width:150px;
+				height:auto;
+				aspect-ratio:19/20;
+			}
+		}
 	}
 }
