@@ -3,8 +3,8 @@ let isMobile=(function(){
 	return(e=navigator.userAgent)&&e.headers&&"string"==typeof e.headers["user-agent"]&&(e=e.headers["user-agent"]),"string"==typeof e&&(!!(navigator.maxTouchPoints&&navigator.maxTouchPoints>2&&/MacIntel/.test(navigator.platform))||o.test(e));
 })();
 const{$}=(function(){
-	const p=["#tesseract","#hm","#bs","#b1","#b2","#b3","#b4"];
-	const t=["MIL Blog","MIL Blog","Blog Posts","Portfolio Building","History of Media","Promotional Video","Magazine"];
+	const p=["#tesseract","#hm","#bs","#b1","#b2","#b3","#b4","#b5"];
+	const t=["MIL Blog","MIL Blog","Blog Posts","Portfolio Building","History of Media","Promotional Video","Magazine","Podcast"];
 	const c=tesseract.getContext("2d"),{abs,sin,cos,PI}=Math;tesseract.width=tesseract.height=200;c.translate(100,100);
 	let currentActive;
 	function q(z){
@@ -184,6 +184,13 @@ const{$}=(function(){
 		
 		//if back page:
 		//targetPage.style.translate=focused?"-150% 0%":"-100% 0%";
+		try{
+			let vm=b4vm.value;
+			vm1.style.display=vm2.style.display="none";
+			eval("vm"+vm).style.display="block";
+		}catch(e){
+			vm1.style.display="block";
+		}
 		render();
 	});
 })();

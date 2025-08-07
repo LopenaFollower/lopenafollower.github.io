@@ -82,11 +82,13 @@ sub,sup{
 		box-shadow:0 0 14px .95px #0003;
 	}
 }
-iframe{
-	aspect-ratio:16/9;
-	margin-right:5%;
-	margin-left:5%;
-	width:90%;
+#b3{
+	iframe{
+		aspect-ratio:16/9;
+		margin-right:5%;
+		margin-left:5%;
+		width:90%;
+	}
 }
 #b4{
 	.wrapper{
@@ -94,7 +96,7 @@ iframe{
 		--size:400px;
 		display:flex;
 		width:fit-content;
-		perspective:650px;
+		perspective:700px;
 		font:16px/1.4 sans-serif;
 		transition-duration:1s;
 		transition-timing-function:ease-out;
@@ -148,6 +150,25 @@ iframe{
 				height:auto;
 				aspect-ratio:19/20;
 			}
+		}
+	}
+	.canva-wrapper{
+		position:relative;
+		width:100%;
+		padding-top:141.4286%;
+		box-shadow:0 2px 8px 0 rgba(63,69,81,0.16);
+		margin-top:1.6em;
+		margin-bottom:.9em;
+		overflow:hidden;
+		border-radius:8px;
+		iframe{
+			position:absolute;
+			width:100%;
+			height:100%;
+			top:0;left:0;
+			border:none;
+			padding:0;
+			margin:0;
 		}
 	}
 }
