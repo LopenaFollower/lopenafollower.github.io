@@ -1,10 +1,10 @@
-let isMobile=(function(){
+const isMobile=(function(){
 	let e,o=/(android|bb\d+|meego).+mobile|avantgo|bada\/|bla(ckberry|zer)|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series[46]0|symbian|treo|up\.(browser|link)|vodafone|wap|windows (ce|phone)|xda|xiino|android|ipad|playbook|silk/i;
 	return(e=navigator.userAgent)&&e.headers&&"string"==typeof e.headers["user-agent"]&&(e=e.headers["user-agent"]),"string"==typeof e&&(!!(navigator.maxTouchPoints&&navigator.maxTouchPoints>2&&/MacIntel/.test(navigator.platform))||o.test(e));
 })();
 const{$}=(function(){
-	const p=["#tesseract","#hm","#bs","#b1","#b2","#b3","#b4","#b5"];
-	const t=["MIL Blog","MIL Blog","Blog Posts","Portfolio Building","History of Media","Promotional Video","Magazine","Podcast"];
+	const p=["#tesseract","#hm","#bs","#b1","#b2","#b3","#b4","#b5","#b6"];
+	const t=["MIL Blog","MIL Blog","Blog Posts","Portfolio Building","History of Media","Promotional Video","Magazine","Podcast","Print Ad"];
 	const c=tesseract.getContext("2d"),{abs,sin,cos,PI}=Math;tesseract.width=tesseract.height=200;c.translate(100,100);
 	let currentActive;
 	function q(z){
@@ -72,7 +72,7 @@ const{$}=(function(){
 	document.addEventListener("DOMContentLoaded",()=>{
 		let{href}=location,query=href.indexOf("?")<0?0:href.split("?q=")[1];
 		if(query){
-			let redir={home:"#hm",blogs:"#bs",b1:"#b1",b2:"#b2",b3:"#b3",b4:"#b4"};
+			let redir={home:"#hm",blogs:"#bs",b1:"#b1",b2:"#b2",b3:"#b3",b4:"#b4",b5:"#b5",b6:"#b6"};
 			if(redir[query])$(redir[query]);
 		}
 	});
@@ -191,6 +191,7 @@ const{$}=(function(){
 		}catch(e){
 			vm1.style.display="block";
 		}
+		b6img.src=window.b64img["9.3.8.35"];
 		render();
 	});
 })();
