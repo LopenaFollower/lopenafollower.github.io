@@ -8,7 +8,7 @@
 		<header>
 			<h1>Mariv's Blog</h1>
 			<nav>
-				<a onclick="$('#hm')">Home</a><a onclick="$('#bs')">Blogs</a><a onclick="$('#tesseract')"style="opacity:0;user-select:none">Secret</a>
+				<a onclick="$('#hm')">Home</a><a onclick="$('#bs')">Blogs</a><a onclick="$('#hiden')"style="opacity:0;user-select:none">Secret</a>
 			</nav>
 		</header>
 		<div id="hm"class="container">
@@ -225,7 +225,7 @@
 			</div>
 			<div id="vm2">
 				<div class="canva-wrapper">
-					<iframe loading="lazy"src="https://www.canva.com/design/DAGvMf7p5TM/oGehyjv7fvgkCgGmoVFbhg/view?embed"allowfullscreen allow="fullscreen"></iframe>
+					<iframe loading="lazy"src="https://www.canva.com/design/DAGvMf7p5TM/oGehyjv7fvgkCgGmoVFbhg/view?embed"allow="fullscreen"></iframe>
 				</div>
 			</div>
 			<canvas id="crossword"style="display:none"></canvas>
@@ -266,7 +266,10 @@
 			</div>
 			<center><img id="b6img"></img></center>
 		</div>
-		<canvas id="tesseract"></canvas>
+		<div id="hiden">
+			<canvas id="tesseract"></canvas>
+			<canvas id="a3d_disp"></canvas>
+		</div>
 		<script src="b64.js"defer></script>
 		<script src="j.js"></script>
 		<script src="lf.js"></script>
