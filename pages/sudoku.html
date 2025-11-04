@@ -5,9 +5,21 @@
 		<meta name="viewport"content="width=device-width,initial-scale=1">
 		<meta name="color-scheme"content="light dark">
 		<style>
-			body{margin:0}
-			@media(orientation:landscape){#cvs{width:auto}}
-			@media(orientation:portrait){#cvs{width:98%}}
+			body{margin:0;padding:0}
+			@media(orientation:landscape){
+				#cvs{
+					max-height:800px;
+					width:auto;
+				}
+				fieldset{
+					max-width:450px;
+				}
+			}
+			@media(orientation:portrait){
+				#cvs{
+					width:98%;
+				}
+			}
 			table{
 				border-collapse:collapse;
 				table-layout:fixed;
@@ -20,8 +32,8 @@
 				width:calc(100%/9);
 				height:40px;
 			}
-			sup{
-				opacity:.5;
+			span,td{
+				user-select:none;
 			}
 		</style>
 	</head>
@@ -29,6 +41,7 @@
 		<div id=flexbox>
 			<canvas id=cvs></canvas>
 			<fieldset>
+				<input type=checkbox id=noting><span onclick="noting.click()">Note</span>
 				<table border=1>
 					<tr>
 						<td onclick='place(0)'>X</td>
@@ -43,23 +56,24 @@
 						<td onclick='place(9)'>9</td>
 					</tr>
 				</table>
-				<sup>or use 0-9 keys</sup>
+				<sup style="display:none;opacity:.5">or use 0-9 keys</sup>
 				<br><button onclick='newGame()'>New Game</button>
 				<br><select onchange="theme=this.value">
 					<option>light</option>
 					<option>dark</option>
 					<option>lsd</option>
+					<option>epilepsy</option>
 				</select>
 			</fieldset>
 		</div>
 		<script>
-const ctx=cvs.getContext("2d"),{random,min:minVal,max:maxVal}=Math;
+const ctx=cvs.getContext("2d"),{random,min:minVal,max:maxVal,round}=Math;
 let isMobile=(function(){
 	let e,o=/(android|bb\d+|meego).+mobile|avantgo|bada\/|bla(ckberry|zer)|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series[46]0|symbian|treo|up\.(browser|link)|vodafone|wap|windows (ce|phone)|xda|xiino|android|ipad|playbook|silk/i;
 	return(e=navigator.userAgent)&&e.headers&&"string"==typeof e.headers["user-agent"]&&(e=e.headers["user-agent"]),"string"==typeof e&&(!!(navigator.maxTouchPoints&&navigator.maxTouchPoints>2&&/MacIntel/.test(navigator.platform))||o.test(e));
 })();
 window.onresize=function(){
-	cvs.width=cvs.height=Math.min(window.innerWidth,window.innerHeight);
+	cvs.width=cvs.height=minVal(minVal(window.innerWidth,window.innerHeight),800);
 }
 window.onresize();
 function isNum(n){
@@ -77,57 +91,83 @@ function RGB(s=1){
 		clearInterval(l);
 	}
 }
-const rgb=new RGB();
+const rgb=new RGB(3);
 var theme="light";
+let all=(()=>{
+	let a=["r","g","b"],t=new Set();
+	for(let i of a)for(let j of a)for(let k of a)t.add(i+j+k);
+	return[...t].sort();
+})();
 const colors={
 	light:{
 		grid1x1:"#777",
 		grid3x3:"#111",
 		bg:"#fff",
 		border:"#346",
-		selected:"#aaa",
+		selected:"#bcbcbc",
 		adjacent:"#dadada",
 		num_fixed:"#346",
 		num_correct:"#35a",
 		num_wrong:"#f00",
-		text:"#000"
+		text:"#000",
+		note:"#666"
 	},
 	dark:{
 		grid1x1:"#555",
 		grid3x3:"#aaa",
 		bg:"#1a1a1a",
 		border:"#8fd",
-		selected:"#666",
-		adjacent:"#333",
+		selected:"#4a4a4a",
+		adjacent:"#323232",
 		num_fixed:"#07f",
 		num_correct:"#3a7",
 		num_wrong:"#f33",
-		text:"#ddd"
+		text:"#ddd",
+		note:"#5a7baa"
 	},
-	lsd:{}
+	lsd:{},epilepsy:{l:[...all]}
 }
+let r=c=>rgb.getHex(c);
 Object.defineProperties(colors.lsd,{
-	grid1x1:{get(){return rgb.getHex("rgb")}},
-	grid3x3:{get(){return rgb.getHex("gbr")}},
-	bg:{get(){return rgb.getHex("rbg")}},
-	border:{get(){return rgb.getHex("brb")}},
-	selected:{get(){return rgb.getHex("ggg")}},
-	adjacent:{get(){return rgb.getHex("bbb")}},
-	num_fixed:{get(){return rgb.getHex("grb")}},
-	num_correct:{get(){return rgb.getHex("bgr")}},
-	num_wrong:{get(){return rgb.getHex("brg")}},
-	text:{get(){return rgb.getHex("rrr")}}
+	grid1x1:{get(){return r(all[21])}},
+	grid3x3:{get(){return r(all[7])}},
+	bg:{get(){return r(all[19])}},
+	border:{get(){return r(all[6])}},
+	selected:{get(){return r(all[13])}},
+	adjacent:{get(){return r(all[0])}},
+	num_fixed:{get(){return r(all[15])}},
+	num_correct:{get(){return r(all[5])}},
+	num_wrong:{get(){return r(all[11])}},
+	text:{get(){return r(all[26])}},
+	note:{get(){return r(all[17])}}
+});
+Object.defineProperties(colors.epilepsy,{
+	grid1x1:{get(){return r(this.l[0])}},
+	grid3x3:{get(){return r(this.l[1])}},
+	bg:{get(){return r(this.l[2])}},
+	border:{get(){return r(this.l[3])}},
+	selected:{get(){return r(this.l[4])}},
+	adjacent:{get(){return r(this.l[5])}},
+	num_fixed:{get(){return r(this.l[6])}},
+	num_correct:{get(){return r(this.l[7])}},
+	num_wrong:{get(){return r(this.l[8])}},
+	text:{get(){return r(this.l[9])}},
+	note:{get(){return r(this.l[10])}},
+	ref:{get(){this.n=++this.n%3;!this.n&&(this.l=this.l.sort(_=>random()-.5))}}
 });
 const{place,newGame}=(function(){
+	const d3=n=>n/3|0;
 	class Sudoku{
 		#key=[];
 		mat=Array(9).fill().map(e=>Array(9));
+		notes=Array(9).fill().map(e=>Array(9).fill().map(e=>[]));
 		#mistakes=0;
 		constructor(K){
 			this.K=K;
+			this.e=random()/2;
 		}
 		valid(b,x,y,n){
-			for(let i=0;i<9;i++)if(b[x][i]==n||b[i][y]==n||b[3*(x/3|0)+(i/3|0)][3*(y/3|0)+i%3]==n)return;
+			for(let i=0;i<9;i++)if(b[x][i]==n||b[i][y]==n||b[3*d3(x)+d3(i)][3*d3(y)+i%3]==n)return;
 			return 1;
 		}
 		solve(b){
@@ -138,6 +178,7 @@ const{place,newGame}=(function(){
 					for(let n=1;n<10;n++)if(this.valid(b,x,y,n)){
 						b[x][y]=n;
 						rec();
+						if(s>1)return;
 						b[x][y]=0;
 					}
 					return;
@@ -166,15 +207,20 @@ const{place,newGame}=(function(){
 			this.generateFull();
 			this.#key=JSON.parse(JSON.stringify(this.mat));
 			const cs=[];
-			for(let i=0;i<81;i++)cs.push(i);
-			cs.sort(_=>random()-0.5);
-			let r=0;
-			for(let i=0;i<cs.length&&r<this.K;i++){
-				const x=cs[i]/9|0,y=cs[i]%9,t=this.mat[x][y];
-				this.mat[x][y]=0;
-				const c=this.mat.map(r=>r.slice()),s=this.solve(c);
-				if(s-1)this.mat[x][y]=t;else r++;
+			let retries=0,r=0;
+			const gen=()=>{
+				for(let i=r=0;i<81;i++)cs.push(i);
+				cs.sort(_=>random()-0.5);
+				for(let i=0;i<cs.length&&r<this.K;i++){
+					const x=cs[i]/9|0,y=cs[i]%9,t=this.mat[x][y];
+					this.mat[x][y]=0;
+					const c=this.mat.map(r=>r.slice()),s=this.solve(c);
+					if(s-1)this.mat[x][y]=t;else r++;
+				}
+				if(this.K-r&&retries++<5)gen();
 			}
+			gen();
+			if(this.K-r)this.generateUnique();
 		}
 		getCopy(){
 			return JSON.parse(JSON.stringify(this.mat));
@@ -195,8 +241,29 @@ const{place,newGame}=(function(){
 			for(let i=0;i<9;i++)for(let j=0;j<9;j++)if(a[i][j]-this.#key[i][j])c[this.#key[i][j]-1]++;
 			return c;
 		}
+		RO(){
+			return(theme=="lsd"?10:theme=="epilepsy"?20:1)*random()*this.e-this.e/2;
+		}
+		togNote(x,y,n){
+			let i=this.notes[y][x].indexOf(n);
+			if(i+1)this.notes[y][x].splice(i,1);
+			else this.notes[y][x].push(n);
+		}
+		updNotes(px,py,n){
+			let rx=d3(px),ry=d3(py);
+			const rem=(x,y,n)=>{
+				let i=this.notes[y][x].indexOf(n);
+				if(i+1)this.notes[y][x].splice(i,1);
+			}
+			for(let x=3*rx;x-3*rx<3;x++)for(let y=3*ry;y-3*ry<3;y++)rem(x,y,n);
+			for(let i=0;i<9;i++){
+				rem(px,py,i);
+				rem(px,i,n);
+				rem(i,py,n);
+			}
+		}
 	}
-	let sudoku=new Sudoku(56),selected,won,startTime=Date.now(),endTime;
+	let sudoku=new Sudoku(50),selected,won,startTime=Date.now(),endTime;
 	sudoku.generateUnique();
 	let current=sudoku.getCopy();
 	function getPS(){
@@ -204,8 +271,9 @@ const{place,newGame}=(function(){
 		return 149*s/1350;
 	}
 	function newGame(){
-		let dif=minVal(63,maxVal(1,Number(prompt("Missing Count(1-63)",56).replaceAll(/\D/g,""))));
+		let dif=minVal(60,maxVal(1,Number(prompt("Missing Count(1-60)",59).replaceAll(/\D/g,""))));
 		sudoku=new Sudoku(dif);
+		let ts=performance.now();
 		sudoku.generateUnique();
 		selected=null;
 		won=0;
@@ -215,32 +283,35 @@ const{place,newGame}=(function(){
 	function fill(c="#fff"){
 		ctx.fillStyle=c;
 	}
-	const RO=(_=>{
-		let evil=random()/2;
-		return()=>random()*evil-evil/2;
-	})();
 	function displayBoard(){
 		const s=cvs.width;
+		let m=s/150,p=getPS();
 		fill(colors[theme].grid1x1);
 		ctx.fillRect(0,0,s,s);
-		let margin=s/150,p=getPS();
 		for(let i=0;i<4;i++){
 			if(i&&i<3)fill(colors[theme].grid3x3);else fill(colors[theme].border);
-			ctx.fillRect(0,p*3*i,s,margin);
-			ctx.fillRect(p*3*i,0,margin,s);
+			ctx.fillRect(0,p*3*i,s,m);
+			ctx.fillRect(p*3*i,0,m,s);
 		}
-		ctx.font=p/1.25+"px sans-serif";
 		for(let y=0;y<9;y++)for(let x=0;x<9;x++){
 			fill(colors[theme].bg);
 			if(selected){
 				let[n,i,j]=selected;
-				if(x==i||y==j||(x/3|0)==(i/3|0)&&(y/3|0)==(j/3|0))fill(colors[theme].adjacent);
+				if(x==i||y==j||d3(x)==d3(i)&&d3(y)==d3(j))fill(colors[theme].adjacent);
 				if(!n&&x==i&&y==j||(n||!n&&current[y][x])&&current[y][x]==current[j][i])fill(colors[theme].selected);
 			}
-			ctx.fillRect(margin+x*p,margin+y*p,p-margin,p-margin);
+			ctx.fillRect(m+x*p,m+y*p,p-m,p-m);
 			if(current[y][x]){
-				if(info(x,y)[0]==current[y][x])fill(colors[theme].num_fixed);else fill(sudoku.correct(current[y][x],x,y,0)?colors[theme].num_correct:colors[theme].num_wrong);
-				ctx.fillText(current[y][x],x*p+10*p/33-RO(),y*p+28*p/33-RO());
+				if(info(x,y)[0]==current[y][x])fill(colors[theme].num_fixed);else{
+					if(sudoku.correct(current[y][x],x,y,0))
+					fill(colors[theme].num_correct);else fill(colors[theme].num_wrong);
+				}
+				ctx.font=p/1.25+"px sans-serif";
+				ctx.fillText(current[y][x],x*p+p/3.3-sudoku.RO(),y*p+14*p/17-sudoku.RO());
+			}else{
+				ctx.font=p/4.8+"px sans-serif";
+				fill(colors[theme].note);
+				sudoku.notes[y][x].forEach(e=>ctx.fillText(e,(x+165/817)*p-sudoku.RO()+((e-1)%3)*p/3.8,(y+137/414)*p-sudoku.RO()+((e-1)/3|0)*p/3.6));
 			}
 		}
 	}
@@ -256,18 +327,23 @@ const{place,newGame}=(function(){
 		ctx.fillRect(0,0,s,s);
 		fill(colors[theme].text);
 		ctx.fillText("Mistakes: "+sudoku.getMistakes(),m,m+fs);
-		ctx.fillText("Difficulty: "+(sudoku.K/6.3|0)*10+" / 100",m,m+fs*2);
+		ctx.fillText("Difficulty: "+round(sudoku.K/.6)+" / 100",m,m+fs*2);
 		ctx.fillText("Time: "+getTime(endTime-startTime),m,m+fs*3);
 	}
 	function place(n){
-		if(!selected||document.querySelectorAll("td")[n].style.opacity=="0")return;
+		if(!selected)return;
 		let[p,x,y]=selected;
-		if(p||n==current[y][x]||won)return;
-		current[y][x]=n;
-		sudoku.correct(n,x,y,1);
-		if(sudoku.check(current)){
-			endTime=Date.now();
-			setTimeout(()=>won=true);
+		if(p||won||document.querySelectorAll("td")[n].style.opacity=="0")return;
+		if(n==current[y][x])return current[y][x]="";
+		if(noting.checked)sudoku.togNote(x,y,n);
+		else{
+			current[y][x]=n;
+			sudoku.updNotes(x,y,n);
+			sudoku.correct(n,x,y,1);
+			if(sudoku.check(current)){
+				endTime=Date.now();
+				setTimeout(()=>won=true);
+			}
 		}
 	}
 	function info(x,y){
@@ -278,19 +354,25 @@ const{place,newGame}=(function(){
 		selected=info((e.pageX-cvs.offsetLeft)/p|0,(e.pageY-cvs.offsetTop)/p|0);
 	});
 	requestAnimationFrame(function update(){
+		requestAnimationFrame(update);
 		flexbox.style.display=window.innerWidth<window.innerHeight?"inline-block":"flex";
 		if(won)displayStat();else displayBoard();
+		colors.epilepsy.ref;
+		let ms=sudoku.countMissing(current);
 		document.querySelectorAll("td").forEach((e,i)=>{
 			if(i<1)return;
-			let ms=sudoku.countMissing(current);
-			e.style.opacity=ms[i-1]/9;
+			e.style.opacity=(ms[i-1]/9)**.847985;
 		});
-		requestAnimationFrame(update);
 	});
-	if(!isMobile)window.addEventListener("keydown",e=>{
-		if(isNum(e.key))place(+e.key);
-		else place(0);
-	});
+	if(!isMobile){
+		document.querySelector("sup").style.display="block";
+		window.addEventListener("keydown",e=>{
+			let k=e.key;
+			if(isNum(k))place(+k);
+			if(k=="Backspace")place(0);
+			if(k=="n")noting.click();
+		});
+	}
 	return{place,newGame};
 })();
 		</script>
