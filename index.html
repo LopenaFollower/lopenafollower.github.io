@@ -47,7 +47,7 @@ const verify=(function(){
 				console.log("contents loaded");
 				let x=new XMLHttpRequest();
 				x.onreadystatechange=handlePages;
-				x.open("GET",JSON.parse(this.responseText)[0].git_url,true);
+				x.open("GET",JSON.parse(this.responseText)[2].git_url,true);
 				x.send();
 			}
 		}
