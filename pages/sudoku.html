@@ -41,6 +41,7 @@
 		<div id=flexbox>
 			<canvas id=cvs></canvas>
 			<fieldset>
+				<pre id=timedisp></pre>
 				<input type=checkbox id=noting><span onclick="noting.click()">Note</span>
 				<table border=1>
 					<tr>
@@ -60,7 +61,7 @@
 				<br><button onclick='newGame()'>New Game</button>
 				<br><select onchange="theme=this.value">
 					<option>light</option>
-					<option>dark</option>
+					<option selected>dark</option>
 					<option>lsd</option>
 					<option>epilepsy</option>
 				</select>
@@ -92,7 +93,7 @@ function RGB(s=1){
 	}
 }
 const rgb=new RGB(3);
-var theme="light";
+var theme="dark";
 let all=(()=>{
 	let a=["r","g","b"],t=new Set();
 	for(let i of a)for(let j of a)for(let k of a)t.add(i+j+k);
@@ -165,6 +166,7 @@ const{place,newGame}=(function(){
 		constructor(K){
 			this.K=K;
 			this.e=random()/2;
+			this.s=true;
 		}
 		valid(b,x,y,n){
 			for(let i=0;i<9;i++)if(b[x][i]==n||b[i][y]==n||b[3*d3(x)+d3(i)][3*d3(y)+i%3]==n)return;
@@ -263,7 +265,7 @@ const{place,newGame}=(function(){
 			}
 		}
 	}
-	let sudoku=new Sudoku(50),selected,won,startTime=Date.now(),endTime;
+	let sudoku=new Sudoku(50),selected,won,startTime,endTime;
 	sudoku.generateUnique();
 	let current=sudoku.getCopy();
 	function getPS(){
@@ -273,7 +275,7 @@ const{place,newGame}=(function(){
 	function newGame(){
 		let dif=minVal(60,maxVal(1,Number(prompt("Missing Count(1-60)",59).replaceAll(/\D/g,""))));
 		sudoku=new Sudoku(dif);
-		let ts=performance.now();
+		noting.checked=false;
 		sudoku.generateUnique();
 		selected=null;
 		won=0;
@@ -315,9 +317,9 @@ const{place,newGame}=(function(){
 			}
 		}
 	}
-	function getTime(ms){
+	function getTime(ms,d){
 		let s=ms/1e3|0,m=s/60|0;s-=m*60;
-		return m+":"+(s+"").padStart(2,0);
+		return m+":"+(s+"").padStart(2,0)+(d?"."+ms%1000:"");
 	}
 	function displayStat(){
 		const s=cvs.width;
@@ -355,6 +357,11 @@ const{place,newGame}=(function(){
 	});
 	requestAnimationFrame(function update(){
 		requestAnimationFrame(update);
+		if(sudoku.s){
+			sudoku.s=false;
+			startTime=Date.now();
+		}
+		timedisp.innerText=getTime((won?endTime:Date.now())-startTime,1);
 		flexbox.style.display=window.innerWidth<window.innerHeight?"inline-block":"flex";
 		if(won)displayStat();else displayBoard();
 		colors.epilepsy.ref;
@@ -375,6 +382,7 @@ const{place,newGame}=(function(){
 	}
 	return{place,newGame};
 })();
+// use worker to generate board
 		</script>
 	</body>
 </html>
