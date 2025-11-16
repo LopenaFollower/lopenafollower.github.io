@@ -18,6 +18,7 @@
 			@media(orientation:portrait){
 				#cvs{
 					width:98%;
+					max-width:800px;
 				}
 			}
 			table{
@@ -68,7 +69,8 @@
 			</fieldset>
 		</div>
 		<script>
-const ctx=cvs.getContext("2d"),{random,min:minVal,max:maxVal,round}=Math;
+let lt=localStorage.lt=1/0;
+const ctx=cvs.getContext("2d"),{random,min:minVal,max:maxVal,round,ceil}=Math;
 let isMobile=(function(){
 	let e,o=/(android|bb\d+|meego).+mobile|avantgo|bada\/|bla(ckberry|zer)|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series[46]0|symbian|treo|up\.(browser|link)|vodafone|wap|windows (ce|phone)|xda|xiino|android|ipad|playbook|silk/i;
 	return(e=navigator.userAgent)&&e.headers&&"string"==typeof e.headers["user-agent"]&&(e=e.headers["user-agent"]),"string"==typeof e&&(!!(navigator.maxTouchPoints&&navigator.maxTouchPoints>2&&/MacIntel/.test(navigator.platform))||o.test(e));
@@ -86,10 +88,7 @@ function RGB(s=1){
 		return(1<<24)|(c[r]<<16)|(c[g]<<8)|c[b];
 	}
 	this.getHex=function(pattern="rgb"){
-		return"#"+this.getDecimal(...pattern.replaceAll("r",0).replaceAll("g",1).replaceAll("b",2)).toString(16).slice(1);
-	}
-	this.stop=function(){
-		clearInterval(l);
+		return"#"+this.getDecimal(...[...pattern].map(e=>({r:0,g:1,b:2}[e]))).toString(16).slice(1);
 	}
 }
 const rgb=new RGB(3);
@@ -99,7 +98,7 @@ let all=(()=>{
 	for(let i of a)for(let j of a)for(let k of a)t.add(i+j+k);
 	return[...t].sort();
 })();
-const colors={
+const themes={
 	light:{
 		grid1x1:"#777",
 		grid3x3:"#111",
@@ -129,7 +128,7 @@ const colors={
 	lsd:{},epilepsy:{l:[...all]}
 }
 let r=c=>rgb.getHex(c);
-Object.defineProperties(colors.lsd,{
+Object.defineProperties(themes.lsd,{
 	grid1x1:{get(){return r(all[21])}},
 	grid3x3:{get(){return r(all[7])}},
 	bg:{get(){return r(all[19])}},
@@ -142,7 +141,7 @@ Object.defineProperties(colors.lsd,{
 	text:{get(){return r(all[26])}},
 	note:{get(){return r(all[17])}}
 });
-Object.defineProperties(colors.epilepsy,{
+Object.defineProperties(themes.epilepsy,{
 	grid1x1:{get(){return r(this.l[0])}},
 	grid3x3:{get(){return r(this.l[1])}},
 	bg:{get(){return r(this.l[2])}},
@@ -158,6 +157,17 @@ Object.defineProperties(colors.epilepsy,{
 });
 const{place,newGame}=(function(){
 	const d3=n=>n/3|0;
+	const mt=Array(9).fill().map(e=>Array(9));
+	const shuf=a=>{
+		for(let i=a.length-1;i>0;i--){
+			let j=random()*(i+1)|0;
+			[a[i],a[j]]=[a[j],a[i]];
+		}
+		return a;
+	};
+	function sleep(ms){
+		return new Promise(r=>setTimeout(r,ms));
+	}
 	class Sudoku{
 		#key=[];
 		mat=Array(9).fill().map(e=>Array(9));
@@ -168,64 +178,162 @@ const{place,newGame}=(function(){
 			this.e=random()/2;
 			this.s=true;
 		}
-		valid(b,x,y,n){
-			for(let i=0;i<9;i++)if(b[x][i]==n||b[i][y]==n||b[3*d3(x)+d3(i)][3*d3(y)+i%3]==n)return;
-			return 1;
-		}
-		solve(b){
-			let s=0;
-			const rec=()=>{
-				if(s>1)return;
-				for(let x=0;x<9;x++)for(let y=0;y<9;y++)if(!b[x][y]){
-					for(let n=1;n<10;n++)if(this.valid(b,x,y,n)){
-						b[x][y]=n;
-						rec();
-						if(s>1)return;
-						b[x][y]=0;
-					}
-					return;
-				}
-				s++;
-			}
-			rec();
-			return s;
-		}
 		generateFull(){
-			const fill=()=>{
-				for(let x=0;x<9;x++)for(let y=0;y<9;y++)if(!this.mat[x][y]){
-					let ns=[1,2,3,4,5,6,7,8,9].sort(_=>random()-.5);
-					for(let n of ns)if(this.valid(this.mat,x,y,n)){
-						this.mat[x][y]=n;
-						if(fill())return 1;
-						this.mat[x][y]=0;
-					}
-					return;
-				}
-				return 1;
-			}
-			fill();
+			const pat=(r,c)=>r*3+d3(r)+c;
+			let rs=[0,1,2,3,4,5,6,7,8],cs=[...rs],ns=shuf([1,2,3,4,5,6,7,8,9]),rB=shuf([0,1,2]),cS=shuf([0,1,2]);
+			for(let b=0;b<3;b++)rs.splice(b*3,3,...shuf(rs.slice(b*3,3+b*3)));
+			for(let c=0;c<3;c++)cs.splice(c*3,3,...shuf(cs.slice(c*3,3+c*3)));
+			rs=rB.flatMap(b=>rs.slice(b*3,3+b*3));
+			cs=cS.flatMap(s=>cs.slice(s*3,3+s*3));
+			for(let x=0;x<9;x++)for(let y=0;y<9;y++)this.mat[x][y]=ns[pat(rs[x],cs[y])%9];
 		}
-		generateUnique(){
-			this.generateFull();
-			this.#key=JSON.parse(JSON.stringify(this.mat));
-			const cs=[];
-			let retries=0,r=0;
-			const gen=()=>{
-				for(let i=r=0;i<81;i++)cs.push(i);
-				cs.sort(_=>random()-0.5);
-				for(let i=0;i<cs.length&&r<this.K;i++){
-					const x=cs[i]/9|0,y=cs[i]%9,t=this.mat[x][y];
-					this.mat[x][y]=0;
-					const c=this.mat.map(r=>r.slice()),s=this.solve(c);
-					if(s-1)this.mat[x][y]=t;else r++;
+		async generateUnique(){
+			const handler=e=>{
+				const{o,mat,M}=e.data;
+				this.mat=o?Array(9).fill().map(e=>Array(9)):mat;
+				if(o){
+					atmp++;
+					this.generateFull();
+					this.#key=this.getCopy();
+					worker.postMessage({mat:this.mat,K:this.K});
+				}else{
+					console.log(...M);
+					console.log(mat);
+					worker.terminate();
+					worker=null;
 				}
-				if(this.K-r&&retries++<5)gen();
 			}
-			gen();
-			if(this.K-r)this.generateUnique();
+			worker=new Worker(URL.createObjectURL(new Blob([`
+			const{random}=Math,d3=n=>n/3|0;
+			const shuf=a=>{
+				for(let i=a.length-1;i>0;i--){
+					let j=random()*(i+1)|0;
+					[a[i],a[j]]=[a[j],a[i]];
+				}
+				return a;
+			};
+			class Node{
+				constructor(){
+					this.L=this.R=this.U=this.D=this.C=this;
+					this.r=-1;
+					this.z=0;
+				}
+			}
+			class DLX{
+				constructor(mat,rI,cC){
+					this.H=new Node();
+					this.H.L=this.H.R=this.H;
+					this.cs=[];
+					let p=this.H;
+					for(let i=0;i<cC;i++){
+						const c=new Node();
+						p.R=this.cs[i]=c.U=c.D=c;
+						c.z=0;
+						c.L=p;
+						p=c;
+					}
+					p.R=this.H;
+					this.H.L=p;
+					this.rI=rI;
+					for(let r=0,f;r<mat.length;r++,f=null)for(let i of mat[r]){
+						const c=this.cs[i],n=new Node();
+						[n.r,n.C,n.D,n.U]=[r,c,c,c.U];
+						[c.U.D,c.U]=[n,n];
+						c.z++;
+						if(f){
+							[n.R,n.L]=[f,f.L];
+							f.L.R=f.L=n;
+						}else f=n.L=n.R=n;
+					}
+				}
+				cover(c){
+					c.R.L=c.L;
+					c.L.R=c.R;
+					for(let i=c.D;i!==c;i=i.D)for(let j=i.R;j!==i;j=j.R){
+						j.D.U=j.U;
+						j.U.D=j.D;
+						j.C.z--;
+					}
+				}
+				uncover(c){
+					for(let i=c.U;i!==c;i=i.U)for(let j=i.L;j!==i;j=j.L){
+						j.C.z++;
+						j.D.U=j;
+						j.U.D=j;
+					}
+					c.R.L=c.L.R=c;
+				}
+				search(lim,sR,cb){
+					if(this.H.R===this.H){
+						cb(sR.slice());
+						return true;
+					}
+					let c=this.H.R;
+					for(let j=c.R;j!==this.H;j=j.R)if(j.z<c.z)c=j;
+					this.cover(c);
+					for(let r=c.D;r!==c;r=r.D){
+						sR.push(r.r);
+						for(let j=r.R;j!==r;j=j.R)this.cover(j.C);
+						if(this.search(lim,sR,cb))if(this.stop)return true;
+						sR.pop();
+						for(let j=r.L;j!==r;j=j.L)this.uncover(j.C);
+					}
+					this.uncover(c);
+				}
+				solutions(lim=1,cb=_=>{}){
+					this.stop=false;
+					let f=0;
+					const ts=this;
+					this.search(lim,[],r=>{
+						cb(r.slice());
+						if(++f>=lim)ts.stop=true;
+					});
+					return f;
+				}
+			}
+			function buildRow(r,c,d){
+				return[9*r+c,81+9*r+d,162+9*c+d,243+27*d3(r)+9*d3(c)+d];
+			}
+			function buildCover(b){
+				const rs=[],rI=[];
+				for(let r=0;r<9;r++)for(let c=0;c<9;c++)if(b[r][c]){
+					const d=b[r][c]-1;
+					rs.push(buildRow(r,c,d));
+					rI.push([r,c,d]);
+				}else for(let d=0;d<9;d++){
+					rs.push(buildRow(r,c,d));
+					rI.push([r,c,d]);
+				}
+				return{rs,rI};
+			}
+			function sv(b){
+				const{rs,rI}=buildCover(b);
+				return new DLX(rs,rI,324).solutions(2);
+			}
+			onmessage=e=>{
+				const{mat,K}=e.data,cs=[];
+				for(let i=0;i<81;i++)cs[i]=i;
+				let r=0;
+				shuf(cs);
+				for(let i=0;i<81&&r<K;i++){
+					const x=cs[i]/9|0,y=cs[i]%9,t=mat[x][y];
+					mat[x][y]=0;
+					const c=mat.map(m=>m.slice());
+					if(sv(c)-1)mat[x][y]=t;else r++;
+				}
+				if(K-r)postMessage({o:true});
+				else postMessage({o:null,mat,M:[r,mat.flat().filter(e=>e<1).length]});
+			}
+			`],{type:"text/javascript"})));
+			worker.onmessage=handler;
+			worker.onerror=e=>{
+				console.error(e);
+			}
+			worker.postMessage({mat:this.mat,K:this.K});
+			while(worker)await sleep(25);
 		}
 		getCopy(){
-			return JSON.parse(JSON.stringify(this.mat));
+			return this.mat.map(m=>m.slice());
 		}
 		correct(n,x,y,m){
 			let b=n==this.#key[y][x];
@@ -244,7 +352,7 @@ const{place,newGame}=(function(){
 			return c;
 		}
 		RO(){
-			return(theme=="lsd"?10:theme=="epilepsy"?20:1)*random()*this.e-this.e/2;
+			return(this.t=="lsd"?10:this.t=="epilepsy"?20:1)*random()*this.e-this.e/2;
 		}
 		togNote(x,y,n){
 			let i=this.notes[y][x].indexOf(n);
@@ -265,54 +373,62 @@ const{place,newGame}=(function(){
 			}
 		}
 	}
-	let sudoku=new Sudoku(50),selected,won,startTime,endTime;
-	sudoku.generateUnique();
-	let current=sudoku.getCopy();
+	let sudoku,current,selected,won,startTime,endTime,generating,worker,atmp;
+	newGame(true);
 	function getPS(){
-		const s=cvs.width;
-		return 149*s/1350;
+		return 149*cvs.width/1350;
 	}
-	function newGame(){
-		let dif=minVal(60,maxVal(1,Number(prompt("Missing Count(1-60)",59).replaceAll(/\D/g,""))));
+	async function newGame(f){
+		if(generating){
+			if(confirm("Still generating, cancel?")){
+				generating=false;
+				worker.terminate();
+				worker=null;
+				newGame();
+			}
+			return;
+		}
+		let dif=f?57:minVal(62,maxVal(1,Number(prompt("Missing Count(1-62)",58).replaceAll(/\D/g,""))));
 		sudoku=new Sudoku(dif);
 		noting.checked=false;
-		sudoku.generateUnique();
-		selected=null;
-		won=0;
-		startTime=Date.now();
+		won=atmp=0;
+		generating=true;
+		await sudoku.generateUnique();
 		current=sudoku.getCopy();
+		selected=null;
+		generating=false;
 	}
 	function fill(c="#fff"){
 		ctx.fillStyle=c;
 	}
 	function displayBoard(){
-		const s=cvs.width;
+		const s=cvs.width,gr=generating?mt:current;
 		let m=s/150,p=getPS();
-		fill(colors[theme].grid1x1);
+		fill(themes[theme].grid1x1);
 		ctx.fillRect(0,0,s,s);
 		for(let i=0;i<4;i++){
-			if(i&&i<3)fill(colors[theme].grid3x3);else fill(colors[theme].border);
+			if(i&&i<3)fill(themes[theme].grid3x3);else fill(themes[theme].border);
 			ctx.fillRect(0,p*3*i,s,m);
 			ctx.fillRect(p*3*i,0,m,s);
 		}
 		for(let y=0;y<9;y++)for(let x=0;x<9;x++){
-			fill(colors[theme].bg);
+			fill(themes[theme].bg);
 			if(selected){
 				let[n,i,j]=selected;
-				if(x==i||y==j||d3(x)==d3(i)&&d3(y)==d3(j))fill(colors[theme].adjacent);
-				if(!n&&x==i&&y==j||(n||!n&&current[y][x])&&current[y][x]==current[j][i])fill(colors[theme].selected);
+				if(x==i||y==j||d3(x)==d3(i)&&d3(y)==d3(j))fill(themes[theme].adjacent);
+				if(!n&&x==i&&y==j||(n||!n&&gr[y][x])&&gr[y][x]==gr[j][i])fill(themes[theme].selected);
 			}
 			ctx.fillRect(m+x*p,m+y*p,p-m,p-m);
-			if(current[y][x]){
-				if(info(x,y)[0]==current[y][x])fill(colors[theme].num_fixed);else{
-					if(sudoku.correct(current[y][x],x,y,0))
-					fill(colors[theme].num_correct);else fill(colors[theme].num_wrong);
+			if(gr[y][x]){
+				if(info(x,y)[0]==gr[y][x])fill(themes[theme].num_fixed);else{
+					if(sudoku.correct(gr[y][x],x,y,0))
+					fill(themes[theme].num_correct);else fill(themes[theme].num_wrong);
 				}
 				ctx.font=p/1.25+"px sans-serif";
-				ctx.fillText(current[y][x],x*p+p/3.3-sudoku.RO(),y*p+14*p/17-sudoku.RO());
+				ctx.fillText(gr[y][x],x*p+p/3.3-sudoku.RO(),y*p+14*p/17-sudoku.RO());
 			}else{
 				ctx.font=p/4.8+"px sans-serif";
-				fill(colors[theme].note);
+				fill(themes[theme].note);
 				sudoku.notes[y][x].forEach(e=>ctx.fillText(e,(x+165/817)*p-sudoku.RO()+((e-1)%3)*p/3.8,(y+137/414)*p-sudoku.RO()+((e-1)/3|0)*p/3.6));
 			}
 		}
@@ -325,11 +441,11 @@ const{place,newGame}=(function(){
 		const s=cvs.width;
 		let m=s/150,fs=s/12;
 		ctx.font=fs+"px sans-serif";
-		fill(colors[theme].bg);
+		fill(themes[theme].bg);
 		ctx.fillRect(0,0,s,s);
-		fill(colors[theme].text);
+		fill(themes[theme].text);
 		ctx.fillText("Mistakes: "+sudoku.getMistakes(),m,m+fs);
-		ctx.fillText("Difficulty: "+round(sudoku.K/.6)+" / 100",m,m+fs*2);
+		ctx.fillText("Difficulty: "+round(sudoku.K/.62)+" / 100",m,m+fs*2);
 		ctx.fillText("Time: "+getTime(endTime-startTime),m,m+fs*3);
 	}
 	function place(n){
@@ -357,19 +473,22 @@ const{place,newGame}=(function(){
 	});
 	requestAnimationFrame(function update(){
 		requestAnimationFrame(update);
+		sudoku.t=theme;
 		if(sudoku.s){
 			sudoku.s=false;
 			startTime=Date.now();
 		}
-		timedisp.innerText=getTime((won?endTime:Date.now())-startTime,1);
+		timedisp.innerText=generating?`Generating Board (${atmp})`:getTime((won?endTime:Date.now())-startTime,1);
 		flexbox.style.display=window.innerWidth<window.innerHeight?"inline-block":"flex";
 		if(won)displayStat();else displayBoard();
-		colors.epilepsy.ref;
-		let ms=sudoku.countMissing(current);
-		document.querySelectorAll("td").forEach((e,i)=>{
-			if(i<1)return;
-			e.style.opacity=(ms[i-1]/9)**.847985;
-		});
+		themes.epilepsy.ref;
+		try{
+			let ms=sudoku.countMissing(current);
+			document.querySelectorAll("td").forEach((e,i)=>{
+				if(i<1)return;
+				e.style.opacity=(ms[i-1]/9)**.847985;
+			});
+		}catch(e){};
 	});
 	if(!isMobile){
 		document.querySelector("sup").style.display="block";
@@ -382,7 +501,6 @@ const{place,newGame}=(function(){
 	}
 	return{place,newGame};
 })();
-// use worker to generate board
 		</script>
 	</body>
 </html>
