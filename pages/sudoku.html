@@ -410,12 +410,12 @@ const{place,newGame}=(function(){
 					if(sudoku.correct(gr[y][x],x,y,0))
 					fill(themes[theme].num_correct);else fill(themes[theme].num_wrong);
 				}
-				ctx.font=p/1.25+"px sans-serif";
+				ctx.font=4*p/5+"px sans-serif";
 				ctx.fillText(gr[y][x],x*p+p/3.3-sudoku.RO(),y*p+14*p/17-sudoku.RO());
 			}else{
 				ctx.font=p/4.8+"px sans-serif";
 				fill(themes[theme].note);
-				sudoku.notes[y][x].forEach(e=>ctx.fillText(e,(x+165/817)*p-sudoku.RO()+((e-1)%3)*p/3.8,(y+137/414)*p-sudoku.RO()+((e-1)/3|0)*p/3.6));
+				sudoku.notes[y][x].forEach(e=>ctx.fillText(e,(x+165/817)*p-sudoku.RO()+((e-1)%3)*p/3.8,(y+137/414)*p-sudoku.RO()+d3(e-1)*p/3.6));
 			}
 		}
 	}
