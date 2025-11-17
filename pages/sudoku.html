@@ -157,7 +157,6 @@ Object.defineProperties(themes.epilepsy,{
 });
 const{place,newGame}=(function(){
 	const d3=n=>n/3|0;
-	const mt=Array(9).fill().map(e=>Array(9));
 	const shuf=a=>{
 		for(let i=a.length-1;i>0;i--){
 			let j=random()*(i+1)|0;
@@ -227,13 +226,9 @@ const{place,newGame}=(function(){
 					for(let i=0;i<cC;i++){
 						const c=new Node();
 						p.R=this.cs[i]=c.U=c.D=c;
-						c.z=0;
-						c.L=p;
-						p=c;
+						[c.z,c.L,p]=[0,p,c];
 					}
-					p.R=this.H;
-					this.H.L=p;
-					this.rI=rI;
+					[p.R,this.H.L,this.rI]=[this.H,p,rI];
 					for(let r=0,f;r<mat.length;r++,f=null)for(let i of mat[r]){
 						const c=this.cs[i],n=new Node();
 						[n.r,n.C,n.D,n.U]=[r,c,c,c.U];
@@ -246,20 +241,11 @@ const{place,newGame}=(function(){
 					}
 				}
 				cover(c){
-					c.R.L=c.L;
-					c.L.R=c.R;
-					for(let i=c.D;i!==c;i=i.D)for(let j=i.R;j!==i;j=j.R){
-						j.D.U=j.U;
-						j.U.D=j.D;
-						j.C.z--;
-					}
+					[c.R.L,c.L.R]=[c.L,c.R];
+					for(let i=c.D;i!==c;i=i.D)for(let j=i.R;j!==i;j.C.z--,j=j.R)[j.D.U,j.U.D]=[j.U,j.D];
 				}
 				uncover(c){
-					for(let i=c.U;i!==c;i=i.U)for(let j=i.L;j!==i;j=j.L){
-						j.C.z++;
-						j.D.U=j;
-						j.U.D=j;
-					}
+					for(let i=c.U;i!==c;i=i.U)for(let j=i.L;j!==i;j.C.z++,j=j.L)j.D.U=j.U.D=j;
 					c.R.L=c.L.R=c;
 				}
 				search(lim,sR,cb){
@@ -392,6 +378,7 @@ const{place,newGame}=(function(){
 		noting.checked=false;
 		won=atmp=0;
 		generating=true;
+		current=Array(9).fill().map(e=>Array(9));
 		await sudoku.generateUnique();
 		current=sudoku.getCopy();
 		selected=null;
@@ -401,7 +388,7 @@ const{place,newGame}=(function(){
 		ctx.fillStyle=c;
 	}
 	function displayBoard(){
-		const s=cvs.width,gr=generating?mt:current;
+		const s=cvs.width,gr=current;
 		let m=s/150,p=getPS();
 		fill(themes[theme].grid1x1);
 		ctx.fillRect(0,0,s,s);
@@ -464,7 +451,7 @@ const{place,newGame}=(function(){
 		}
 	}
 	function info(x,y){
-		return[sudoku.mat[y][x],x,y];
+		return[generating?0:sudoku.mat[y][x],x,y];
 	}
 	cvs.addEventListener("click",e=>{
 		let p=getPS();
@@ -502,5 +489,4 @@ const{place,newGame}=(function(){
 })();
 		</script>
 	</body>
-
 </html>
