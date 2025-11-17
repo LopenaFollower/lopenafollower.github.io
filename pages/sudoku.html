@@ -198,7 +198,6 @@ const{place,newGame}=(function(){
 					worker.postMessage({mat:this.mat,K:this.K});
 				}else{
 					console.log(...M);
-					console.log(mat);
 					worker.terminate();
 					worker=null;
 				}
@@ -503,4 +502,5 @@ const{place,newGame}=(function(){
 })();
 		</script>
 	</body>
+
 </html>
