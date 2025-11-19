@@ -175,7 +175,6 @@ const{place,newGame}=(function(){
 		constructor(K){
 			this.K=K;
 			this.e=random()/2;
-			this.s=true;
 		}
 		generateFull(){
 			const pat=(r,c)=>r*3+d3(r)+c;
@@ -197,6 +196,7 @@ const{place,newGame}=(function(){
 					worker.postMessage({mat:this.mat,K:this.K});
 				}else{
 					console.log(...M);
+					startTime=Date.now();
 					worker.terminate();
 					worker=null;
 				}
@@ -378,10 +378,10 @@ const{place,newGame}=(function(){
 		noting.checked=false;
 		won=atmp=0;
 		generating=true;
+		selected=null;
 		current=Array(9).fill().map(e=>Array(9));
 		await sudoku.generateUnique();
 		current=sudoku.getCopy();
-		selected=null;
 		generating=false;
 	}
 	function fill(c="#fff"){
@@ -438,15 +438,15 @@ const{place,newGame}=(function(){
 		if(!selected)return;
 		let[p,x,y]=selected;
 		if(p||won||document.querySelectorAll("td")[n].style.opacity=="0")return;
-		if(n==current[y][x])return current[y][x]="";
-		if(noting.checked)sudoku.togNote(x,y,n);
-		else{
+		if(n==current[y][x]&&!noting.checked)return current[y][x]="";
+		if(!current[y][x]){
+			if(noting.checked)return sudoku.togNote(x,y,n);
 			current[y][x]=n;
 			sudoku.updNotes(x,y,n);
 			sudoku.correct(n,x,y,1);
 			if(sudoku.check(current)){
 				endTime=Date.now();
-				setTimeout(()=>won=true);
+				setTimeout("won=true");
 			}
 		}
 	}
@@ -460,10 +460,6 @@ const{place,newGame}=(function(){
 	requestAnimationFrame(function update(){
 		requestAnimationFrame(update);
 		sudoku.t=theme;
-		if(sudoku.s){
-			sudoku.s=false;
-			startTime=Date.now();
-		}
 		timedisp.innerText=generating?`Generating Board (${atmp})`:getTime((won?endTime:Date.now())-startTime,1);
 		flexbox.style.display=window.innerWidth<window.innerHeight?"inline-block":"flex";
 		if(won)displayStat();else displayBoard();
@@ -471,8 +467,7 @@ const{place,newGame}=(function(){
 		try{
 			let ms=sudoku.countMissing(current);
 			document.querySelectorAll("td").forEach((e,i)=>{
-				if(i<1)return;
-				e.style.opacity=(ms[i-1]/9)**.847985;
+				if(i)e.style.opacity=(ms[i-1]/9)**.847985;
 			});
 		}catch(e){};
 	});
