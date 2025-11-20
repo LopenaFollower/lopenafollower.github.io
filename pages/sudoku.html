@@ -438,14 +438,16 @@ const{place,newGame}=(function(){
 		if(!selected)return;
 		let[p,x,y]=selected;
 		if(p||won||document.querySelectorAll("td")[n].style.opacity=="0")return;
-		if(n==current[y][x]&&!noting.checked)return current[y][x]="";
-		if(noting.checked)return sudoku.togNote(x,y,n);
-		current[y][x]=n;
-		sudoku.updNotes(x,y,n);
-		sudoku.correct(n,x,y,1);
-		if(sudoku.check(current)){
-			endTime=Date.now();
-			setTimeout(_=>won=true);
+		if(n&&noting.checked&&!current[y][x])return sudoku.togNote(x,y,n);
+		if(!noting.checked){
+			if(n==current[y][x])return current[y][x]="";
+			current[y][x]=n;
+			sudoku.updNotes(x,y,n);
+			sudoku.correct(n,x,y,1);
+			if(sudoku.check(current)){
+				endTime=Date.now();
+				setTimeout(_=>won=true);
+			}
 		}
 	}
 	function info(x,y){
