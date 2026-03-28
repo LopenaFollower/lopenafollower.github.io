@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title></title>
+		<meta name="viewport"content="width=device-width,initial-scale=1">
+		<meta name="color-scheme"content="light dark">
+		<style>
+			body{
+				margin:0;
+				padding:0;
+				font-family:Liberation mono,monospace;
+			}
+			@keyframes flip{
+				30%{rotate:1 0 0 90deg}
+				100%{rotate:1 0 0 0deg}
+			}
+			@keyframes shake{
+				16.67%,66.67%{transform:translate(-20%,0%)}
+				33.33%,83.33%{transform:translate(20%,0%)}
+				100%{transform:translate(0%,0%)}
+			}
+			@media screen and (max-width:600px){
+				td,table{
+					width:50px;
+					height:75px;
+				}
+			}
+			@media screen and (min-width:600px){
+				td,table{
+					width:54px;
+					height:81px;
+				}
+			}
+			td,table{
+				text-align:center;
+				font-size:25px;
+				table-layout:fixed;
+				border-collapse:collapse;
+			}
+			#keyboard{
+				user-select:none;
+				position:fixed;
+				bottom:5vh;
+				left:50%;
+				transform:translate(-50%,0%);
+				td:not(.ns){
+					border:1px #fff solid;
+				}
+			}
+			#enter{
+				transition:all .15s linear;
+			}
+			#board{
+				user-select:none;
+				td{
+					padding:0 5px;
+				}
+				td:not(.highlight){
+					border:1px #888 solid;
+					transition:all .2s linear;
+				}
+			}
+			#sec{color:#0000}
+			table,.center{
+				text-align:center;
+				margin:0 auto;
+			}
+			.highlight{border:1.5px #fff solid}
+			.void,.misplace,.correct{border:1px #fff solid}
+			.void{background:#787c7f;color:#fff}
+			.misplace{background:#c8b653;color:#000}
+			.correct{background:#6ca965;color:#000}
+		</style>
+	</head>
+	<body>
+		<input id="file_in"style="display:none;"type="file"accept=".txt">
+		<select id="letter_count"></select><select id="reveal_type"><option selected value=0>Sequential</option><option value=1>Immediate</option></select>
+		<div class="center"id="score_display">Score 0</div>
+		<table id="board"></table>
+		<div class="center"id="sec"></div>
+		<table id="keyboard">
+			<tr><td colspan=2>Q</td><td colspan=2>W</td><td colspan=2>E</td><td colspan=2>R</td><td colspan=2>T</td><td colspan=2>Y</td><td colspan=2>U</td><td colspan=2>I</td><td colspan=2>O</td><td colspan=2>P</td></tr>
+			<tr><td class="ns"rowspan=2 ondblclick="set('fg')"></td><td colspan=2>A</td><td colspan=2>S</td><td colspan=2>D</td><td colspan=2>F</td><td colspan=2>G</td><td colspan=2>H</td><td colspan=2>J</td><td colspan=2>K</td><td colspan=2>L</td><td class="ns"rowspan=2 ondblclick="set('t')"></td></tr>
+			<tr><td id="enter"style="font-size:17px"colspan=2>Enter</td><td colspan=2>Z</td><td colspan=2>X</td><td colspan=2>C</td><td colspan=2>V</td><td colspan=2>B</td><td colspan=2>N</td><td colspan=2>M</td><td id="backspace"colspan=2>&#9003;</td></tr>
+		</table>
+		<script>
+const{type,setWordLen,submitWords,set}=(function(){
+	class Wordle{
+		#word="";
+		wordLen=5;
+		row=0;
+		rowMax=6;
+		input="";
+		won=false;
+		score=0;
+		wait=true;
+		async getWordList(lcl){
+			let rl;
+			if(lcl)rl=lcl.split(" ");
+			else await fetch("https://raw.githubusercontent.com/LopenaFollower/Other/refs/heads/main/words.txt").then(r=>r.text()).then(t=>rl=t.split(" ")).catch(e=>e);
+			if(!rl)return;
+			console.log(`Loaded ${rl.length.toLocaleString()} words.`);
+			let groups=Array(32).fill().map(e=>[]);
+			rl.forEach(e=>groups[e.length].push(e));
+			this.wordList=Object.fromEntries(groups.map((e,i)=>[i,e]).filter(e=>e[1].length>9));
+			this.wait=false;
+			return true;
+		}
+		requestManualWordList(){
+			alert("Unable to fetch word list. Please manually submit a wordlist.");
+			file_in.style.display="block";
+		}
+		newWord(){
+			let g=this.wordList[this.wordLen];
+			sessionStorage.w=btoa(sec.innerText=this.#word=g[g.length*Math.random()|0]);
+		}
+		initBoard(){
+			board.innerHTML="";
+			let b=document.createElement("tbody");board.appendChild(b);
+			b.innerHTML=`<tr>${"<td></td>".repeat(this.wordLen)}</tr>`.repeat(this.rowMax);
+		}
+		async init(s,check=true){
+			if(check){
+				let fetched=await this.getWordList(s);
+				if(!fetched)return this.requestManualWordList();
+				Object.keys(this.wordList).forEach(e=>letter_count.innerHTML+=`<option ${e-5?"":"selected"}>${e} Letters (${this.wordList[e].length.toLocaleString()} Words)</option>`);
+			}else if(this.wait)return;
+			this.won=false;
+			this.used=new Set();
+			this.row=0;
+			this.rowMax=this.wordLen<4?8:6;
+			this.input="";
+			this.#word="";
+			this.newWord();
+			this.initBoard();
+			this.updateKeyboard();
+		}
+		display(){
+			try{
+				let r=board.children[0].children[this.row];
+				[...r.children].forEach(e=>e.innerText=e.className="");
+				[...this.input].forEach((e,i)=>{
+					r.children[i].className="highlight";
+					r.children[i].innerText=e;
+				});
+			}catch(e){}
+		}
+		async reveal(arr){
+			let r=board.children[0].children[this.row],t=700;
+			if(reveal_type.value=="0")for(let i in arr){
+				let c=r.children[i];
+				c.style.animation="flip .7s";
+				await new Promise(r=>setTimeout(r,t*.3));
+				c.className=["void","misplace","correct"][arr[i]];
+				setTimeout(()=>c.style.animation="",t*.7);
+			}else{
+				r.style.animation="flip .7s";
+				setTimeout(()=>{
+					for(let i in arr)r.children[i].className=["void","misplace","correct"][arr[i]];
+				},t*.3);
+				setTimeout(()=>r.style.animation="",t);
+			}
+		}
+		isWord(w,l=true){
+			let f;
+			for(let i=0;i<32;i++)if(this.wordList[i]&&(i==this.wordLen||!l))f|=this.wordList[i].includes(w);
+			return f;
+		}
+		async checkInput(){
+			const str=this.input.trim().toLowerCase(),ans=this.#word;
+			if(ans.length-str.length)return;
+			this.wait=true;
+			if(!this.isWord(str)){
+				[...board.children[0].children[this.row].children].forEach(e=>e.style.animation="shake .3s");
+				await new Promise(r=>setTimeout(r,300));
+				[...board.children[0].children[this.row].children].forEach(e=>e.style.animation="");
+				this.wait=false;
+				this.input="";
+				this.display();
+				return;
+			}
+			const token=Object.fromEntries([...ans].map(e=>[e,{c:ans.split(e).length-1,i:[...ans].reduce((a,v,i)=>(v==e&&a.push(i),a),[])}]));
+			let res=[],txt;
+			// 0 = not included, 1 = misplaced, 2 = correct
+			//check correct letters first
+			for(let i in str){
+				const c=str[i=+i],tc=token[c];
+				if(ans.indexOf(c)<0||!tc.c||!tc.i.includes(i))continue;
+				tc.c--;
+				this.used.add(c+(res[i]=2));
+			}
+			for(let i in str){
+				const c=str[i=+i],tc=token[c];
+				let s=res[i]|0;
+				if(ans.indexOf(c)+1&&!tc.i.includes(i))tc.c-=s+=tc.c>0;
+				this.used.add(c+s);
+				res[i]=s;
+			}
+			await this.reveal(res);
+			this.row++;
+			this.input="";
+			this.updateKeyboard();
+			if(str==ans){
+				this.won=true;
+				this.score+=7-this.row;
+				txt="You win!";
+			}else if(this.row>=this.rowMax){
+				this.score=0;
+				txt="The word was "+this.#word;
+			}
+			this.wait=false;
+			score_display.innerText="Score "+this.score;
+			if(txt){
+				await new Promise(r=>setTimeout(r,500));
+				alert(txt);
+				this.init(null,false);
+			}
+		}
+		updateKeyboard(){
+			keyboard.querySelectorAll("td:not(.ns)").forEach(e=>{
+				let k=e.innerText.trim().toLowerCase();
+				e.className="";
+				if(this.used.size)for(let i=0;i<3;i++)if(this.used.has(k+i))e.className=["void","misplace","correct"][i];
+			});
+		}
+	}
+	function loop(){
+		requestAnimationFrame(loop);
+		enter.style.background=W.input.length==W.wordLen?W.wordList[W.wordLen].includes(W.input.toLowerCase())?"#170":"#800":"#0000";
+	}
+	const W=new Wordle();
+	var fg="";
+	W.init();
+	loop();
+	return{
+		type:(k,cmd=false)=>{
+			if(W.won||W.wait)return;
+			if(cmd)switch(cmd){
+				case"enter":
+					W.checkInput();
+					break;
+				case"backspace":
+					let s=W.input;
+					W.input=s.substr(0,s.length-1);
+					W.display();
+					break;
+			}else if(W.input.length<W.wordLen){
+				W.input+=k.toUpperCase();
+				W.display();
+			}
+		},
+		setWordLen:n=>{
+			if(W.wordList[n].length>9)W.wordLen=n;
+			fg="";
+			W.init(null,false);
+		},
+		submitWords:str=>W.init(str.replace(/[^a-z ]/g,"")),
+		set:n=>{
+			if(n=="fg"){
+				let r=prompt("Auto").replace(/[^a-z]/g,"");
+				if(W.isWord(r))fg=r;
+			}
+			if(n=="t"){
+				if(W.won||W.wait)return;
+				W.input=fg.toUpperCase();
+				W.display();
+			}
+		}
+	}
+})();
+keyboard.querySelectorAll("td:not(.ns)").forEach(e=>e.className="void");
+letter_count.onchange=e=>setWordLen(+letter_count.value.split(" ")[0]);
+keyboard.querySelectorAll("td:not(.ns)").forEach(e=>e.onclick=n=>type(e.innerText,e.id));
+file_in.onchange=e=>{
+	let fr=new FileReader(),f=e.target.files[0];
+	fr.onload=function(){
+		file_in.style.display="none";
+		submitWords(fr.result);
+	}
+	fr.readAsText(f);
+}
+window.addEventListener("keydown",e=>{
+	let k=e.key.toLowerCase();
+	if(k.length==1&&!k.search(/[a-z]/g))type(k);
+	if(["enter","backspace"].includes(k))type(0,k);
+});
+		</script>
+	</body>
+</html>
