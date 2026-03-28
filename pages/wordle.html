@@ -43,8 +43,13 @@
 				bottom:5vh;
 				left:50%;
 				transform:translate(-50%,0%);
-				td:not(.ns){
+				td:not([class]),#enter,#backspace{
 					border:1px #fff solid;
+					background:#333;
+				}
+				.void{
+					opacity:.2;
+					background:#000;
 				}
 			}
 			#enter{
@@ -65,9 +70,9 @@
 				text-align:center;
 				margin:0 auto;
 			}
-			.highlight{border:1.5px #fff solid}
+			.highlight{border:1.45px #fff solid}
 			.void,.misplace,.correct{border:1px #fff solid}
-			.void{background:#787c7f;color:#fff}
+			.void{background:#787c7e;color:#fff}
 			.misplace{background:#c8b653;color:#000}
 			.correct{background:#6ca965;color:#000}
 		</style>
@@ -112,7 +117,7 @@ const{type,setWordLen,submitWords,set}=(function(){
 		}
 		newWord(){
 			let g=this.wordList[this.wordLen];
-			sessionStorage.w=btoa(sec.innerText=this.#word=g[g.length*Math.random()|0]);
+			sec.innerText=this.#word=g[g.length*Math.random()|0];
 		}
 		initBoard(){
 			board.innerHTML="";
@@ -138,7 +143,7 @@ const{type,setWordLen,submitWords,set}=(function(){
 		display(){
 			try{
 				let r=board.children[0].children[this.row];
-				[...r.children].forEach(e=>e.innerText=e.className="");
+				[...r.children].forEach(e=>e.innerText=e.removeAttribute("class")||"");
 				[...this.input].forEach((e,i)=>{
 					r.children[i].className="highlight";
 					r.children[i].innerText=e;
@@ -219,14 +224,14 @@ const{type,setWordLen,submitWords,set}=(function(){
 		updateKeyboard(){
 			keyboard.querySelectorAll("td:not(.ns)").forEach(e=>{
 				let k=e.innerText.trim().toLowerCase();
-				e.className="";
+				e.removeAttribute("class");
 				if(this.used.size)for(let i=0;i<3;i++)if(this.used.has(k+i))e.className=["void","misplace","correct"][i];
 			});
 		}
 	}
 	function loop(){
 		requestAnimationFrame(loop);
-		enter.style.background=W.input.length==W.wordLen?W.wordList[W.wordLen].includes(W.input.toLowerCase())?"#170":"#800":"#0000";
+		enter.style.background=W.input.length==W.wordLen?W.wordList[W.wordLen].includes(W.input.toLowerCase())?"#170":"#800":"";
 	}
 	const W=new Wordle();
 	var fg="";
