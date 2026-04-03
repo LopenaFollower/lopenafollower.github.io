@@ -188,8 +188,6 @@ const{type,setWordLen,submitWords,run}=(function(){
 			}
 			const token=Object.fromEntries([...ans].map(e=>[e,{c:ans.split(e).length-1,i:[...ans].reduce((a,v,i)=>(v==e&&a.push(i),a),[])}]));
 			let res=[],txt;
-			// 0 = not included, 1 = misplaced, 2 = correct
-			//check correct letters first
 			for(let i in str){
 				const c=str[i=+i],tc=token[c];
 				if(ans.indexOf(c)<0||!tc.c||!tc.i.includes(i))continue;
@@ -206,6 +204,7 @@ const{type,setWordLen,submitWords,run}=(function(){
 			}
 			for(let v of[...this.used])for(let i=0;i<2;i++)if(this.used.has(v[0]+(i+1)))this.used.delete(v[0]+i);
 			G.cRes=res.map((e,i)=>str[i]+e);
+			G.check();
 			await this.reveal(res);
 			this.row++;
 			this.input="";
@@ -280,25 +279,13 @@ const{type,setWordLen,submitWords,run}=(function(){
 			}
 		}
 		filter(){
-			let wl=Array.from(W.wordList[W.wordLen]);
-			//filter absent
-			let abs=[...W.used].filter(e=>e.indexOf(0)+1);
-			wl=wl.filter(w=>!abs.find(c=>[...w].includes(c[0])));
-			
-			//must contain misplaced
-			let mp=[...W.used].filter(e=>e.indexOf(1)+1);
-			wl=wl.filter(w=>mp.every(c=>w.indexOf(c[0])+1));
-			
-			//check incorrects
-			wl=wl.filter(w=>this.misplacements.every(c=>w[num(c)]!=c[0]));
-			
-			//ensure correct
+			let wl=[...W.wordList[W.wordLen]];
+			let abs=[...W.used].filter(e=>e.indexOf(0)+1),mp=[...W.used].filter(e=>e.indexOf(1)+1);
+			wl=wl.filter(w=>!abs.find(c=>[...w].includes(c[0]))&&mp.every(c=>w.indexOf(c[0])+1)&&this.misplacements.every(c=>w[num(c)]!=c[0]));
 			for(let i in this.cRes){
 				let c=this.cRes[i];
 				if(c.indexOf(2)+1)wl=wl.filter(w=>w[i]==c[0]);
 			}
-			
-			//check character repetitions
 			for(let i in this.counts){
 				let v=this.counts[i],c=v[0],n=num(v);
 				if(v.indexOf(">")+1)wl=wl.filter(w=>this.count(c,w)>=n);
@@ -342,7 +329,6 @@ const{type,setWordLen,submitWords,run}=(function(){
 			if(n=="t"){
 				if(W.won||W.wait)return;
 				if(!fg){
-					G.check();
 					let wl=G.filter();
 					W.input=wl.sort(()=>Math.random()-.5)[0].toUpperCase();
 				}else W.input=fg.toUpperCase();
@@ -367,7 +353,6 @@ window.addEventListener("keydown",e=>{
 	if(k.length==1&&/[a-z]/.test(k))type(k);
 	if(["enter","backspace"].includes(k))type(0,k);
 });
-//removed syftn
 		</script>
 	</body>
 </html>
