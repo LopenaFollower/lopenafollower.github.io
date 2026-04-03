@@ -48,6 +48,7 @@
 					background:#333;
 				}
 				.void{
+					color:#ddd;
 					opacity:.2;
 					background:#000;
 				}
@@ -85,11 +86,11 @@
 		<div class="center"id="sec"></div>
 		<table id="keyboard">
 			<tr><td colspan=2>Q</td><td colspan=2>W</td><td colspan=2>E</td><td colspan=2>R</td><td colspan=2>T</td><td colspan=2>Y</td><td colspan=2>U</td><td colspan=2>I</td><td colspan=2>O</td><td colspan=2>P</td></tr>
-			<tr><td class="ns"rowspan=2 ondblclick="set('fg')"></td><td colspan=2>A</td><td colspan=2>S</td><td colspan=2>D</td><td colspan=2>F</td><td colspan=2>G</td><td colspan=2>H</td><td colspan=2>J</td><td colspan=2>K</td><td colspan=2>L</td><td class="ns"rowspan=2 ondblclick="set('t')"></td></tr>
+			<tr><td class="ns"rowspan=2 ondblclick="run('fg')"></td><td colspan=2>A</td><td colspan=2>S</td><td colspan=2>D</td><td colspan=2>F</td><td colspan=2>G</td><td colspan=2>H</td><td colspan=2>J</td><td colspan=2>K</td><td colspan=2>L</td><td class="ns"rowspan=2 ondblclick="run('t')"></td></tr>
 			<tr><td id="enter"style="font-size:17px"colspan=2>Enter</td><td colspan=2>Z</td><td colspan=2>X</td><td colspan=2>C</td><td colspan=2>V</td><td colspan=2>B</td><td colspan=2>N</td><td colspan=2>M</td><td id="backspace"colspan=2>&#9003;</td></tr>
 		</table>
 		<script>
-const{type,setWordLen,submitWords,set}=(function(){
+const{type,setWordLen,submitWords,run}=(function(){
 	class Wordle{
 		#word="";
 		wordLen=5;
@@ -139,6 +140,7 @@ const{type,setWordLen,submitWords,set}=(function(){
 			this.newWord();
 			this.initBoard();
 			this.updateKeyboard();
+			G.reset();
 		}
 		display(){
 			try{
@@ -168,7 +170,7 @@ const{type,setWordLen,submitWords,set}=(function(){
 		}
 		isWord(w,l=true){
 			let f;
-			for(let i=0;i<32;i++)if(this.wordList[i]&&(i==this.wordLen||!l))f|=this.wordList[i].includes(w);
+			for(let i=0;i<32;i++)if(this.wordList[i]&&(i==this.wordLen||!l))f|=this.wordList[i].includes(w.toLowerCase());
 			return f;
 		}
 		async checkInput(){
@@ -198,9 +200,12 @@ const{type,setWordLen,submitWords,set}=(function(){
 				const c=str[i=+i],tc=token[c];
 				let s=res[i]|0;
 				if(ans.indexOf(c)+1&&!tc.i.includes(i))tc.c-=s+=tc.c>0;
-				this.used.add(c+s);
+				if(!this.used.has(c+2)||s)this.used.add(c+s);
+				if(s<2)G.misplacements.push(c+i);
 				res[i]=s;
 			}
+			for(let v of[...this.used])for(let i=0;i<2;i++)if(this.used.has(v[0]+(i+1)))this.used.delete(v[0]+i);
+			G.cRes=res.map((e,i)=>str[i]+e);
 			await this.reveal(res);
 			this.row++;
 			this.input="";
@@ -231,10 +236,79 @@ const{type,setWordLen,submitWords,set}=(function(){
 	}
 	function loop(){
 		requestAnimationFrame(loop);
-		enter.style.background=W.input.length==W.wordLen?W.wordList[W.wordLen].includes(W.input.toLowerCase())?"#170":"#800":"";
+		enter.style.background=W.input.length==W.wordLen?W.isWord(W.input)?"#170":"#800":"";
 	}
-	const W=new Wordle();
-	var fg="";
+	function num(s){
+		return+s.match(/\d+/g);
+	}
+	class Guesser{
+		misplacements=[];
+		cRes=[];
+		counts=[];
+		reset(){
+			this.cRes=[];
+			this.misplacements=[];
+			this.counts=[];
+		}
+		count(c,str){
+			return str.split(c).length-1;
+		}
+		check(){
+			let cRes=[...this.cRes],cg=cRes.map(e=>e[0]).join("");
+			if(new Set(cg).size-cg.length){
+				let cs={};
+				for(let v of cRes.sort((a,b)=>num(b)-num(a))){
+					let c=v[0],n=num(v);
+					if(this.count(c,cg)>1){
+						if(!cs[c])cs[c]=[0,">"];
+						if(n)cs[c][0]++;
+						if(cs[c][0]&&!n)cs[c][1]="";
+					}
+				}
+				Object.entries(cs).map(e=>e.join("").replace(",","")).filter(e=>e.indexOf("0>")<0).forEach(e=>{
+					let u=false;
+					for(let i in this.counts){
+						let v=this.counts[i];
+						if(v[0]==e[0]&&num(e)>num(v)){
+							this.counts[i]=e;
+							u=true;
+						}
+					}
+					if(!u)this.counts.push(e);
+				});
+				this.counts=[...new Set(this.counts)];
+			}
+		}
+		filter(){
+			let wl=Array.from(W.wordList[W.wordLen]);
+			//filter absent
+			let abs=[...W.used].filter(e=>e.indexOf(0)+1);
+			wl=wl.filter(w=>!abs.find(c=>[...w].includes(c[0])));
+			
+			//must contain misplaced
+			let mp=[...W.used].filter(e=>e.indexOf(1)+1);
+			wl=wl.filter(w=>mp.every(c=>w.indexOf(c[0])+1));
+			
+			//check incorrects
+			wl=wl.filter(w=>this.misplacements.every(c=>w[num(c)]!=c[0]));
+			
+			//ensure correct
+			for(let i in this.cRes){
+				let c=this.cRes[i];
+				if(c.indexOf(2)+1)wl=wl.filter(w=>w[i]==c[0]);
+			}
+			
+			//check character repetitions
+			for(let i in this.counts){
+				let v=this.counts[i],c=v[0],n=num(v);
+				if(v.indexOf(">")+1)wl=wl.filter(w=>this.count(c,w)>=n);
+				else wl=wl.filter(w=>this.count(c,w)==n);
+			}
+			return wl;
+		}
+	}
+	const W=new Wordle(),G=new Guesser();
+	var fg="",counts=[];
 	W.init();
 	loop();
 	return{
@@ -260,14 +334,18 @@ const{type,setWordLen,submitWords,set}=(function(){
 			W.init(null,false);
 		},
 		submitWords:str=>W.init(str.replace(/[^a-z ]/g,"")),
-		set:n=>{
+		run:n=>{
 			if(n=="fg"){
 				let r=prompt("Auto").replace(/[^a-z]/g,"");
-				if(W.isWord(r))fg=r;
+				if(W.isWord(r)||r==="")fg=r;
 			}
 			if(n=="t"){
 				if(W.won||W.wait)return;
-				W.input=fg.toUpperCase();
+				if(!fg){
+					G.check();
+					let wl=G.filter();
+					W.input=wl.sort(()=>Math.random()-.5)[0].toUpperCase();
+				}else W.input=fg.toUpperCase();
 				W.display();
 			}
 		}
@@ -286,9 +364,10 @@ file_in.onchange=e=>{
 }
 window.addEventListener("keydown",e=>{
 	let k=e.key.toLowerCase();
-	if(k.length==1&&!k.search(/[a-z]/g))type(k);
+	if(k.length==1&&/[a-z]/.test(k))type(k);
 	if(["enter","backspace"].includes(k))type(0,k);
 });
+//removed syftn
 		</script>
 	</body>
 </html>
