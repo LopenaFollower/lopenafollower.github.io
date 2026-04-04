@@ -199,7 +199,7 @@ const{type,setWordLen,submitWords,run}=(function(){
 				let s=res[i]|0;
 				if(ans.indexOf(c)+1&&!tc.i.includes(i))tc.c-=s+=tc.c>0;
 				if(!this.used.has(c+2)||s)this.used.add(c+s);
-				if(s<2)G.misplacements.push(c+i);
+				if(s%2)G.misplacements.push(c+i);
 				res[i]=s;
 			}
 			for(let v of[...this.used])for(let i=0;i<2;i++)if(this.used.has(v[0]+(i+1)))this.used.delete(v[0]+i);
@@ -254,42 +254,36 @@ const{type,setWordLen,submitWords,run}=(function(){
 		}
 		check(){
 			let cRes=[...this.cRes],cg=cRes.map(e=>e[0]).join("");
-			if(new Set(cg).size-cg.length){
-				let cs={};
-				for(let v of cRes.sort((a,b)=>num(b)-num(a))){
-					let c=v[0],n=num(v);
-					if(this.count(c,cg)>1){
-						if(!cs[c])cs[c]=[0,">"];
-						if(n)cs[c][0]++;
-						if(cs[c][0]&&!n)cs[c][1]="";
+			if(new Set(cg).size==cg.length)return;
+			let cs={};
+			for(let v of cRes.sort((a,b)=>num(b)-num(a))){
+				let c=v[0],n=num(v);
+				if(this.count(c,cg)>1){
+					if(!cs[c])cs[c]=[0,">"];
+					if(n)cs[c][0]++;
+					if(cs[c][0]&&!n)cs[c][1]="";
+				}
+			}
+			Object.entries(cs).map(e=>e.join("").replace(",","")).filter(e=>e.indexOf("0>")<0).forEach(e=>{
+				let u=false;
+				for(let i in this.counts){
+					let v=this.counts[i];
+					if(v[0]==e[0]&&num(e)>num(v)){
+						this.counts[i]=e;
+						u=true;
 					}
 				}
-				Object.entries(cs).map(e=>e.join("").replace(",","")).filter(e=>e.indexOf("0>")<0).forEach(e=>{
-					let u=false;
-					for(let i in this.counts){
-						let v=this.counts[i];
-						if(v[0]==e[0]&&num(e)>num(v)){
-							this.counts[i]=e;
-							u=true;
-						}
-					}
-					if(!u)this.counts.push(e);
-				});
-				this.counts=[...new Set(this.counts)];
-			}
+				if(!u)this.counts.push(e);
+			});
+			this.counts=[...new Set(this.counts)];
 		}
 		filter(){
 			let wl=[...W.wordList[W.wordLen]];
 			let abs=[...W.used].filter(e=>e.indexOf(0)+1),mp=[...W.used].filter(e=>e.indexOf(1)+1);
-			wl=wl.filter(w=>!abs.find(c=>[...w].includes(c[0]))&&mp.every(c=>w.indexOf(c[0])+1)&&this.misplacements.every(c=>w[num(c)]!=c[0]));
-			for(let i in this.cRes){
-				let c=this.cRes[i];
-				if(c.indexOf(2)+1)wl=wl.filter(w=>w[i]==c[0]);
-			}
-			for(let i in this.counts){
-				let v=this.counts[i],c=v[0],n=num(v);
-				if(v.indexOf(">")+1)wl=wl.filter(w=>this.count(c,w)>=n);
-				else wl=wl.filter(w=>this.count(c,w)==n);
+			wl=wl.filter(w=>!abs.find(c=>[...w].includes(c[0]))&&!mp.find(c=>w.indexOf(c[0])<0)&&!this.misplacements.find(c=>w[num(c)]==c[0])&&this.cRes.every((c,i)=>c.indexOf(2)<0||w[i]==c[0]));
+			for(let v of this.counts){
+				let c=v[0],n=num(v);
+				wl=v.indexOf(">")+1?wl.filter(w=>this.count(c,w)>=n):wl.filter(w=>this.count(c,w)==n);
 			}
 			return wl;
 		}
