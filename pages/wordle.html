@@ -146,22 +146,22 @@ const{type,setWordLen,submitWords,run}=(function(){
 			try{
 				let r=board.children[0].children[this.row];
 				[...r.children].forEach(e=>e.innerText=e.removeAttribute("class")||"");
-				[...this.input].forEach((e,i)=>{
+				[...this.input.toUpperCase()].forEach((e,i)=>{
 					r.children[i].className="highlight";
 					r.children[i].innerText=e;
 				});
 			}catch(e){}
 		}
 		async reveal(arr){
-			let r=board.children[0].children[this.row],t=700;
+			let r=board.children[0].children[this.row],t=600;
 			if(reveal_type.value=="0")for(let i in arr){
 				let c=r.children[i];
-				c.style.animation="flip .7s";
+				c.style.animation=`flip ${t}ms`;
 				await new Promise(r=>setTimeout(r,t*.3));
 				c.className=["void","misplace","correct"][arr[i]];
 				setTimeout(()=>c.style.animation="",t*.7);
 			}else{
-				r.style.animation="flip .7s";
+				r.style.animation=`flip ${t}ms`;
 				setTimeout(()=>{
 					for(let i in arr)r.children[i].className=["void","misplace","correct"][arr[i]];
 				},t*.3);
@@ -178,8 +178,8 @@ const{type,setWordLen,submitWords,run}=(function(){
 			if(ans.length-str.length)return;
 			this.wait=true;
 			if(!this.isWord(str)){
-				[...board.children[0].children[this.row].children].forEach(e=>e.style.animation="shake .3s");
-				await new Promise(r=>setTimeout(r,300));
+				[...board.children[0].children[this.row].children].forEach(e=>e.style.animation="shake .25s");
+				await new Promise(r=>setTimeout(r,250));
 				[...board.children[0].children[this.row].children].forEach(e=>e.style.animation="");
 				this.wait=false;
 				this.input="";
@@ -199,7 +199,7 @@ const{type,setWordLen,submitWords,run}=(function(){
 				let s=res[i]|0;
 				if(ans.indexOf(c)+1&&!tc.i.includes(i))tc.c-=s+=tc.c>0;
 				if(!this.used.has(c+2)||s)this.used.add(c+s);
-				if(s%2)G.misplaced.push(c+i);
+				if(s<2)G.misplaced.push(c+i);
 				res[i]=s;
 			}
 			for(let v of[...this.used])for(let i=0;i<2;i++)if(this.used.has(v[0]+(i+1)))this.used.delete(v[0]+i);
@@ -305,7 +305,7 @@ const{type,setWordLen,submitWords,run}=(function(){
 					W.display();
 					break;
 			}else if(W.input.length<W.wordLen){
-				W.input+=k.toUpperCase();
+				W.input+=k;
 				W.display();
 			}
 		},
@@ -324,16 +324,18 @@ const{type,setWordLen,submitWords,run}=(function(){
 				if(W.won||W.wait)return;
 				if(!fg){
 					let wl=G.filter();
-					W.input=wl.sort(()=>Math.random()-.5)[0].toUpperCase();
-				}else W.input=fg.toUpperCase();
+					W.input=wl[wl.length*Math.random()|0];
+				}else W.input=fg;
 				W.display();
 			}
 		}
 	}
 })();
-keyboard.querySelectorAll("td:not(.ns)").forEach(e=>e.className="void");
 letter_count.onchange=e=>setWordLen(+letter_count.value.split(" ")[0]);
-keyboard.querySelectorAll("td:not(.ns)").forEach(e=>e.onclick=n=>type(e.innerText,e.id));
+keyboard.querySelectorAll("td:not(.ns)").forEach(e=>{
+	e.className="void";
+	e.onclick=n=>type(e.innerText,e.id);
+});
 file_in.onchange=e=>{
 	let fr=new FileReader(),f=e.target.files[0];
 	fr.onload=function(){
