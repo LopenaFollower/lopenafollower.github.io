@@ -199,7 +199,7 @@ const{type,setWordLen,submitWords,run}=(function(){
 				let s=res[i]|0;
 				if(ans.indexOf(c)+1&&!tc.i.includes(i))tc.c-=s+=tc.c>0;
 				if(!this.used.has(c+2)||s)this.used.add(c+s);
-				if(s%2)G.misplacements.push(c+i);
+				if(s%2)G.misplaced.push(c+i);
 				res[i]=s;
 			}
 			for(let v of[...this.used])for(let i=0;i<2;i++)if(this.used.has(v[0]+(i+1)))this.used.delete(v[0]+i);
@@ -241,12 +241,12 @@ const{type,setWordLen,submitWords,run}=(function(){
 		return+s.match(/\d+/g);
 	}
 	class Guesser{
-		misplacements=[];
+		misplaced=[];
 		cRes=[];
 		counts=[];
 		reset(){
 			this.cRes=[];
-			this.misplacements=[];
+			this.misplaced=[];
 			this.counts=[];
 		}
 		count(c,str){
@@ -280,7 +280,7 @@ const{type,setWordLen,submitWords,run}=(function(){
 		filter(){
 			let wl=[...W.wordList[W.wordLen]];
 			let abs=[...W.used].filter(e=>e.indexOf(0)+1),mp=[...W.used].filter(e=>e.indexOf(1)+1);
-			wl=wl.filter(w=>!abs.find(c=>[...w].includes(c[0]))&&!mp.find(c=>w.indexOf(c[0])<0)&&!this.misplacements.find(c=>w[num(c)]==c[0])&&this.cRes.every((c,i)=>c.indexOf(2)<0||w[i]==c[0]));
+			wl=wl.filter(w=>!abs.find(c=>[...w].includes(c[0]))&&!mp.find(c=>w.indexOf(c[0])<0)&&!this.misplaced.find(c=>w[num(c)]==c[0])&&this.cRes.every((c,i)=>c.indexOf(2)<0||w[i]==c[0]));
 			for(let v of this.counts){
 				let c=v[0],n=num(v);
 				wl=v.indexOf(">")+1?wl.filter(w=>this.count(c,w)>=n):wl.filter(w=>this.count(c,w)==n);
@@ -289,7 +289,7 @@ const{type,setWordLen,submitWords,run}=(function(){
 		}
 	}
 	const W=new Wordle(),G=new Guesser();
-	var fg="",counts=[];
+	var fg="";
 	W.init();
 	loop();
 	return{
