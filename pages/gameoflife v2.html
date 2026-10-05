@@ -33,6 +33,9 @@
 				display:flex;
 				justify-content:space-between;
 			}
+			button:has(+ button){
+				margin-right:5px;
+			}
 		</style>
 	</head>
 	<body>
@@ -49,7 +52,7 @@
 					<details open>
 						<summary>Simulation</summary>
 						<div class=spacer>Running<input type=checkbox id=toggle></div>
-						<button id=stepBtn>Step</button>
+						<button id=stepBtn>Step</button><button onclick="populate()">Randomize</button>
 						<div class=spacer>Generations / Frame<input type=number min=1 value=1 id=gensPerFrame></div>
 						<div class=spacer>Wrap Around<input type=checkbox id=useWrap></div>
 						<span id=genDisp></span>
@@ -156,7 +159,7 @@ function loadPattern(name,ox,oy){
 }
 function populate(){
 	const grid=new Uint32Array(size2);
-	for(let i=0;i<size2;i++)grid[i]=Math.random()>.5;
+	for(let i=0;i<size2;i++)grid[i]=Math.random()<.5;
 	gens=0;
 	device.queue.writeBuffer(gridA,0,grid);
 	device.queue.writeBuffer(gridB,0,grid);
@@ -203,8 +206,7 @@ fn main(@builtin(global_invocation_id)id:vec3u){
 	if(x>=s||y>=s){return;}
 	let n=cell(x-1,y-1)+cell(x,y-1)+cell(x+1,y-1)+cell(x-1,y)+cell(x+1,y)+cell(x-1,y+1)+cell(x,y+1)+cell(x+1,y+1);
 	let i=id.y*p.size+id.x;
-	if n==3u||(cur[i]==1u&&n==2u){next[i]=1u;}
-	else{next[i]=0u;}
+	next[i]=select(0u,1u,n==3u||(cur[i]==1u&&n==2u));
 }`,renderShader=`
 struct Params{size:u32,wrap:u32}
 struct ColorParams{a:vec4f,d:vec4f}
