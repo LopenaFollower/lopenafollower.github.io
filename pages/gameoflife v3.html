@@ -65,13 +65,17 @@
 						<button onclick="askSize()">Set Grid Size</button>
 					</details>
 				</fieldset>
+				<details>
+					<summary>Controls</summary>
+					Wheel = Zoom<br>Middle MB = Pan<br>Left MB = Place Cell (Draw mode dependent)<br>Right MB = Erase Cell (Draw mode dependent)
+				</details>
 			</div>
 		</div>
 		<script>
 // document.querySelector("body>pre").innerText.split("\n").filter((e,i,a)=>i>a.findIndex(e=>e.indexOf("rule")+1)).join("").replace("!","");
 // https://conwaylife.appspot.com/library/ navigator.clipboard.writeText(pattern.data.replace(/[^\dbo$]/g,""))
 // https://conwaylife.com/wiki/Glider_synthesis
-let size=1024,wordsPerRow=size>>>5,wordCount=size*wordsPerRow;
+let size=2048,wordsPerRow=size>>>5,wordCount=size*wordsPerRow;
 function askSize(){
 	const ans=prompt("New Grid Size (n % 32 = 0)");
 	if(!ans||!ans.trim())return alert("Cancelled");
@@ -412,12 +416,10 @@ function loop(){
 	genDisp.innerText=gens.toLocaleString()+" Generations";
 }
 function editCell(e,v,ox=0,oy=0){
-	const rect=cvs.getBoundingClientRect();
-	const x=(viewX+(e.clientX-rect.left)*cvs.width/rect.width/zoom+ox)|0,y=(viewY+(e.clientY-rect.top)*cvs.height/rect.height/zoom+oy)|0;
+	const rect=cvs.getBoundingClientRect(),sc=size/rect.width/zoom;
+	const x=viewX+(e.clientX-rect.left)*sc+ox|0,y=viewY+(e.clientY-rect.top)*sc+oy|0;
 	if(x<0||x>=size||y<0||y>=size)return;
-	const index=y*wordsPerRow+(x>>>5);
-	const mask=1<<(x&31);
-	device.queue.writeBuffer(editBuf,0,new Uint32Array([index,mask>>>0,v,0]));
+	device.queue.writeBuffer(editBuf,0,new Uint32Array([y*wordsPerRow+(x>>>5),mask=1<<(x&31)>>>0,v,0]));
 	const encoder=device.createCommandEncoder();
 	const pass=encoder.beginComputePass();
 	pass.setPipeline(editPipeline);
@@ -457,13 +459,11 @@ function clampView(){
 }
 cvs.addEventListener("wheel",e=>{
 	e.preventDefault();
-	const rect=cvs.getBoundingClientRect();
-	const mx=e.clientX-rect.left,my=e.clientY-rect.top;
-	const ozoom=zoom;
-	zoom*=Math.pow(1.1,-e.deltaY/100);
-	zoom=Math.max(1,Math.min(64,zoom));
-	viewX=viewX+mx/ozoom-mx/zoom;
-	viewY=viewY+my/ozoom-my/zoom;
+	const rect=cvs.getBoundingClientRect(),oz=zoom;
+	zoom=Math.max(1,Math.min(size/8,zoom*Math.pow(1.1,-e.deltaY/100)));
+	const sc=(zoom-oz)/oz/zoom*size/rect.width;
+	viewX+=(e.clientX-rect.left)*sc;
+	viewY+=(e.clientY-rect.top)*sc;
 	clampView();
 },{passive:false});
 addEventListener("mouseup",e=>panning=drawing=false);
