@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<title>Game of Life V2</title>
+		<title>Game of Life V3</title>
 		<meta name="viewport"content="width=device-width,initial-scale=1">
 		<meta name="color-scheme"content="light dark">
 		<style>
@@ -47,7 +47,7 @@
 					<details open>
 						<summary>Pattern</summary>
 						<select id=selectset oninput="rleInp.value=patterns[this.value]"><option selected hidden disabled>Select A Pattern</option></select><br>
-						<input id="rleInp"placeholder="RLE here..."oninput="this.value=this.value.replace(/[^\dbo$]/g,'')||''"><button onclick="loadPattern(rleInp.value)">Load RLE</button>
+						<input id=rleInp placeholder="RLE here..."oninput="this.value=this.value.replace(/[^\dbo$]/g,'')||''"><button onclick="loadPattern(rleInp.value)">Load RLE</button>
 					</details><br>
 					<details open>
 						<summary>Simulation</summary>
@@ -59,10 +59,10 @@
 					</details><br>
 					<details open>
 						<summary>Display</summary>
-						<div class=spacer>Draw Mode<select id="drawMode"><option selected>Off</option><option>Pointer</option><option>Brush</option></select></div>
+						<div class=spacer>Edit Mode<select id=drawMode><option selected>Off</option><option>Click</option><option>Drag</option><option>Brush</option></select></div>
 						<div class=spacer>Alive Color<input type=color id=aliveColor value="#ffffff"></div>
 						<div class=spacer>Dead Color<input type=color id=deadColor value="#000000"></div>
-						<button onclick="setSize()">Set Grid Size</button>
+						<button onclick="askSize()">Set Grid Size</button>
 					</details>
 				</fieldset>
 			</div>
@@ -70,22 +70,27 @@
 		<script>
 // document.querySelector("body>pre").innerText.split("\n").filter((e,i,a)=>i>a.findIndex(e=>e.indexOf("rule")+1)).join("").replace("!","");
 // https://conwaylife.appspot.com/library/ navigator.clipboard.writeText(pattern.data.replace(/[^\dbo$]/g,""))
-const upar=new URLSearchParams(location.search);
-let size=+upar.get("size")||500,size2=size*size;
-function setSize(){
-	const url=new URL(location.href);
-	const ans=prompt("New Grid Size (16 - 4096)");
-	if(!ans.trim())return alert("Cancelled");
-	url.searchParams.set("size",Math.max(16,Math.min(4096,parseInt(ans))));
-	location.href=url.toString();
+// https://conwaylife.com/wiki/Glider_synthesis
+let size=1024,wordsPerRow=size>>>5,wordCount=size*wordsPerRow;
+function askSize(){
+	const ans=prompt("New Grid Size (n % 32 = 0)");
+	if(!ans||!ans.trim())return alert("Cancelled");
+	const n=parseInt(ans);
+	if(!Number.isInteger(n)||n%32)return alert("Size must be a positive multiple of 32.");
+	rebuildGPU(n);
 }
-onresize=e=>cvs.width=cvs.height=size;
-onresize();
-let ctx,drawing,drawVal,gens=0;
-let device,format,paramsBuffer,renderBuffer;
-let gridA,gridB,computePipeline,renderPipeline,computeBindA,computeBindB,renderBindA,renderBindB,useA=true;
+function setSize(n){
+	if(n%32)return size;
+	size=Math.max(32,Math.min(n,device.limits.maxTextureDimension2D));
+	wordsPerRow=size>>>5;
+	wordCount=size*wordsPerRow;
+	return size;
+}
+let ctx,drawing,drawVal,gens=0,viewX=0,viewY=0,zoom=1,panning=false,panX=0,panY=0;
+let device,format,paramsBuf,editBuf,renderBuf,viewBuf;
+let gridA,gridB,computePipeline,editPipeline,renderPipeline,computeBindA,computeBindB,editBindA,editBindB,renderBindA,renderBindB,useA=true;
 const patterns={
-	"solifuge":"195b4o$194bo3bo$184b2o12bo$185b2o7bo2bo15bo2bo$184bo32bo$213bo3bo$172b2o5b3o32b4o$172b2o7bo$180bo52b4o$232bo3bo$160b2o27bo46bo$160b2o26b3o41bo2bo15bo2bo$187b2obo64bo$181bo5b3o61bo3bo$181b2o5b2o62b4o$158b3o19bobo$161bo109b4o$162bo13b2o92bo3bo$158b2o3bo11bobo96bo$158bo4bo13bo92bo2bo15bo2bo$158bo134bo$158bo2bo127bo3bo$290b4o2$309b4o$177b2o129bo3bo$178b2o132bo$177bo130bo2bo2$151b2ob2o16b3o$142bo11bobo17bo$139bo4bo9b3o16bo151b2o$139bo5bo4bo2bo171b2o$139bo4bo$142bo6bo4bo$148b2o178b3ob2o$149bobo3bo18bo150b2o4b3o$133b3o14b2o2bo19b2o25bo123b3obo4bo$134bo16b3o19bobo24b3o121bo4bob3o$140bo59bob2o121b3o4b2o$140b2o2bo24b2o30b3o121b2ob3o$136bo5bo2bo22bobo30b2o115b2o$135bo2b2o5bo24bo146bo2bo$135bo5b2o2bo170b2o$135bo2bo5bo171bo5bo$127b2o7bo2b2o174b2obob3o$126bo2bo10bo175bobo$127bobo186b3o$126bo3b2o38b2o$125b3o2b2o39b2o$170bo$125bobo$126bo38b3o$167bo140b3o$166bo128b2o3b2o5bob3o$293b2o2bo2b2o8b2o$298bo$292bo5bo8b3o$293bo4bo8b3o$167bo124b3o2bo10bo$167b2o123bo10b3o$166bobo123b2o2bo5bo2b3o$296bo5bo5bo$162b2o130b2o10bobo$161bobo49bo93bo$163bo48b3o$211b2obo$211b3o99bo$212b2o98b3o$311b2ob2o$312bob3o$163b2o146bobobo$164b2o148bo$163bo147b2o2$158b3o133b2o$160bo133b2o$159bo$312bo$282b2o28bo2bo$282b2o31bo$312bo2bo$160bo150b2ob2o$160b2o108b2o15b2o4bo17bo2bo$159bobo108b2o15b2o4bo18bo$287bo29bo$155b2o117b3o11bo27bobo$154bobo131bo6bo22bo$156bo136b4o18b3o$292b2obobo$291bobo3b2o$225bo52b2o10b2o3bobo$224b3o50bo2bo10bobob2o$224bob2o50b2o12b4o$156b2o67b3o65bo$157b2o66b2o$156bo2$151b3o130bo$153bo128b2ob2o7bo$152bo132b2o7bo$281bo3b2o9bo$263bo17bo2bo11bo$263bobo16b2o12bo4bobo$263b2o27b2o10b2o$153bo122b2o13bobo12bo$153b2o135bo2bo10bobo$152bobo129bobo3bobo10bo2bo$284b2o4bo12bobo$148b2o134b2o5b2o10b2o$147bobo143bobo$149bo125b2o$275b2o3$263b2o$263b2o$149b2o$150b2o85bo$149bo86b3o12b2o$235b2obo12b2o$144b3o88b3o$146bo89b2o$145bo2$249b3o$248bo3bo$248bo4bo$146bo106bo$146b2o101b2o2bo$145bobo100bob2o2$141b2o$140bobo$142bo2$250bo$244bo5bo$243bo2bo$232bobo7bo3bo$142b2o87bo2bo7bo3b2o$143b2o86bo3bo5b2o$142bo88bo2bo9bo$232bobo6bobo$137b3o100b2o2bo$139bo83b2ob2o13b2ob2o$138bo103bobo$224bobo16bo$225bo$231b2obo$228bob2ob3o$139bo87b3obo4bo$139b2o85bo4bob3o$138bobo86b3ob2obo$228bob2o$134b2o81b3o$133bobo84bo$135bo85bo$217b2o3bo$217bo4bo$217bo$217bo2bo2$135b2o$136b2o$135bo2$130b3o89bo$132bo89bo$131bo90b3o$225bo$223b2o3$132bo93b2o$132b2o91bob2o$131bobo89b2ob2o$225bo$127b2o$126bobo$128bo74b2o$203b2o3$191b2o$191b2o24b2o$128b2o86bo2bo$129b2o84b2ob2o$128bo50b2o23b2o11bo$179b2o23b2o21bo$123b3o100b4o$125bo97b2o2bobobo$124bo42b2o23b2o27bobo2b2o4b2o$167b2o23b2o25b2o4b2o2bobo$221bobobo2b2o$223b4o$155b2o23b2o43bo$125bo29b2o23b2o$125b2o$124bobo$143b2o23b2o$120b2o21b2o23b2o$119bobo26bo75bo$121bo26bo75b2o$131b2o15bo77bo$131b2o90b2obo$136bo25b2o59b3o$136bo24bo2bo$136bo14b2o8bo2bo53b2o$121b2o27bo2bo6b2ob2o44b2obo4bo$122b2o27b2o8bobo44bobo7b3o$121bo17bobo20bo45bo10bo3b2o$138bo2bo67b2o10bo2bo$116b3o19bo3bo12bo2bo51bo11b2o$118bo19b2o3bo11bo2bo$117bo20b2o3bo12bobo2b2o29b2o$140bo2bo16bobo29b2o$142bobo16bo41b3o$143bo62bo$149b2obo50b2obo$118bo27bob2ob3o50b2o$118b2o25b3obo4bo$117bobo24bo4bob3o44b2o$145b3ob2obo33bo11b2o$113b2o31bob2o35bobo10b2obo$112bobo69bo2bo15b2o$114bo70b2o13b4o$192b2o8bo$189b2o$119bo60b2o10bob2o$117b2o56b2o2bo2bo4b2obo3b2o$113b3o2b2o56b2o2b2o5b2o3bob2o$113bo73b2obo$114bo77b2o$169b2o18b2o$169b2o$109b3o$111bo$110bo46b2o23b3o$157b2o23bo2bo$172b3o6bo4bo$183bobo$141b2o37bob3o$141bobo37b2o$141bo18b3o4b2o$166bo2bo$167b2o$106b2o63b3o9bo$105bobo74bo2bo$107bo75b2o$169b2o$167b2obo$167b2o$173bo$166b2o2bob2o$169bo2bo$167bobo$168bo2$102b3o$104bo$103bo3$158b2o$158b2o2$165bo$165b2o2bo$161bo5bo2bo$99b2o59bo2b2o5bo$98bobo59bo5b2o2bo$100bo59bo2bo5bo$161bo2b2o$145b2o18bo$145b2o4$150b3o$150bobo$135bo3bo9bo2bo$95b3o36bo5bo7bo2bo$97bo36b2o3bo9b2o$96bo38b5o4b2o$137bo5bo$144b2o5b2o$153bo$138bo11bobo$138bo12bo$140bo$139bo$139bo$92b2o28b2o$91bobo28b2o$93bo2$110b2o$110b2o4$93b2o$92bo2bo$92bobo$93bo$104b3o$104bo2bo$104b2ob2o$91bo17bo$90b2o11b3o2bo$89bobo10bo$103b3o$77b2o25bo$77b2o11bo2b2o$90bo2$65b2o$65b2o14bo13b2o$81bo12bobo$48b2o31bo11b3o$34bo12b2o45b2o$22b2o10b2o13bo19bo$18b2obob2o9bobo32bo5b2o$16bo19b2o31bo4bo2bo$21b2o10bo2bo38b2o3bo$14b2o16b2obo40bob3o$18bo14b2o42bo$13bo2bo58b2o3bo$14bobo58b2o$15bo59bo2b2o$22bo$20b4o57bo$19b2o3bo57bo$18bo3b2o55bo2bo$19b4o57b2o$20bo59bo3$8bo$6b2ob2o$9b2o$5bo3b2o$5bo2bo$6b2o2$2o2$8bobo$8b2o$8b2o",
+	"solifuge":"193b4o$192bo3bo$182b2o12bo$183b2o7bo2bo15bo2bo$182bo32bo$211bo3bo$170b2o5b3o32b4o$170b2o7bo$178bo52b4o$230bo3bo$158b2o27bo46bo$158b2o26b3o41bo2bo15bo2bo$185b2obo64bo$179bo5b3o61bo3bo$179b2o5b2o62b4o$156b3o19bobo$159bo109b4o$160bo13b2o92bo3bo$156b2o3bo11bobo96bo$156bo4bo13bo92bo2bo15bo2bo$156bo134bo$156bo2bo127bo3bo$288b4o2$307b4o$175b2o129bo3bo$176b2o132bo$175bo130bo2bo2$149b2ob2o16b3o$140bo11bobo17bo$137bo4bo9b3o16bo151b2o$137bo5bo4bo2bo171b2o$137bo4bo$140bo6bo4bo$146b2o178b3ob2o$147bobo3bo18bo150b2o4b3o$131b3o14b2o2bo19b2o25bo123b3obo4bo$132bo16b3o19bobo24b3o121bo4bob3o$138bo59bob2o121b3o4b2o$138b2o2bo24b2o30b3o121b2ob3o$134bo5bo2bo22bobo30b2o115b2o$133bo2b2o5bo24bo146bo2bo$133bo5b2o2bo170b2o$133bo2bo5bo171bo5bo$125b2o7bo2b2o174b2obob3o$124bo2bo10bo175bobo$125bobo186b3o$124bo3b2o38b2o$123b3o2b2o39b2o$168bo$123bobo$124bo38b3o$165bo140b3o$164bo128b2o3b2o5bob3o$291b2o2bo2b2o8b2o$296bo$290bo5bo8b3o$291bo4bo8b3o$165bo124b3o2bo10bo$165b2o123bo10b3o$164bobo123b2o2bo5bo2b3o$294bo5bo5bo$160b2o130b2o10bobo$159bobo49bo93bo$161bo48b3o$209b2obo$209b3o99bo$210b2o98b3o$309b2ob2o$310bob3o$161b2o146bobobo$162b2o148bo$161bo147b2o2$156b3o133b2o$158bo133b2o$157bo$310bo$280b2o28bo2bo$280b2o31bo$310bo2bo$158bo150b2ob2o$158b2o108b2o15b2o4bo17bo2bo$157bobo108b2o15b2o4bo18bo$285bo29bo$153b2o117b3o11bo27bobo$152bobo131bo6bo22bo$154bo136b4o18b3o$290b2obobo$289bobo3b2o$223bo52b2o10b2o3bobo$222b3o50bo2bo10bobob2o$222bob2o50b2o12b4o$154b2o67b3o65bo$155b2o66b2o$154bo2$149b3o130bo$151bo128b2ob2o7bo$150bo132b2o7bo$279bo3b2o9bo$261bo17bo2bo11bo$261bobo16b2o12bo4bobo$261b2o27b2o10b2o$151bo122b2o13bobo12bo$151b2o135bo2bo10bobo$150bobo129bobo3bobo10bo2bo$282b2o4bo12bobo$146b2o134b2o5b2o10b2o$145bobo143bobo$147bo125b2o$273b2o3$261b2o$261b2o$147b2o$148b2o85bo$147bo86b3o12b2o$233b2obo12b2o$142b3o88b3o$144bo89b2o$143bo2$247b3o$246bo3bo$246bo4bo$144bo106bo$144b2o101b2o2bo$143bobo100bob2o2$139b2o$138bobo$140bo2$248bo$242bo5bo$241bo2bo$230bobo7bo3bo$140b2o87bo2bo7bo3b2o$141b2o86bo3bo5b2o$140bo88bo2bo9bo$230bobo6bobo$135b3o100b2o2bo$137bo83b2ob2o13b2ob2o$136bo103bobo$222bobo16bo$223bo$229b2obo$226bob2ob3o$137bo87b3obo4bo$137b2o85bo4bob3o$136bobo86b3ob2obo$226bob2o$132b2o81b3o$131bobo84bo$133bo85bo$215b2o3bo$215bo4bo$215bo$215bo2bo2$133b2o$134b2o$133bo2$128b3o89bo$130bo89bo$129bo90b3o$223bo$221b2o3$130bo93b2o$130b2o91bob2o$129bobo89b2ob2o$223bo$125b2o$124bobo$126bo74b2o$201b2o3$189b2o$189b2o24b2o$126b2o86bo2bo$127b2o84b2ob2o$126bo50b2o23b2o11bo$177b2o23b2o21bo$121b3o100b4o$123bo97b2o2bobobo$122bo42b2o23b2o27bobo2b2o4b2o$165b2o23b2o25b2o4b2o2bobo$219bobobo2b2o$221b4o$153b2o23b2o43bo$123bo29b2o23b2o$123b2o$122bobo$141b2o23b2o$118b2o21b2o23b2o$117bobo26bo75bo$119bo26bo75b2o$129b2o15bo77bo$129b2o90b2obo$134bo25b2o59b3o$134bo24bo2bo$134bo14b2o8bo2bo53b2o$119b2o27bo2bo6b2ob2o44b2obo4bo$120b2o27b2o8bobo44bobo7b3o$119bo17bobo20bo45bo10bo3b2o$136bo2bo67b2o10bo2bo$114b3o19bo3bo12bo2bo51bo11b2o$116bo19b2o3bo11bo2bo$115bo20b2o3bo12bobo2b2o29b2o$138bo2bo16bobo29b2o$140bobo16bo41b3o$141bo62bo$147b2obo50b2obo$116bo27bob2ob3o50b2o$116b2o25b3obo4bo$115bobo24bo4bob3o44b2o$143b3ob2obo33bo11b2o$111b2o31bob2o35bobo10b2obo$110bobo69bo2bo15b2o$112bo70b2o13b4o$190b2o8bo$187b2o$117bo60b2o10bob2o$115b2o56b2o2bo2bo4b2obo3b2o$111b3o2b2o56b2o2b2o5b2o3bob2o$111bo73b2obo$112bo77b2o$167b2o18b2o$167b2o$107b3o$109bo$108bo46b2o23b3o$155b2o23bo2bo$170b3o6bo4bo$181bobo$139b2o37bob3o$139bobo37b2o$139bo18b3o4b2o$164bo2bo$165b2o$104b2o63b3o9bo$103bobo74bo2bo$105bo75b2o$167b2o$165b2obo$165b2o$171bo$164b2o2bob2o$167bo2bo$165bobo$166bo2$100b3o$102bo$101bo3$156b2o$156b2o2$163bo$163b2o2bo$159bo5bo2bo$97b2o59bo2b2o5bo$96bobo59bo5b2o2bo$98bo59bo2bo5bo$159bo2b2o$143b2o18bo$143b2o4$148b3o$148bobo$133bo3bo9bo2bo$93b3o36bo5bo7bo2bo$95bo36b2o3bo9b2o$94bo38b5o4b2o$135bo5bo$142b2o5b2o$151bo$136bo11bobo$136bo12bo$138bo$137bo$137bo$90b2o28b2o$89bobo28b2o$91bo2$108b2o$108b2o4$91b2o$90bo2bo$90bobo$91bo$102b3o$102bo2bo$102b2ob2o$89bo17bo$88b2o11b3o2bo$87bobo10bo$101b3o$75b2o25bo$75b2o11bo2b2o$88bo2$63b2o$63b2o14bo13b2o$79bo12bobo$79bo11b3o$92b2o$48b2o17bo$34bo12b2o18bo5b2o$22b2o10b2o13bo17bo4bo2bo$18b2obob2o9bobo36b2o3bo$16bo19b2o40bo$21b2o10bo2bo14b2o25bo$14b2o16b2obo$18bo14b2o40b2o$13bo2bo57bo2bo$14bobo58bobo$15bo58bo3b2o$22bo50b3o2b2o$20b4o$19b2o3bo48bobo$18bo3b2o50bo$19b4o$20bo3$8bo$6b2ob2o$9b2o$5bo3b2o$5bo2bo$6b2o2$2o2$8bobo$8b2o$8b2o",
 	"4enginecordership_synth":"39bo$40b2o$39b2o$77bo$77bobo$77b2o18$33bo$34bo$32b3o$71bo$69b2o$70b2o4$25bo$23bobo$24b2o3$80b3o$80bo$obo78bo$b2o$bo18$74bo$73b2o$73bobo8$27bo101bo$27b2o99b2o$26bobo99bobo2$60b2o$59b2o$61bo2$3b3o$5bo$4bo$37b2o$37bobo$37bo46$70b2o$69b2o$71bo",
 	"7inarowcordership":"95bo18b$78b3o8bo5bo18b$77bo3bo6bo7bo17b$78b2o9b4o2b2o17b$80b2ob2o9b3o17b$82b2o11bobo16b$96bo7b2o8b$96bo7b2o8b3$88bo25b$87bobo24b$87bobo24b$74b3o11bo25b$75bo36b2o$75bo2bo33b2o$75bo2bo35b$76bobo35b$96bo17b$95bobo16b$95bobo16b$96bo17b2$75b2o37b$53bobo18b2o38b$52bo19b3o39b$53bo2bo57b$55bobo14b2o40b$58bo55b$57b3o54b$57bo56b$39bo15b2o57b$39bo5b3o9bo13b3o40b$38bobo3b2o2bo6bo2bo12b3o40b$39bo3bo5bo5bobo13b2o41b$39bo3bo11bo14bo21b3o19b$44bo2b2o19b2o2bo21bo19b$45b2o22bo3bo19bo20b$69bo2bo41b$70b3o41b5$55b2o57b$55b2o57b$42b2o70b$42b2o70b$41b2obo69b$28bobo13bo69b$27bo16b2ob3o64b$28bo2bo12bob2obo64b$30bobo9b2o3b2o14b2o49b$33bo8b2o19b2o49b$32b3o4bob3o9b2o59b$32bo6bo13b2o59b$30b2o82b$32bo81b$30bo2bo80b$30bobo81b$30bo83b2$54bobo57b$54bo2bo56b2$22b3o30bobo56b$23bo31b3o56b$23bo2bo29bobo55b$23bo2bo30b2obo53b$24bobo31b3o53b2$48bo65b$48bobo63b$48b2o64b2$23b2o89b3$b3o8b2o100b$o3bo6bo2bo99b$b2o9b2o100b$3b2ob2o106b$5b2o107b4$20b2o92b$19bo2bo91b$20b2o92b6$26b2o86b$7b2o15bo3bob2o82b$7b2o15bo3bob2o82b$24bo3b2o84b$25b3o86b$25b3o86b4$15b2o15bo81b$15b2o15bobo79b$32b2o80b6$23b2o89b$23b2o",
 	"bricklayer":"56bo27bo56b$54b3o27b3o54b$53bo33bo53b$53b2o31b2o53b3$18b2o6b3o3bobo15bo39bo15bobo3b3o6b2o18b$19bo6bobo2bo17bob2o35b2obo17bo2bobo6bo19b$19bobo6b3o5b2o11bob2o2b2o27b2o2b2obo11b2o5b3o6bobo19b$20b2o5bo6bo2bo12bo2bo3bo25bo3bo2bo12bo2bo6bo5b2o20b$26bobo7b2o16bobo27bobo16b2o7bobo26b$25b2o7bobo17bo31bo17bobo7b2o25b$25bo2bo6bo5b2o11b2o29b2o11b2o5bo6bo2bo25b$25b2o5b3o6bobo4bo6bo29bo6bo4bobo6b3o5b2o25b$31bo2bobo6bo4b2o41b2o4bo6bobo2bo31b$28bobo3b3o6b2o4bo41bo4b2o6b3o3bobo28b$9bo14bo22bobo41bobo22bo14bo9b$2o6bobo11bobo21bo3bo2bo33bo2bo3bo21bobo11bobo6b2o$bo6bo3b2o9b2o22b2o2b2obo12bo5bo12bob2o2b2o22b2o9b2o3bo6bob$bobo6b3o5b2o31b2obo10b3o5b3o10bob2o31b2o5b3o6bobob$2b2o5bo7bo2bo32bo10bo11bo10bo32bo2bo7bo5b2o2b$7b2o9b2o9bo34b2o9b2o34bo9b2o9b2o7b$7b2o9b2o10bo25bo27bo25bo10b2o9b2o7b$6bo2bo7bo5b2o3b3o18b2o4bo29bo4b2o18b3o3b2o5bo7bo2bo6b$7b2o5b3o6bobo24bo4b3o25b3o4bo24bobo6b3o5b2o7b$13b2o3bo6bo21b3o10b3o15b3o10b3o21bo6bo3b2o13b$16bobo6b2o20bo12bob2o2b2o5b2o2b2obo12bo20b2o6bobo16b$17bo17bo28bo2bo5bo2bo46bo17b$33bobo14bo7bo2bobob3o5b3obobo2bo7bo10bo39b$34b2o14bobo12bo9bo12bobo9bobo3b2o33b$50b2o6bo6bo9bo6bo6b2o11bo2bo35b$59bo6bo7bo6bo17b2o4bo2bo32b$40bo19bo6bo5bo6bo19bobo3bobo32b$41bo3bo14bo19bo12b2o8bo37b$39b3o2bo13b3obobo2bo5bo2bobob3o9bobo8bo37b$44b3o11bo2bo17bo2bo15b2o41b$58b2o2b2obo9bob2o2b2o14b3o2b2o37b$12bo25bo24b3o9b3o17bob2o3b2o24bo12b$11bo2bo23b2o56b2obob2o23bo2bo11b$9bo5bo6bo7b2o5bobo52bo3b2o3bo7b2o7bo6bo5bo9b$9bo6bo4bobo6bo60b2obo15bo6bobo4bo6bo9b$13bo2bo11bobo29b2o17b2o11bo4bo12bobo11bo2bo13b$15bobo3bo2bo3b2o31bo17bo13b3ob2ob2o9b2o3bo2bo3bobo15b$10b2ob2o2bobo3b2o7b2o24b3o19b3o17b2o5b2o7b2o3bobo2b2ob2o10b$12b2o3bobo2b2ob2o6b2o23bo23bo17bo5b2o6b2ob2o2bobo3b2o12b$7b2o3bo2bo3bobo10bo75bo10bobo3bo2bo3b2o7b$6bobo11bo2bo93bo2bo11bobo6b$6bo6bobo4bo6bo85bo6bo4bobo6bo6b$5b2o7bo6bo5bo85bo5bo6bo7b2o5b$22bo2bo3b3o25bo51b3o3bo2bo22b$24bo3bob3o15b2o5bobo33b2o15b3obo3bo24b$27b3ob3o5b3o6bo7b2o34bo6b3o5b3ob3o27b$28b2obob2o4b3o4bobo43bobo4b3o4b2obob2o28b$28b2obobo6bo5b2o45b2o5bo6bobob2o28b$29bo4bobo4b2o55b2o4bobo4bo29b$30b2o4bobo4bo53bo4bobo4b2o30b$25b2o5bo6bobob2o51b2obobo6bo5b2o25b$24bobo4b3o4b2obob2o51b2obob2o4b3o4bobo24b$24bo6b3o5b3ob3o49b3ob3o5b3o6bo24b$23b2o15b3obo51bob3o15b2o23b$41b3o28bo24b3o41b$72bobo66b$72b2o67b5$80b2o5b2o52b$80b2o5bo53b$85bobo53b$85b2o54b$81b2o58b$81bobo57b$82bo58b$69bo71b$67b2ob2o69b$67b2ob2o19bo49b$88bo2b3o3b2o42b$68b2ob2o8b5o2b3o3bo2bo43b$68b2ob2o6b3obob3o4b2obobo43b$70bo7bo4bo4b4obobo2b2o41b$78b2ob2ob4o3bobob2obo42b$82bobobobobo2bo2bobo42b$82bobobo2bo2bob3ob2o41b$81b2obob4o6bobo42b$85bo4b6o2bo42b$87bo2bo2bo4b2o41b$86b2o",
@@ -128,7 +133,7 @@ const patterns={
 	"blocklayingswitchenginepredecessor":"11bobo2b$2o8bo5b$2o9bo2bob$13b3o",
 	"14911M":"8ob5o3b3o6b7ob5o",
 }
-function getSize(t){
+function getPatternDim(t){
 	let x=0,y=0,w=0,n=0;
 	for(const c of t)
 		if(+c>=0)n=+c+n*10;
@@ -139,30 +144,31 @@ function getSize(t){
 	return{width:w,height:y+1};
 }
 function loadPattern(name,ox,oy){
-	const txt=(patterns[name]||name).replace(/[^\dbo$]/g,""),{width,height}=getSize(txt);
-	if(!width)return;if(width>size||height>size)return alert("Pattern out of bounds.");
+	const txt=(patterns[name]||name).replace(/[^\dbo$]/g,""),{width,height}=getPatternDim(txt);
+	if(!width)return;if(width>size||height>size)return alert(`Pattern out of bounds. {${width},${height}}`);
 	console.log(`Loaded Size {${width},${height}}`)
 	if(isNaN(ox)){
 		ox=size-width>>1;
 		oy=size-height>>1;
 	}
-	const grid=new Uint32Array(size2);
+	const grid=new Uint32Array(wordCount);
 	let x=0,y=0,n=0;gens=0;
 	for(const c of txt)
 		if(+c>=0)n=+c+n*10;
 		else{
-			if(c=="$")y+=n||1,x=0;else for(let j=n||1;j>0;j--)grid[(y+oy)*size+ox+x++]=c=="o";
+			if(c=="$")y+=n||1,x=0;else for(let j=n||1;j>0;j--){
+				const px=ox+x++,py=y+oy;
+				c=="o"&&(grid[py*wordsPerRow+(px>>>5)]|=1<<(px&31));
+			}
 			n=0;
 		}
 	device.queue.writeBuffer(gridA,0,grid);
 	device.queue.writeBuffer(gridB,0,grid);
 }
 function populate(){
-	const grid=new Uint32Array(size2);
-	for(let i=0;i<size2;i++)grid[i]=Math.random()<.5;
-	gens=0;
-	device.queue.writeBuffer(gridA,0,grid);
-	device.queue.writeBuffer(gridB,0,grid);
+	const grid=new Uint32Array(wordCount);
+	for(let i=gens=0;i<wordCount;i++)grid[i]=(Math.random()*0x100000000)>>>0;
+	device.queue.writeBuffer(useA?gridA:gridB,0,grid);
 }
 async function initGPU(){
 	if(!navigator.gpu)throw"WebGPU is not supported.";
@@ -172,48 +178,120 @@ async function initGPU(){
 	format=navigator.gpu.getPreferredCanvasFormat();
 	ctx=cvs.getContext("webgpu");
 	ctx.configure({device,format,alphaMode:"opaque"});
-
-	paramsBuffer=device.createBuffer({size:8,usage:GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST});
-	renderBuffer=device.createBuffer({size:32,usage:GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST});
-	gridA=device.createBuffer({size:size2<<2,usage:GPUBufferUsage.STORAGE|GPUBufferUsage.COPY_DST});
-	gridB=device.createBuffer({size:size2<<2,usage:GPUBufferUsage.STORAGE|GPUBufferUsage.COPY_DST});
-
+	rebuildGPU(size);
+}
+function rebuildGPU(newSize){
+	cvs.width=cvs.height=setSize(newSize);
+	paramsBuf?.destroy();
+	renderBuf?.destroy();
+	editBuf?.destroy();
+	viewBuf?.destroy();
+	gridA?.destroy();
+	gridB?.destroy();
+	paramsBuf=device.createBuffer({size:8,usage:GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST});
+	renderBuf=device.createBuffer({size:32,usage:GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST});
+	editBuf=device.createBuffer({size:16,usage:GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST});
+	viewBuf=device.createBuffer({size:16,usage:GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST});
+	gridA=device.createBuffer({size:wordCount<<2,usage:GPUBufferUsage.STORAGE|GPUBufferUsage.COPY_DST});
+	gridB=device.createBuffer({size:wordCount<<2,usage:GPUBufferUsage.STORAGE|GPUBufferUsage.COPY_DST});
 	createPipelines();
+	createEditPipeline();
 	createRenderPipeline();
+	resetSimulation();
 }
 const computeShader=`
 struct Params{size:u32,wrap:u32}
-@group(0)@binding(0)var<storage,read>cur:array<u32>;
+@group(0)@binding(0)var<storage,read>grid:array<u32>;
 @group(0)@binding(1)var<storage,read_write>next:array<u32>;
 @group(0)@binding(2)var<uniform>p:Params;
-fn cell(xx:i32,yy:i32)->u32{
-	var x=xx;
-	var y=yy;
-	let s=i32(p.size);
-	if p.wrap==1u{
-		if x<0{x+=s;}
-		if x>=s{x-=s;}
-		if y<0{y+=s;}
-		if y>=s{y-=s;}
-	}else if x<0||y<0||x>=s||y>=s{return 0u;}
-	return cur[y*s+x];
-}
 @compute@workgroup_size(8,8)
 fn main(@builtin(global_invocation_id)id:vec3u){
-	let x=i32(id.x);
-	let y=i32(id.y);
-	let s=i32(p.size);
-	if(x>=s||y>=s){return;}
-	let n=cell(x-1,y-1)+cell(x,y-1)+cell(x+1,y-1)+cell(x-1,y)+cell(x+1,y)+cell(x-1,y+1)+cell(x,y+1)+cell(x+1,y+1);
-	let i=id.y*p.size+id.x;
-	next[i]=select(0u,1u,n==3u||(cur[i]==1u&&n==2u));
+	let w=id.x;
+	let y=id.y;
+	let words=p.size>>5u;
+	if(w>=words||y>=p.size){return;}
+	let row=y*words;
+	let i=row+w;
+	let cur=grid[i];
+	var ym1=y;
+	var yp1=y;
+	//00 01 02
+	//10 11 12
+	//20 21 22
+	var p01=0u;
+	var p21=0u;
+	if(p.wrap==1u){
+		ym1=select(y-1u,p.size-1u,y==0u);
+		yp1=select(y+1u,0,y==p.size-1u);
+		p01=grid[ym1*words+w];
+		p21=grid[yp1*words+w];
+	}else{
+		if(y>0u){
+			ym1=y-1u;
+			p01=grid[ym1*words+w];
+		}
+		if(y+1u<p.size){
+			yp1=y+1u;
+			p21=grid[yp1*words+w];
+		}
+	}
+	var p00=p01<<1u;
+	var p02=p01>>1u;
+	var p10=cur<<1u;
+	var p12=cur>>1u;
+	var p20=p21<<1u;
+	var p22=p21>>1u;
+	if(p.wrap==1u||w>0u){
+		let prevW=select(w-1u,words-1u,w==0u);
+		p00|=grid[ym1*words+prevW]>>31u;
+		p10|=grid[row+prevW]>>31u;
+		p20|=grid[yp1*words+prevW]>>31u;
+	}
+	if(p.wrap==1u||w+1u<words){
+		let nextW=select(w+1u,0u,w+1u==words);
+		p02|=grid[ym1*words+nextW]<<31u;
+		p12|=grid[row+nextW]<<31u;
+		p22|=grid[yp1*words+nextW]<<31u;
+	}
+	var n0=0u;
+	var n1=0u;
+	var n2=0u;
+	var c:u32;
+	var c2:u32;
+	c=n0&p00;n0^=p00;c2=n1&c;n1^=c;n2^=c2;
+
+	c=n0&p01; n0^=p01; c2=n1&c;n1^=c;n2^=c2;
+
+	c=n0&p02;n0^=p02;c2=n1&c;n1^=c;n2^=c2;
+
+	c=n0&p10;  n0^=p10;  c2=n1&c;n1^=c;n2^=c2;
+
+	c=n0&p12;  n0^=p12;  c2=n1&c;n1^=c;n2^=c2;
+
+	c=n0&p20;n0^=p20;c2=n1&c;n1^=c;n2^=c2;
+
+	c=n0&p21; n0^=p21; c2=n1&c;n1^=c;n2^=c2;
+
+	c=n0&p22;n0^=p22;c2=n1&c;n1^=c;n2^=c2;
+
+	next[i]=(cur&~n2&n1&~n0)|(~n2&n1&n0);
+}`,editShader=`
+struct Edit{index:u32,mask:u32,val:u32}
+@group(0)@binding(0)var<storage,read_write>grid:array<u32>;
+@group(0)@binding(1)var<uniform>edit:Edit;
+@compute@workgroup_size(1)
+fn main(){
+	let old=grid[edit.index];
+	grid[edit.index]=select(old&~edit.mask,old|edit.mask,edit.val==1u);
 }`,renderShader=`
 struct Params{size:u32,wrap:u32}
-struct ColorParams{a:vec4f,d:vec4f}
+struct Colors{a:vec4f,d:vec4f}
+struct View{x:f32,y:f32,zoom:f32}
 struct Out{@builtin(position)pos:vec4f}
 @group(0)@binding(0)var<storage,read>grid:array<u32>;
 @group(0)@binding(1)var<uniform>p:Params;
-@group(0)@binding(2)var<uniform>c:ColorParams;
+@group(0)@binding(2)var<uniform>c:Colors;
+@group(0)@binding(3)var<uniform>v:View;
 @vertex
 fn v_main(@builtin(vertex_index)i:u32)->Out{
 	var out:Out;
@@ -222,15 +300,29 @@ fn v_main(@builtin(vertex_index)i:u32)->Out{
 }
 @fragment
 fn f_main(@builtin(position)pos:vec4f)->@location(0)vec4f{
-	return select(c.a,c.d,grid[u32(pos.y)*p.size+u32(pos.x)]==0u);
+	let x=u32(v.x+pos.x/v.zoom);
+	let y=u32(v.y+pos.y/v.zoom);
+	let words=p.size>>5u;
+	let wordX=x>>5u;
+	let bitX=x&31u;
+	let word=grid[y*words+wordX];
+	return select(c.a,c.d,(word&(1u<<bitX))==0u);
 }`;
 function hexToRGBA(hex){
 	const n=parseInt(hex.slice(1),16);
 	return[(n>>16&255)/255,(n>>8&255)/255,(n&255)/255,1];
 }
+function resetSimulation(){
+	gens=0;
+	const x=new Uint32Array(wordCount);
+	device.queue.writeBuffer(gridA,0,x);
+	device.queue.writeBuffer(gridB,0,x);
+	useA=true;
+}
 function updateParams(){
-	device.queue.writeBuffer(paramsBuffer,0,new Uint32Array([size,useWrap.checked?1:0]));
-	device.queue.writeBuffer(renderBuffer,0,new Float32Array([...hexToRGBA(aliveColor.value),...hexToRGBA(deadColor.value)]));
+	device.queue.writeBuffer(paramsBuf,0,new Uint32Array([size,useWrap.checked?1:0]));
+	device.queue.writeBuffer(renderBuf,0,new Float32Array([...hexToRGBA(aliveColor.value),...hexToRGBA(deadColor.value)]));
+	device.queue.writeBuffer(viewBuf,0,new Float32Array([viewX,viewY,zoom]));
 }
 function createPipelines(){
 	const shader=device.createShaderModule({code:computeShader});
@@ -239,7 +331,7 @@ function createPipelines(){
 		entries:[
 			{binding:0,resource:{buffer:gridA}},
 			{binding:1,resource:{buffer:gridB}},
-			{binding:2,resource:{buffer:paramsBuffer}}
+			{binding:2,resource:{buffer:paramsBuf}}
 		]
 	});
 	computeBindB=device.createBindGroup({
@@ -247,7 +339,25 @@ function createPipelines(){
 		entries:[
 			{binding:0,resource:{buffer:gridB}},
 			{binding:1,resource:{buffer:gridA}},
-			{binding:2,resource:{buffer:paramsBuffer}}
+			{binding:2,resource:{buffer:paramsBuf}}
+		]
+	});
+}
+function createEditPipeline(){
+	const shader=device.createShaderModule({code:editShader});
+	editPipeline=device.createComputePipeline({layout:"auto",compute:{module:shader,entryPoint:"main"}});
+	editBindA=device.createBindGroup({
+		layout:editPipeline.getBindGroupLayout(0),
+		entries:[
+			{binding:0,resource:{buffer:gridA}},
+			{binding:1,resource:{buffer:editBuf}}
+		]
+	});
+	editBindB=device.createBindGroup({
+		layout:editPipeline.getBindGroupLayout(0),
+		entries:[
+			{binding:0,resource:{buffer:gridB}},
+			{binding:1,resource:{buffer:editBuf}}
 		]
 	});
 }
@@ -258,27 +368,29 @@ function createRenderPipeline(){
 		layout:renderPipeline.getBindGroupLayout(0),
 		entries:[
 			{binding:0,resource:{buffer:gridA}},
-			{binding:1,resource:{buffer:paramsBuffer}},
-			{binding:2,resource:{buffer:renderBuffer}}
+			{binding:1,resource:{buffer:paramsBuf}},
+			{binding:2,resource:{buffer:renderBuf}},
+			{binding:3,resource:{buffer:viewBuf}}
 		]
 	});
 	renderBindB=device.createBindGroup({
 		layout:renderPipeline.getBindGroupLayout(0),
 		entries:[
 			{binding:0,resource:{buffer:gridB}},
-			{binding:1,resource:{buffer:paramsBuffer}},
-			{binding:2,resource:{buffer:renderBuffer}}
+			{binding:1,resource:{buffer:paramsBuf}},
+			{binding:2,resource:{buffer:renderBuf}},
+			{binding:3,resource:{buffer:viewBuf}}
 		]
 	});
 }
 function encodeCompute(encoder,steps){
 	for(let i=0;i<steps;gens++,i++){
-		const compute=encoder.beginComputePass();
-		compute.setPipeline(computePipeline);
-		compute.setBindGroup(0,useA?computeBindA:computeBindB);
-		compute.dispatchWorkgroups(Math.ceil(size/8),Math.ceil(size/8));
-		compute.end();
-		if(steps>1)useA=!useA;
+		const pass=encoder.beginComputePass();
+		pass.setPipeline(computePipeline);
+		pass.setBindGroup(0,useA?computeBindA:computeBindB);
+		pass.dispatchWorkgroups(Math.ceil(wordsPerRow/8),Math.ceil(size/8));
+		pass.end();
+		useA=!useA;
 	}
 }
 function render(encoder){
@@ -298,25 +410,64 @@ function loop(){
 	render(encoder);
 	device.queue.submit([encoder.finish()]);
 	genDisp.innerText=gens.toLocaleString()+" Generations";
-	if(toggle.checked&&!drawing)useA=!useA;
 }
-function setCell(e,v,ox=0,oy=0){
-	const p=Math.min(innerWidth,innerHeight)/size,x=(e.pageX-cvs.offsetLeft)/p+ox|0,y=(e.pageY-cvs.offsetTop)/p+oy|0;
+function editCell(e,v,ox=0,oy=0){
+	const rect=cvs.getBoundingClientRect();
+	const x=(viewX+(e.clientX-rect.left)*cvs.width/rect.width/zoom+ox)|0,y=(viewY+(e.clientY-rect.top)*cvs.height/rect.height/zoom+oy)|0;
 	if(x<0||x>=size||y<0||y>=size)return;
-	device.queue.writeBuffer(useA?gridA:gridB,y*size+x<<2,new Uint32Array([v]));
+	const index=y*wordsPerRow+(x>>>5);
+	const mask=1<<(x&31);
+	device.queue.writeBuffer(editBuf,0,new Uint32Array([index,mask>>>0,v,0]));
+	const encoder=device.createCommandEncoder();
+	const pass=encoder.beginComputePass();
+	pass.setPipeline(editPipeline);
+	pass.setBindGroup(0,useA?editBindA:editBindB);
+	pass.dispatchWorkgroups(1);
+	pass.end();
+	device.queue.submit([encoder.finish()]);
+}
+function drawCells(e){
+	if(drawMode.value!="Brush")editCell(e,drawVal);
+	else for(let a=0;a<2*Math.PI;a+=Math.PI/16)if(Math.random()>.9)editCell(e,drawVal,Math.cos(a)*Math.random()*5,Math.sin(a)*Math.random()*5);
 }
 cvs.addEventListener("mousedown",e=>{
-	if(!e.button)drawVal=1;else if(e.button==2)drawVal=0;else return;
 	e.preventDefault();
-	drawing=drawMode.value!="Off";
-	setCell(e,drawVal);
+	if(e.button==1){
+		panning=true;
+		panX=e.clientX;
+		panY=e.clientY;
+	}else{
+		if(!e.button)drawVal=1;else if(e.button===2)drawVal=0;else return;
+		drawing=drawMode.value!="Off";
+		if(drawing)drawCells(e);
+	}
 });
 cvs.addEventListener("mousemove",e=>{
-	if(drawing)
-		if(drawMode.value=="Pointer")setCell(e,drawVal);
-		else for(let a=0;a<2*Math.PI;a+=Math.PI/16)if(Math.random()>.9)setCell(e,drawVal,Math.cos(a)*Math.random()*5,Math.sin(a)*Math.random()*5);
+	if(drawing&&drawMode.value!="Click")drawCells(e);
+	if(!panning)return;
+	viewX-=(e.clientX-panX)/zoom;
+	viewY-=(e.clientY-panY)/zoom;
+	panX=e.clientX;
+	panY=e.clientY;
+	clampView();
 });
-["mouseup","mouseleave"].forEach(v=>cvs.addEventListener(v,e=>drawing=false));
+function clampView(){
+    viewX=Math.max(0,Math.min(size-size/zoom,viewX));
+    viewY=Math.max(0,Math.min(size-size/zoom,viewY));
+}
+cvs.addEventListener("wheel",e=>{
+	e.preventDefault();
+	const rect=cvs.getBoundingClientRect();
+	const mx=e.clientX-rect.left,my=e.clientY-rect.top;
+	const ozoom=zoom;
+	zoom*=Math.pow(1.1,-e.deltaY/100);
+	zoom=Math.max(1,Math.min(64,zoom));
+	viewX=viewX+mx/ozoom-mx/zoom;
+	viewY=viewY+my/ozoom-my/zoom;
+	clampView();
+},{passive:false});
+addEventListener("mouseup",e=>panning=drawing=false);
+cvs.addEventListener("mouseleave",e=>panning=drawing=false);
 cvs.addEventListener("contextmenu",e=>e.preventDefault());
 Object.keys(patterns).forEach(e=>{
 	const opt=document.createElement("option");
@@ -328,7 +479,6 @@ stepBtn.onclick=()=>{
 	const encoder=device.createCommandEncoder();
 	encodeCompute(encoder,1);
 	render(encoder);
-	useA=!useA;
 	device.queue.submit([encoder.finish()]);
 }
 (async()=>{
