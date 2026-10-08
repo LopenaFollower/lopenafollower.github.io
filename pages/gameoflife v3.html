@@ -46,7 +46,7 @@
 					<legend>Options</legend>
 					<details open>
 						<summary>Pattern</summary>
-						<select id=selectset oninput="rleInp.value=patterns[this.value]"><option selected hidden disabled>Select A Pattern</option></select><br>
+						<select id=selectSet oninput="rleInp.value=patterns[this.value]"><option selected hidden disabled>Select A Pattern</option></select><br>
 						<input id=rleInp placeholder="RLE here..."oninput="this.value=sanitizeRLE(this.value)||''"><button onclick="loadPattern(rleInp.value)">Load RLE</button>
 					</details><br>
 					<details open>
@@ -54,14 +54,14 @@
 						<div class=spacer>Running<input type=checkbox id=toggle></div>
 						<button id=stepBtn>Step</button><button onclick="populate()">Randomize</button>
 						<div class=spacer>Generations / Frame<input type=number min=1 value=1 id=gensPerFrame></div>
-						<div class=spacer>Wrap Around<input type=checkbox id=useWrap></div>
+						<div class=spacer>Wrap Around<input type=checkbox id=useWrap oninput="updParamBuf()"></div>
 						<span id=genDisp></span>
 					</details><br>
 					<details open>
 						<summary>Display</summary>
 						<div class=spacer>Edit Mode<select id=drawMode><option selected>Off</option><option>Click</option><option>Drag</option><option>Brush</option></select></div>
-						<div class=spacer>Alive Color<input type=color id=aliveColor value="#ffffff"></div>
-						<div class=spacer>Dead Color<input type=color id=deadColor value="#000000"></div>
+						<div class=spacer>Alive Color<input type=color id=aliveColor value="#ffffff"oninput="updRenderBuf()"></div>
+						<div class=spacer>Dead Color<input type=color id=deadColor value="#000000"oninput="updRenderBuf()"></div>
 						<button onclick="askSize()">Set Grid Size</button>
 					</details>
 				</fieldset>
@@ -72,22 +72,20 @@
 			</div>
 		</div>
 		<script>
-// document.querySelector("body>pre").innerText.split("\n").filter((e,i,a)=>i>a.findIndex(e=>e.indexOf("rule")+1)).join("").replace("!","");
-// https://conwaylife.appspot.com/library/ navigator.clipboard.writeText(pattern.data.replace(/[^\dbo$]/g,""))
-// https://conwaylife.com/wiki/Glider_synthesis
 let size=1024,wordsPerRow=size>>>5,wordCount=size*wordsPerRow;
 function askSize(){
 	const ans=prompt("New Grid Size (n % 32 = 0)");
 	if(!ans||!ans.trim())return alert("Cancelled");
-	const n=parseInt(ans);
+	const n=Math.max(32,Math.min(parseInt(ans),device.limits.maxTextureDimension2D));
 	if(!Number.isInteger(n)||n%32)return alert("Size must be a positive multiple of 32.");
 	rebuildGPU(n);
 }
 function setSize(n){
 	if(n%32)return size;
-	size=Math.max(32,Math.min(n,device.limits.maxTextureDimension2D));
+	size=n;
 	wordsPerRow=size>>>5;
 	wordCount=size*wordsPerRow;
+	updParamBuf();
 	return size;
 }
 let ctx,drawing,drawVal,gens=0,viewX=0,viewY=0,zoom=1,panning=false,panX=0,panY=0;
@@ -206,6 +204,10 @@ function rebuildGPU(newSize){
 	createEditPipeline();
 	createRenderPipeline();
 	resetSimulation();
+
+	updParamBuf();
+	updRenderBuf();
+	updviewBuf();
 }
 const computeShader=`
 struct Params{size:u32,wrap:u32}
@@ -217,28 +219,25 @@ fn main(@builtin(global_invocation_id)id:vec3u){
 	let w=id.x;
 	let y=id.y;
 	let words=p.size>>5u;
-	if(w>=words||y>=p.size){return;}
+	if w>=words||y>=p.size{return;}
 	let row=y*words;
 	let i=row+w;
 	let cur=grid[i];
 	var ym1=y;
 	var yp1=y;
-	//00 01 02
-	//10 11 12
-	//20 21 22
 	var p01=0u;
 	var p21=0u;
-	if(p.wrap==1u){
+	if p.wrap==1u{
 		ym1=select(y-1u,p.size-1u,y==0u);
 		yp1=select(y+1u,0,y==p.size-1u);
 		p01=grid[ym1*words+w];
 		p21=grid[yp1*words+w];
 	}else{
-		if(y>0u){
+		if y>0u{
 			ym1=y-1u;
 			p01=grid[ym1*words+w];
 		}
-		if(y+1u<p.size){
+		if y+1u<p.size{
 			yp1=y+1u;
 			p21=grid[yp1*words+w];
 		}
@@ -249,17 +248,25 @@ fn main(@builtin(global_invocation_id)id:vec3u){
 	var p12=cur>>1u;
 	var p20=p21<<1u;
 	var p22=p21>>1u;
-	if(p.wrap==1u||w>0u){
+	if p.wrap==1u||w>0u{
 		let prevW=select(w-1u,words-1u,w==0u);
-		p00|=grid[ym1*words+prevW]>>31u;
 		p10|=grid[row+prevW]>>31u;
-		p20|=grid[yp1*words+prevW]>>31u;
+		if p.wrap==1u||y>0u{
+			p00|=grid[ym1*words+prevW]>>31u;
+		}
+		if p.wrap==1u||y+1u<p.size{
+			p20|=grid[yp1*words+prevW]>>31u;
+		}
 	}
-	if(p.wrap==1u||w+1u<words){
+	if p.wrap==1u||w+1u<words{
 		let nextW=select(w+1u,0u,w+1u==words);
-		p02|=grid[ym1*words+nextW]<<31u;
 		p12|=grid[row+nextW]<<31u;
-		p22|=grid[yp1*words+nextW]<<31u;
+		if p.wrap==1u||y>0u{
+			p02|=grid[ym1*words+nextW]<<31u;
+		}
+		if p.wrap==1u||y+1u<p.size{
+			p22|=grid[yp1*words+nextW]<<31u;
+		}
 	}
 	var n0=0u;
 	var n1=0u;
@@ -268,17 +275,17 @@ fn main(@builtin(global_invocation_id)id:vec3u){
 	var c2:u32;
 	c=n0&p00;n0^=p00;c2=n1&c;n1^=c;n2^=c2;
 
-	c=n0&p01; n0^=p01; c2=n1&c;n1^=c;n2^=c2;
+	c=n0&p01;n0^=p01;c2=n1&c;n1^=c;n2^=c2;
 
 	c=n0&p02;n0^=p02;c2=n1&c;n1^=c;n2^=c2;
 
-	c=n0&p10;  n0^=p10;  c2=n1&c;n1^=c;n2^=c2;
+	c=n0&p10;n0^=p10;c2=n1&c;n1^=c;n2^=c2;
 
-	c=n0&p12;  n0^=p12;  c2=n1&c;n1^=c;n2^=c2;
+	c=n0&p12;n0^=p12;c2=n1&c;n1^=c;n2^=c2;
 
 	c=n0&p20;n0^=p20;c2=n1&c;n1^=c;n2^=c2;
 
-	c=n0&p21; n0^=p21; c2=n1&c;n1^=c;n2^=c2;
+	c=n0&p21;n0^=p21;c2=n1&c;n1^=c;n2^=c2;
 
 	c=n0&p22;n0^=p22;c2=n1&c;n1^=c;n2^=c2;
 
@@ -310,11 +317,7 @@ fn v_main(@builtin(vertex_index)i:u32)->Out{
 fn f_main(@builtin(position)pos:vec4f)->@location(0)vec4f{
 	let x=u32(v.x+pos.x/v.zoom);
 	let y=u32(v.y+pos.y/v.zoom);
-	let words=p.size>>5u;
-	let wordX=x>>5u;
-	let bitX=x&31u;
-	let word=grid[y*words+wordX];
-	return select(c.a,c.d,(word&(1u<<bitX))==0u);
+	return select(c.a,c.d,(grid[y*(p.size>>5u)+(x>>5u)]&(1u<<(x&31u)))==0u);
 }`;
 function hexToRGBA(hex){
 	const n=parseInt(hex.slice(1),16);
@@ -327,9 +330,16 @@ function resetSimulation(){
 	device.queue.writeBuffer(gridB,0,x);
 	useA=true;
 }
-function updateParams(){
+function updParamBuf(){
+	if(!paramsBuf)return;
 	device.queue.writeBuffer(paramsBuf,0,new Uint32Array([size,useWrap.checked?1:0]));
+}
+function updRenderBuf(){
+	if(!renderBuf)return;
 	device.queue.writeBuffer(renderBuf,0,new Float32Array([...hexToRGBA(aliveColor.value),...hexToRGBA(deadColor.value)]));
+}
+function updviewBuf(){
+	if(!viewBuf)return;
 	device.queue.writeBuffer(viewBuf,0,new Float32Array([viewX,viewY,zoom]));
 }
 function createPipelines(){
@@ -392,14 +402,14 @@ function createRenderPipeline(){
 	});
 }
 function encodeCompute(encoder,steps){
+	const pass=encoder.beginComputePass();
+	pass.setPipeline(computePipeline);
 	for(let i=0;i<steps;gens++,i++){
-		const pass=encoder.beginComputePass();
-		pass.setPipeline(computePipeline);
 		pass.setBindGroup(0,useA?computeBindA:computeBindB);
 		pass.dispatchWorkgroups(Math.ceil(wordsPerRow/8),Math.ceil(size/8));
-		pass.end();
 		useA=!useA;
 	}
+	pass.end();
 }
 function render(encoder){
 	const view=ctx.getCurrentTexture().createView();
@@ -412,9 +422,8 @@ function render(encoder){
 function loop(){
 	requestAnimationFrame(loop);
 	if(!device)return;
-	updateParams();
 	const encoder=device.createCommandEncoder();
-	if(toggle.checked&&!drawing)encodeCompute(encoder,gensPerFrame.valueAsNumber);
+	if(toggle.checked&&!drawing)encodeCompute(encoder,parseInt(gensPerFrame.value));
 	render(encoder);
 	device.queue.submit([encoder.finish()]);
 	genDisp.innerText=gens.toLocaleString()+" Generations";
@@ -445,8 +454,9 @@ cvs.addEventListener("mousedown",e=>{
 		panY=e.clientY;
 	}else{
 		if(!e.button)drawVal=1;else if(e.button===2)drawVal=0;else return;
-		drawing=drawMode.value!="Off"&&drawMode.value!="Click";
-		if(drawing)drawCells(e);
+		const click=drawMode.value=="Click";
+		drawing=drawMode.value!="Off"&&!click;
+		if(drawing||click)drawCells(e);
 	}
 });
 cvs.addEventListener("mousemove",e=>{
@@ -462,6 +472,7 @@ cvs.addEventListener("mousemove",e=>{
 function clampView(){
 	viewX=Math.max(0,Math.min(size-size/zoom,viewX));
 	viewY=Math.max(0,Math.min(size-size/zoom,viewY));
+	updviewBuf();
 }
 cvs.addEventListener("wheel",e=>{
 	e.preventDefault();
@@ -477,7 +488,7 @@ cvs.addEventListener("mouseleave",e=>panning=drawing=false);
 cvs.addEventListener("contextmenu",e=>e.preventDefault());
 Object.keys(patterns).forEach(e=>{
 	const opt=document.createElement("option");
-	selectset.appendChild(opt);
+	selectSet.appendChild(opt);
 	opt.innerText=e;
 });
 stepBtn.onclick=()=>{
