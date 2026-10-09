@@ -142,7 +142,7 @@ const patterns={
 function getPatternDim(t){
 	let x=0,y=0,w=0,n=0;
 	for(const c of t)
-		if(+c>=0)n=+c+n*10;
+		if(+c+1)n=+c+n*10;
 		else{
 			if(c=="$")y+=n||1,x=0;else w=Math.max(w,x+=n||1);
 			n=0;
@@ -160,7 +160,7 @@ function loadPattern(name,ox,oy){
 	const grid=new Uint32Array(wordCount);
 	let x=0,y=0,n=0;gens=0;
 	for(const c of txt)
-		if(+c>=0)n=+c+n*10;
+		if(+c+1)n=+c+n*10;
 		else{
 			if(c=="$")y+=n||1,x=0;else for(let j=n||1;j>0;j--){
 				const px=ox+x++,py=y+oy;
@@ -214,7 +214,7 @@ struct Params{size:u32,wrap:u32}
 @group(0)@binding(0)var<storage,read>grid:array<u32>;
 @group(0)@binding(1)var<storage,read_write>next:array<u32>;
 @group(0)@binding(2)var<uniform>p:Params;
-@compute@workgroup_size(8,8)
+@compute@workgroup_size(32,1)
 fn main(@builtin(global_invocation_id)id:vec3u){
 	let w=id.x;
 	let y=id.y;
@@ -404,9 +404,10 @@ function createRenderPipeline(){
 function encodeCompute(encoder,steps){
 	const pass=encoder.beginComputePass();
 	pass.setPipeline(computePipeline);
+	const x=Math.ceil(wordsPerRow/32),y=size;
 	for(let i=0;i<steps;gens++,i++){
 		pass.setBindGroup(0,useA?computeBindA:computeBindB);
-		pass.dispatchWorkgroups(Math.ceil(wordsPerRow/8),Math.ceil(size/8));
+		pass.dispatchWorkgroups(x,y);
 		useA=!useA;
 	}
 	pass.end();
