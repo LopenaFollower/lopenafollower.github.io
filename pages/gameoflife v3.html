@@ -85,9 +85,19 @@ function setSize(n){
 	size=n;
 	wordsPerRow=size>>>5;
 	wordCount=size*wordsPerRow;
+	viewX=viewY=0;zoom=1;
 	updParamBuf();
+	updViewBuf();
 	return size;
 }
+function resizeCanvas(){
+	if(!device)return;
+	const rect=cvs.getBoundingClientRect(),side=Math.max(1,Math.min(device.limits.maxTextureDimension2D>>1,Math.round(rect.width*Math.min(window.devicePixelRatio||1,1.5))));
+	if(cvs.width===side&&cvs.height===side)return;
+	cvs.width=cvs.height=side;
+	updViewBuf();
+}
+addEventListener("resize",resizeCanvas);
 let ctx,drawing,drawVal,gens=0,viewX=0,viewY=0,zoom=1,panning=false,panX=0,panY=0;
 let device,format,paramsBuf,editBuf,renderBuf,viewBuf;
 let gridA,gridB,computePipeline,editPipeline,renderPipeline,computeBindA,computeBindB,editBindA,editBindB,renderBindA,renderBindB,useA=true;
@@ -187,7 +197,7 @@ async function initGPU(){
 	rebuildGPU(size);
 }
 function rebuildGPU(newSize){
-	cvs.width=cvs.height=setSize(newSize);
+	setSize(newSize);
 	paramsBuf?.destroy();
 	renderBuf?.destroy();
 	editBuf?.destroy();
@@ -204,10 +214,10 @@ function rebuildGPU(newSize){
 	createEditPipeline();
 	createRenderPipeline();
 	resetSimulation();
-
 	updParamBuf();
 	updRenderBuf();
-	updviewBuf();
+	updViewBuf();
+	resizeCanvas();
 }
 const computeShader=`
 struct Params{size:u32,wrap:u32}
@@ -301,7 +311,7 @@ fn main(){
 }`,renderShader=`
 struct Params{size:u32,wrap:u32}
 struct Colors{a:vec4f,d:vec4f}
-struct View{x:f32,y:f32,zoom:f32}
+struct View{x:f32,y:f32,zoom:f32,res:f32}
 struct Out{@builtin(position)pos:vec4f}
 @group(0)@binding(0)var<storage,read>grid:array<u32>;
 @group(0)@binding(1)var<uniform>p:Params;
@@ -315,9 +325,9 @@ fn v_main(@builtin(vertex_index)i:u32)->Out{
 }
 @fragment
 fn f_main(@builtin(position)pos:vec4f)->@location(0)vec4f{
-	let x=u32(v.x+pos.x/v.zoom);
-	let y=u32(v.y+pos.y/v.zoom);
-	return select(c.a,c.d,(grid[y*(p.size>>5u)+(x>>5u)]&(1u<<(x&31u)))==0u);
+	let sc=f32(p.size)/(v.res*v.zoom);
+	let x=u32(v.x+pos.x*sc);
+	return select(c.a,c.d,(grid[u32(v.y+pos.y*sc)*(p.size>>5u)+(x>>5u)]&(1u<<(x&31u)))==0u);
 }`;
 function hexToRGBA(hex){
 	const n=parseInt(hex.slice(1),16);
@@ -338,9 +348,9 @@ function updRenderBuf(){
 	if(!renderBuf)return;
 	device.queue.writeBuffer(renderBuf,0,new Float32Array([...hexToRGBA(aliveColor.value),...hexToRGBA(deadColor.value)]));
 }
-function updviewBuf(){
+function updViewBuf(){
 	if(!viewBuf)return;
-	device.queue.writeBuffer(viewBuf,0,new Float32Array([viewX,viewY,zoom]));
+	device.queue.writeBuffer(viewBuf,0,new Float32Array([viewX,viewY,zoom,cvs.width]));
 }
 function createPipelines(){
 	const shader=device.createShaderModule({code:computeShader});
@@ -434,7 +444,7 @@ function editCell(e,v,ox=0,oy=0){
 	const rect=cvs.getBoundingClientRect(),sc=size/rect.width/zoom;
 	const x=viewX+(e.clientX-rect.left)*sc+ox|0,y=viewY+(e.clientY-rect.top)*sc+oy|0;
 	if(x<0||x>=size||y<0||y>=size)return;
-	device.queue.writeBuffer(editBuf,0,new Uint32Array([y*wordsPerRow+(x>>>5),mask=1<<(x&31)>>>0,v,0]));
+	device.queue.writeBuffer(editBuf,0,new Uint32Array([y*wordsPerRow+(x>>>5),1<<(x&31)>>>0,v,0]));
 	const encoder=device.createCommandEncoder();
 	const pass=encoder.beginComputePass();
 	pass.setPipeline(editPipeline);
@@ -473,7 +483,7 @@ cvs.addEventListener("mousemove",e=>{
 function clampView(){
 	viewX=Math.max(0,Math.min(size-size/zoom,viewX));
 	viewY=Math.max(0,Math.min(size-size/zoom,viewY));
-	updviewBuf();
+	updViewBuf();
 }
 cvs.addEventListener("wheel",e=>{
 	e.preventDefault();
