@@ -322,10 +322,17 @@ fn v_main(@builtin(vertex_index)i:u32)->Out{
 fn f_main(@builtin(position)pos:vec4f)->@location(0)vec4f{
 	let ws=p.size>>5u;
 	let st=v.scale/v.zoom;
-	if(st<=1){
-		let x=i32(floor(v.x+pos.x*st));
-		let y=i32(floor(v.y+pos.y*st));
-		return select(c.d,c.a,isAlive(x,y,ws));
+	var edge=.0;
+	let gx=v.x+pos.x*st;
+	let gy=v.y+pos.y*st;
+	if p.wrap==0u{
+		let n=f32(p.size);
+		let fx=fract(gx/n);
+		let fy=fract(gy/n);
+		edge=max(1-smoothstep(.2,.8,min(fx,1-fx)*n/st),1-smoothstep(.2,.8,min(fy,1-fy)*n/st));
+	}
+	if st<=1{
+		return mix(select(c.d,c.a,isAlive(i32(floor(gx)),i32(floor(gy)),ws)),c.a,edge);
 	}
 	let x0=i32(floor(v.x+(pos.x-.5)*st));
 	let x1=i32(ceil(v.x+(pos.x+.5)*st));
@@ -342,7 +349,7 @@ fn f_main(@builtin(position)pos:vec4f)->@location(0)vec4f{
 			x+=i32(take);
 		}
 	}
-	return select(c.d,c.a,alive);
+	return mix(select(c.d,c.a,alive),c.a,edge);
 }`;
 function hexToRGBA(hex){
 	const n=parseInt(hex.slice(1),16);
