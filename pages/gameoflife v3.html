@@ -52,7 +52,7 @@
 					<details open>
 						<summary>Simulation</summary>
 						<div class=spacer>Running<input type=checkbox id=toggle></div>
-						<button id=stepBtn>Step</button><button onclick="populate()">Randomize</button>
+						<button id=stepBtn>Step</button><button onclick="populate()">Randomize</button><button onclick="resetSimulation()">Clear</button>
 						<div class=spacer>Generations / Frame<input type=number min=1 value=1 id=gensPerFrame></div>
 						<div class=spacer>Wrap Around<input type=checkbox id=useWrap></div>
 						<span id=genDisp></span>
@@ -225,6 +225,7 @@ fn main(@builtin(global_invocation_id)id:vec3u){
 	let y=id.y;
 	let ws=p.size>>5u;
 	if w>=ws||y>=p.size{return;}
+	let wrap=p.wrap==1u;
 	let row=y*ws;
 	let i=row+w;
 	let cur=grid[i];
@@ -232,7 +233,7 @@ fn main(@builtin(global_invocation_id)id:vec3u){
 	var yp1=y;
 	var p01=0u;
 	var p21=0u;
-	if p.wrap==1u{
+	if wrap{
 		ym1=select(y-1u,p.size-1u,y==0u);
 		yp1=select(y+1u,0,y==p.size-1u);
 		p01=grid[ym1*ws+w];
@@ -253,23 +254,23 @@ fn main(@builtin(global_invocation_id)id:vec3u){
 	var p12=cur>>1u;
 	var p20=p21<<1u;
 	var p22=p21>>1u;
-	if p.wrap==1u||w>0u{
+	if wrap||w>0u{
 		let prevW=select(w-1u,ws-1u,w==0u);
 		p10|=grid[row+prevW]>>31u;
-		if p.wrap==1u||y>0u{
+		if wrap||y>0u{
 			p00|=grid[ym1*ws+prevW]>>31u;
 		}
-		if p.wrap==1u||y+1u<p.size{
+		if wrap||y+1u<p.size{
 			p20|=grid[yp1*ws+prevW]>>31u;
 		}
 	}
-	if p.wrap==1u||w+1u<ws{
+	if wrap||w+1u<ws{
 		let nextW=select(w+1u,0u,w+1u==ws);
 		p12|=grid[row+nextW]<<31u;
-		if p.wrap==1u||y>0u{
+		if wrap||y>0u{
 			p02|=grid[ym1*ws+nextW]<<31u;
 		}
-		if p.wrap==1u||y+1u<p.size{
+		if wrap||y+1u<p.size{
 			p22|=grid[yp1*ws+nextW]<<31u;
 		}
 	}
@@ -319,7 +320,7 @@ fn f_main(@builtin(position)pos:vec4f)->@location(0)vec4f{
 	let n=f32(p.size);
 	var gx=v.x+pos.x*st;
 	var gy=v.y+pos.y*st;
-	var edge=.0;
+	var edge=0f;
 	if !wrap{
 		let ct=n*(.5-.5/v.zoom);
 		gx+=ct;gy+=ct;
@@ -332,18 +333,24 @@ fn f_main(@builtin(position)pos:vec4f)->@location(0)vec4f{
 	if st<=1{
 		return mix(select(c.d,c.a,isAlive(i32(floor(gx)),i32(floor(gy)),ws)),c.a,edge);
 	}
-	var x0=i32(max(floor(gx-st*.5),select(0,-n,wrap)));
-	var x1=i32(min(ceil(gx+st*.5),select(n,n*3,wrap)));
-	var y0=i32(max(floor(gy-st*.5),select(0,-n,wrap)));
-	var y1=i32(min(ceil(gy+st*.5),select(n,n*3,wrap)));
+	let lower=select(0,-n,wrap);
+	let upper=select(n,n*3,wrap);
+	var x0=i32(max(floor(gx-st*.5),lower));
+	var x1=i32(min(ceil(gx+st*.5),upper));
+	var y0=i32(max(floor(gy-st*.5),lower));
+	var y1=i32(min(ceil(gy+st*.5),upper));
 	var alive=false;
 	for(var y=y0;y<y1&&!alive;y++){
-		let yy=wrapCoord(y);
-		for(var x=x0;x<x1&&!alive;){
+		let yw=wrapCoord(y)*ws;
+		var x=x0;
+		while(x<x1){
 			let xx=wrapCoord(x);
 			let fs=xx&31u;
 			let take=min(u32(x1-x),32u-fs);
-			alive=(grid[yy*ws+(xx>>5u)]&((0xffffffffu<<fs)&(0xffffffffu>>(32u-fs-take))))!=0u;
+			if(grid[yw+(xx>>5u)]&((0xffffffffu<<fs)&(0xffffffffu>>(32u-fs-take))))!=0u{
+				alive=true;
+				break;
+			}
 			x+=i32(take);
 		}
 	}
@@ -448,7 +455,7 @@ function render(encoder){
 	pass.draw(3);
 	pass.end();
 }
-function loop(){
+function loop(now){
 	requestAnimationFrame(loop);
 	if(!device)return;
 	const encoder=device.createCommandEncoder();
