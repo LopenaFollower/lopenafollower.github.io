@@ -27,11 +27,11 @@ const entries={
 	classroom:[
 		{h:"All-University Academic Convocation",t:"July 15, 2026",d:"An official convocation that marks the opening of the academic year, attended by faculty, staff, and students."},
 		{h:"CCS Freshmen, Shiftees, & Transferees Orientation",t:"July 22, 2026",d:"A orientation for freshmen, shiftees, and transferees into the College of Computer Studies."},
-		{h:"University-Wide Orientation",t:"July 29, 2026",d:"Officially welcomed incoming freshmen and new students, introducing them to university life, policies, and campus culture."},
-		{h:"DOST ISKOmpass Orientation",t:"August 8, 2026",d:""},
-		{h:"One Big Tuyok Campus Tour",t:"August 19, 2026",d:""},
-		{h:"Miller Solutions Development Inc. Industry Lecture and Workshop",t:"August 25, 2026",d:""},
-		{h:"Mental Health Caravan: Building Your Mental Health Toolkit",t:"September 16, 2026",d:""},
+		{h:"University-Wide Orientation",t:"July 29, 2026",d:"Officially welcomed incoming freshmen and new students, introducing them to university life, policies, student services, and campus culture."},
+		{h:"DOST ISKOmpass Orientation",t:"August 8, 2026",d:"A brief but informative online orientation for DOST Scholars attending Silliman University."},
+		{h:"One Big Tuyok Campus Tour",t:"August 19, 2026",d:"A campus tour that not only showcases the different buildings but also their backstory."},
+		{h:"Miller Solutions Development Inc. Industry Lecture and Workshop",t:"August 25, 2026",d:"A lecture and workshop with the purpose of educating students on the use of agents during programming."},
+		{h:"Mental Health Caravan: Building Your Mental Health Toolkit",t:"September 16, 2026",d:"This lecture features a psychiatrist who discusses about mental health and ways to cope with it."},
 	],
 	church:[
 		{h:"CHS Chapel Worship Service",t:"July 12, 2026",d:""},
