@@ -1,5 +1,4 @@
-const $=id=>document.getElementById(id);
-const place=(root,name)=>root.querySelector(`[data-nm="${name}"]`);
+const $=id=>document.getElementById(id),slot=(root,name)=>root.querySelector(`[data-nm="${name}"]`);
 let active=null;
 function moveTo(e,o=0){
 	active=[e,o];
@@ -11,12 +10,11 @@ function moveTo(e,o=0){
 }
 addEventListener("resize",()=>active&&moveTo(...active));
 document.fonts.ready.then(()=>active&&moveTo(...active));
-const aside=document.querySelector("aside");
-const btn=aside.querySelector(".ov_btn");
+const aside=document.querySelector("aside"),btn=aside.querySelector(".ov_btn");
 moveTo(btn);
 btn.addEventListener("click",()=>moveTo(btn));
 aside.querySelectorAll("li").forEach(e=>e.addEventListener("click",()=>moveTo(e,20)));
-const orgs=["the Office of Student Services","the Confederates Student Council","the SU Culture and Arts Council","the SU ROTC Unit"];
+const orgs=["the Office of Student Services","the Confederates Student Council","the SU Culture and Arts Council","the SU ROTC Unit","the SU Divinity School"];
 const entries={
 	classroom:[
 		{
@@ -132,10 +130,10 @@ const entries={
 		},
 		{
 			title:"Mental Health Caravan: Building Your Mental Health Toolkit",
-			org:orgs[0],date:"September 16, 2026",time:"2:00AM – 4:00PM",
+			org:orgs[0],date:"September 16, 2026",time:"2:00PM – 4:00PM",
 			desc:"This lecture features a psychiatrist who discusses about mental health and ways to cope with it.",
 			about:[
-				`During the event, the main speaker Dr. Stephanie Miaco delivered a lecture focused on personal well-being, peer support, and the intrapersonal and interpersonal challenges that college student experience. She also discussed about physical breathing techniques and daily habits help cope with stress. There was also an intermission featuring students acting out a humorous skit of what a stressed college student may be.`,
+				`The event takes place in the Luce Auditorium held on September 16, 2026 from 2:00PM to 4:00PM. During the event, the main speaker Dr. Stephanie Miaco delivered a lecture focused on personal well-being, peer support, and the intrapersonal and interpersonal challenges that college student experience. She also discussed about physical breathing techniques and daily habits help cope with stress. There was also an intermission featuring students acting out a humorous skit of what a stressed college student may be.`,
 				`The event ended with an open forum where people ask advice from scenarios they or a person they know are experiencing.`
 			],
 			reflection:[
@@ -153,12 +151,12 @@ const entries={
 			org:"Alma Ruiz",date:"July 12, 2026",time:"8:30AM – 10:00AM",
 			desc:"A choir sunday worship service with the CHS class at the Chapel of the Evangel.",
 			about:[
-				`This event was done under our CHS professor, Alma Ruiz, on July 12, 2026, from 8:30AM to 10:00AM as a fulfillment of our task in the CHS Subject. At the call time of 8:30, we were given 30 minutes that serves at time to practice our selected song as a choir. The song that we performed was named "Siyahamba" which is an African worship song sung in Zulu. The time alloted for practice was used to arrange us based on our vocal ranges and to properly deliver the melody and lyrics of the song.`,
+				`This event was done under our CHS professor, Alma Ruiz, on July 12, 2026, from 8:30AM to 10:00AM at the Chapel of the Evangel as a fulfillment of our task in the CHS Subject. At the call time of 8:30, we were given 30 minutes that serves at time to practice our selected song as a choir. The song that we performed was named "Siyahamba" which is an African worship song sung in Zulu. The time alloted for practice was used to arrange us based on our vocal ranges and to properly deliver the melody and lyrics of the song.`,
 				`After the practice at around 10:00AM, we were given a program flow to soon start the worship service. When it came to our part to perform the song, we were instructed to make a formation at the front to begin the performance. Lastly, the service is concluded with everyone shaking hands with one another.`
 			],
 			reflection:[
-				`This served as a new experience for me because of it being a protestant church service which is not the usual kind of service that I attend.`,
-				`By being involved in this service, I was able learn about protestant practices and how their sunday services usually go. I also did some reading about the worship song we performed, and found interesting information about it.`
+				`This served as a new experience for me because of it being a protestant church service which is not the usual kind of service that I attend. By being involved in this service, I was able learn about protestant practices and how their sunday services usually go. I also did some reading about the worship song we performed, and found interesting information about its origins and such.`,
+				`Overall, it was a valuable experience which gave me another angle at how faith is expressed, and how it is able to connect the people participating in it.`
 			],
 			photos:[
 				["IMG_20260712_1.png",288.83],
@@ -170,11 +168,11 @@ const entries={
 			org:orgs[1],date:"August 24, 2026",time:"7:30AM – 8:30AM",
 			desc:"An opening devotion for the College of Computer Studies to formally start the Hibalag season with solemn prayer.",
 			about:[
-				`It is August 24, 2026 and it is finally Hibalag week and so to formally start the week, our college held an opening devotion in the ATA Hall starting 7:30AM. After the greetings, there were singing of songs and a psalm reading, an invocation, and scripture reading.`,
-				`The highlight of this event is during the reflection, where we reflect on the saying "Remembering with Gratitude, Moving Forward with Hope." which captures our reason for this celebration and for this entire founders week.`
+				`It is August 24, 2026 and it is finally Hibalag week and so to formally start the week, our college held an opening devotion in the ATA Hall starting 7:30AM. After the greetings, there were singing of songs and a psalm reading, an invocation, scripture reading, and an offertory.`,
+				`The highlight of this event is during the reflection, where we reflect on the year's theme:"Remembering with Gratitude, Moving Forward with Hope." which captures our reason for this celebration and for this entire founders week.`
 			],
 			reflection:[
-				`Celerating`
+				`Celebrating this year's Hibalag season,`
 			],
 			photos:[
 				["IMG_20260824_1.jpg",400],
@@ -183,7 +181,7 @@ const entries={
 		},
 		{
 			title:"UCLEM 2026: Remembering with Gratitude",
-			org:"the SU Divinity School",date:"September 22, 2026",time:"5:30PM – 7:00PM",
+			org:orgs[4],date:"September 22, 2026",time:"5:30PM – 7:00PM",
 			desc:"",
 			about:[],
 			reflection:[],
@@ -243,7 +241,7 @@ const entries={
 			about:[],
 			reflection:[],
 			photos:[
-				["IMG_20260930_3a.jpg",225,"Final board of first game, some pieces were move though."],
+				["IMG_20260930_3a.jpg",225,"Final board of first game, some pieces were moved though."],
 				["IMG_20260930_3b.jpg",400,"Attendance and matching."]
 			]
 		},
@@ -349,9 +347,16 @@ const entries={
 		{
 			title:"ROTC Nutri-Fit Walk 2026",
 			org:orgs[3],date:"July 26, 2026",time:"4:30AM – 11:00AM",
-			desc:"",
-			about:[],
-			reflection:[],
+			desc:"In celebration of the Nutrition Month, the ROTC cadets are to join a Nutri-Walk to spread the message of better nutrition and healthier living.",
+			about:[
+				`This is event organized by the SU ROTC Unit to celebrate the nutrition month. The event was held on July 26, 2026 with a call time of 4:30AM near the Looc Bypass Road. The route goes from the crossing near Harold's Mansion, passing by Silliman University Medical Center towards the intersection, turning left and going forward until we reached the Philippine National Bank. From the bank, we turned left until we reached the boulevard, then turned right until we reached our destination at the Rizal Boulevard Extension.`,
+				`During the walk we were instructed to follow formation corresponding our company, platoon, and squad which was to be maintained until reaching our destination. Once at the destination, we gathered near the stage there along with the other groups outside of Silliman that joined. On the venue, a program was held at the stage with themes relating to the Nutrition Month, as well as a zumba exercise where anyone near the venue can participate in. The venue also featured decorated booths where you could purchase healthy products from charity related organizations.`
+			],
+			reflection:[
+				`This is may be the earliest I have woken up in the whole semester so far, but by attending this Nutri-Walk, I am able to celebrate and spread awareness for Nutrition Month, and also promote fitness and be involve with the community through the walk.`,
+				`Furthermore, I also hardened my discipline by enduring having to maintain proper form the entire trip. At the Boulevard Extension, I purchased a few refreshments from the booths which also served as donation to cause that the booth was handling.`,
+				`Overall, this experience helped me appreciate promoting health through eating nutritious food, staying physically active, developing self-discipline, and participating in activities that benefit the community.`
+			],
 			photos:[
 				["IMG_20260726_1.jpg",400],
 				["IMG_20260726_2.jpg",400],
@@ -395,10 +400,10 @@ function j_category(c){
 	$("entry_cat").textContent=c[0].toUpperCase()+c.slice(1);
 	$("entry_list").replaceChildren(...entries[c].map((e,i)=>{
 		const f=$("post_tpl").content.cloneNode(true);
-		place(f,"title").textContent=e.title;
-		place(f,"title").addEventListener("click",()=>j_entry(c,i));
-		place(f,"date").textContent=e.date;
-		place(f,"preview").textContent=e.desc;
+		slot(f,"title").textContent=e.title;
+		slot(f,"title").addEventListener("click",()=>j_entry(c,i));
+		slot(f,"date").textContent=e.date;
+		slot(f,"preview").textContent=e.desc;
 		return f;
 	}));
 	j_display("entries");
@@ -436,18 +441,18 @@ function pager(a,c,i,t){
 }
 function j_entry(c,i){
 	const e=entries[c][i],f=$("entry_tpl").content.cloneNode(true);
-	place(f,"title").textContent=`Journal Entry #${i+1}: ${e.title}`;
-	place(f,"meta").textContent=`• Organized by ${e.org} • ${e.date} • ${e.time}`;
-	place(f,"about").after(...paragraphs(e.about));
-	place(f,"reflection").after(...paragraphs(e.reflection));
-	place(f,"photos").append(...e.photos.flatMap((p,n)=>[photo(c,p,`${e.title}, photo ${n+1}`)]));
-	pager(place(f,"left"),c,i-1,t=>"← "+t);
-	pager(place(f,"right"),c,i+1,t=>t+" →");
-	$("entry_view").replaceChildren(f);
-	j_display("entry_view");
-	preloadNeighbors(c,i);
+	slot(f,"title").textContent=`Journal Entry #${i+1}: ${e.title}`;
+	slot(f,"meta").textContent=`• Organized by ${e.org} • ${e.date} • ${e.time}`;
+	slot(f,"about").after(...paragraphs(e.about));
+	slot(f,"reflection").after(...paragraphs(e.reflection));
+	slot(f,"photos").append(...e.photos.flatMap((p,n)=>[photo(c,p,`${e.title}, photo ${n+1}`)]));
+	pager(slot(f,"left"),c,i-1,t=>"← "+t);
+	pager(slot(f,"right"),c,i+1,t=>t+" →");
+	$("journal_entry").replaceChildren(f);
+	j_display("journal_entry");
+	preload(c,i);
 }
 const idle=requestIdleCallback||(fn=>setTimeout(fn,250));
-function preloadNeighbors(c,i){
+function preload(c,i){
 	idle(()=>[i-1,i+1].forEach(k=>entries[c][k]?.photos.forEach(([fn])=>new Image().src=`images/${c}/${fn}`)));
 }

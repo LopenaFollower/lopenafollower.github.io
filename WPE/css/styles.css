@@ -6,11 +6,11 @@
 	--surface-aside:light-dark(#d4d4dd,#1d1d1d);
 	--surface-raised:light-dark(#fff,#272727);
 	--surface-hover:light-dark(#adadad,#2a2a2a);
-	--chrome:light-dark(#4f5f4b,#1f1f1f);
+	--semantics:light-dark(#4f5f4b,#1f1f1f);
 
 	--text:light-dark(#121212,#f3f3f3);
 	--text-muted:light-dark(#5a5a4f,#a0a0a0);
-	--text-on-chrome:light-dark(#fff,#bbb);
+	--text-semantics:light-dark(#fff,#bbb);
 	--link:light-dark(#1f5f9e,#6fb1ff);
 
 	--btn:light-dark(#c1a891,#373737);
@@ -20,7 +20,6 @@
 	--border:light-dark(#000,#5a5a5a);
 	--shadow:light-dark(rgb(0 0 0 / .3),rgb(0 0 0 / .6));
 	--highlight:light-dark(rgb(255 255 0 / .5),rgb(255 255 0 / .15));
-	--chrome-link-hover:#ff0;
 	--focus-ring:light-dark(#1f5f9e,#8ec5ff);
 	--scrollbar-thumb:light-dark(#888,#555);
 	--scrollbar-thumb-hover:light-dark(#555,#888);
@@ -48,7 +47,7 @@
 }
 header:focus-visible,
 footer:focus-visible{
-	outline-color:var(--chrome-link-hover);
+	outline-color:var(--link-hover);
 }
 @supports not selector(::-webkit-scrollbar){
 	:root{
@@ -102,14 +101,14 @@ body{
 	font-size:16px;
 }
 .text-dark{
-	color:var(--text-on-chrome);
+	color:var(--text-semantics);
 	font-size:16px;
 }
 .text-justify{
 	text-align:justify;
 }
 header{
-	background-color:var(--chrome);
+	background-color:var(--semantics);
 	justify-content:space-between;
 	box-shadow:0 3px 15px var(--shadow);
 	align-items:center;
@@ -124,8 +123,8 @@ header{
 	margin:0;
 }
 footer{
-	background-color:var(--chrome);
-	color:var(--text-on-chrome);
+	background-color:var(--semantics);
+	color:var(--text-semantics);
 	align-content:center;
 	user-select:none;
     flex-wrap:wrap;
@@ -141,13 +140,6 @@ footer{
 		width:32px;
 		height:32px;
 		cursor:pointer;
-	}
-}
-.pseudo-btn{
-	cursor:pointer;
-	text-decoration:underline;
-	&:hover{
-		color:var(--chrome-link-hover);
 	}
 }
 main{
@@ -260,6 +252,20 @@ section{
 	flex-direction:column;
 	scrollbar-gutter:stable;
 	justify-content:space-between;
+	.content-footer{
+		margin:16px 0 20px;
+		width:100%;padding:0 30px;
+		color:var(--text);
+		display:flex;
+		justify-content:space-between;
+		a{
+			cursor:pointer;
+			user-select:none;
+			&:hover{
+				text-decoration:underline;
+			}
+		}
+	}
 }
 aside{
 	width:200px;
@@ -315,19 +321,5 @@ aside{
 	.post-content{
 		width:fit-content;
 		margin-bottom:0;
-	}
-}
-.content-footer{
-	margin:16px 0 20px;
-	width:100%;padding:0 30px;
-	color:var(--text);
-	display:flex;
-	justify-content:space-between;
-	a{
-		cursor:pointer;
-		user-select:none;
-		&:hover{
-			text-decoration:underline;
-		}
 	}
 }
