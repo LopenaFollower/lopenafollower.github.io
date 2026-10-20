@@ -183,9 +183,17 @@ const entries={
 		{
 			title:"UCLEM 2026: Remembering with Gratitude",pts:"+1 for participating.",
 			org:orgs[4],date:"September 22, 2026",time:"5:30PM – 7:00PM",
-			desc:"",
-			about:[],
-			reflection:[],
+			desc:"September is celebrated as University Christian Life Emphasis Month and so the Divinity School has organized a fellowship to celebrate.",
+			about:[
+				`This fellowship took on September 22, 2026 at the Luz Ausejo Hall from 5:30PM to 7:00PM. Where students will be assigned depends on the per-section grouping in their respective CHS classes. I was assigned to room 106.`,
+				`Our instructor introduced himself as a student from the Divinity School. Our first activity was an icebreaker to properly set the mood, it was a sequential game where we sing a song and perform actions relating to it. Each round a move maybe added, altered, or we sing at a faster pace. After the icebreaker, we go back to our seats, the instructors asks us on what our expectations for this event are and everyone got a turn to answer. Then we had a break where they provided bread and juice.`,
+				`We were then split in to groups of 5-6 people and given a jumbled word, for this minigame our goal was to spell as many words from the given letters. The most important word to be spelt was 'gratitude,' he then introduced to us and explained the theme for this month which is to remember with gratitude.`,
+				`At this point, we were told to get our bibles out to read two passages: 2 Kings 5:1-15 and Luke 17:11-19. These two passages share a common theme which is to be grateful and to praise the Lord. We were given various questions relating to each passage and had a discussion on them.`
+			],
+			reflection:[
+				`I have not been in a fellowship activity for a while, so this served as refreshing experience a reminder to worship.`,
+				`By participating in this fellowship, I can truly celebrate the Peace Month and UCLEM by connecting with others. I also get to discuss and converse with others about the passages given during the fellowship.`
+			],
 			photos:[
 				["IMG_20260922_1.jpg",400],
 				["IMG_20260922_2.jpg",400]
@@ -194,9 +202,16 @@ const entries={
 		{
 			title:"CHS Closing Worship Service & Class Fellowship",pts:"+2 for performing in a choir.",
 			org:"Alma Ruiz",date:"October 8, 2026",time:"2:30PM – 4:00PM",
-			desc:"",
-			about:[],
-			reflection:[],
+			desc:"To culminate our class in CHS, a closing worship service and fellowship has been arranged by our professor.",
+			about:[
+				`The event was done on our last CHS session which happened on October 8, 2026. This event is divided into two parts: The worship service and the fellowship.`,
+				`The first and solemn part is the closing worship service, each row was given a chance to select a specific psalm which is to be performed after each part. The first part is the opening prayer which was done by one of my classmates, then after so the selected group performs their psalm. The next part is the scripture reading followed by another group, the next part was a message to be presented by another classmate to formally acknowledge the celebration which then was followed by the next group to present. I was able to give spare coins that I had during the offertory. And the last part which is the most solemn, the closing prayer which we reflected upon before finally the last group performed. The group I was assigned to was the first to perform, we sang psalm 100 which was a song about praising the Lord. After the service concluded, we move on to the fellowship.`,
+				`The fellowship involved gather all the food we brough on to the table set at the center off the room. Then we settled down for the prayer before meal. Which we then proceeded to eat and converse with one another.`
+			],
+			reflection:[
+				`It is a fitting celebration especially after all the thing we have achieved as a class. This fellowship brings us closer together by bonding with each other while eating.`,
+				`I am able to appreciate the event and also reflected solemnly during times of prayer.`
+			],
 			photos:[
 				["IMG_20261008_1.jpg",225],
 				["IMG_20261008_2.jpg",225]
@@ -388,9 +403,16 @@ const entries={
 		{
 			title:"Legacy in Sound: 120 Years of Silliman University Symphonic Band",pts:"+1 for spectating.",
 			org:orgs[2],date:"October 2, 2026",time:"7:00PM – 9:00PM",
-			desc:"",
-			about:[],
-			reflection:[],
+			desc:"The Silliman University Marching Band celebrates it's 120th founding anniversary featuring returning band alumnis.",
+			about:[
+				`The Silliman University Marching Band celebrates it's 100th anniversary. The presented at the Luce Auditiorium on October 2, 2026, featuring Silliman Marching Band and twirlers as well as returning band alumnis. They played variety of musical pieces, mostly popular movie soundtracks, Filipino medley music, and other classics like Mama Mia by ABBA.`,
+				`The band played a series of songs. The first song that I recognized is 'In the Stone' by Earth, Wind & Fire. After that, they played various famous soundtracks from different movies such as The Lion King, How to Train Your Dragon, and Pirates of the Caribbean.`,
+				`The next set of songs are popular Filipino music that are usually older, Rock N' Roll music. An intermission number was presented by the Silliman University Band Twirlers, and continued with a few more songs. In the finale, they played Thank You for the Music by ABBA and called on all the alumni to get on stage to perform the Silliman Song.`
+			],
+			reflection:[
+				`Seeing the Silliman Band celebrate it's 120th anniversary and still perserving its legacy after that many years helps me appreciate the musicians who continue to represent Silliman and sustain its musical heritage for many more generations.`,
+				`I am glad to have witness this milestone and the overall performance, not only from the current band but also with the alumni who took their time to perform infront.`
+			],
 			photos:[
 				["IMG_20261002_1.jpg",225]
 			]
