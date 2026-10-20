@@ -18,7 +18,7 @@ const orgs=["the Office of Student Services","the Confederates Student Council",
 const entries={
 	classroom:[
 		{
-			title:"All-University Academic Convocation",
+			title:"All-University Academic Convocation",pts:"+1 for participating.",
 			org:orgs[0],date:"July 15, 2026",time:"9:00AM – 11:00AM",
 			desc:"An official convocation that marks the opening of the academic year, attended by faculty, staff, and students.",
 			about:[
@@ -36,7 +36,7 @@ const entries={
 			]
 		},
 		{
-			title:"CCS Freshmen, Shiftees, & Transferees Orientation",
+			title:"CCS Freshmen, Shiftees, & Transferees Orientation",pts:"+1 for participating.",
 			org:orgs[1],date:"July 22, 2026",time:"9:00AM – 12:00NN",
 			desc:"A orientation for freshmen, shiftees, and transferees into the College of Computer Studies.",
 			about:[
@@ -54,7 +54,7 @@ const entries={
 			]
 		},
 		{
-			title:"University-Wide Orientation",
+			title:"University-Wide Orientation",pts:"+1 for participating.",
 			org:orgs[0],date:"July 29, 2026",time:"9:00AM – 11:00AM",
 			desc:"Officially welcoming incoming freshmen and new students, introducing them to university life, policies, student services, and campus culture.",
 			about:[
@@ -72,7 +72,7 @@ const entries={
 			]
 		},
 		{
-			title:"DOST ISKOmpass Orientation",
+			title:"DOST ISKOmpass Orientation",pts:"+1 for participating.",
 			org:"DOST SA SU Government",date:"August 8, 2026",time:"3:00PM – 4:30PM",
 			desc:"A brief but informative online orientation for DOST Scholars attending Silliman University.",
 			about:[
@@ -90,7 +90,7 @@ const entries={
 			]
 		},
 		{
-			title:"One Big Tuyok Campus Tour",
+			title:"One Big Tuyok Campus Tour",pts:"+1 for participating.",
 			org:orgs[1],date:"August 19, 2026",time:"9:00AM – 11:00AM",
 			desc:"A campus tour that not only showcases the different buildings but also their backstory.",
 			about:[
@@ -108,7 +108,7 @@ const entries={
 			]
 		},
 		{
-			title:"Miller Solutions Development Inc. Industry Lecture and Workshop",
+			title:"Miller Solutions Development Inc. Industry Lecture and Workshop",pts:"+2 for participating and project making.",
 			org:orgs[1],date:"August 25, 2026",time:"9:00AM – 12:00NN, 2:00PM – 5:00PM",
 			desc:"A lecture and workshop with the purpose of educating students on the use of agents during programming.",
 			about:[
@@ -121,7 +121,7 @@ const entries={
 			],
 			reflection:[
 				`I was able to learn in depth the process of agentic programming and how it can be used to increase my productivity while working on different kinds of projects.`,
-				`As someone who usually abstains from using these types of automations, I was able to broaden my view on it by partaking in this lecture and workshop. Here I learned that human skill and input is still very important and essential to achieving something with quality.`
+				`As someone who usually abstains from using these types of automations, I was able to broaden my view on it by partaking in this lecture and workshop. Here I learned these agents can increase efficiency when working, but most importantly that human skill and input is still very important and essential to achieving something with quality.`
 			],
 			photos:[
 				["IMG_20260825_1.jpg",400],
@@ -129,7 +129,7 @@ const entries={
 			]
 		},
 		{
-			title:"Mental Health Caravan: Building Your Mental Health Toolkit",
+			title:"Mental Health Caravan: Building Your Mental Health Toolkit",pts:"+1 for participating.",
 			org:orgs[0],date:"September 16, 2026",time:"2:00PM – 4:00PM",
 			desc:"This lecture features a psychiatrist who discusses about mental health and ways to cope with it.",
 			about:[
@@ -147,7 +147,7 @@ const entries={
 	],
 	church:[
 		{
-			title:"CHS Chapel Worship Service",
+			title:"CHS Chapel Worship Service",pts:"+2 for performing in the choir.",
 			org:"Alma Ruiz",date:"July 12, 2026",time:"8:30AM – 10:00AM",
 			desc:"A Sunday worship service as a choir with the CHS class at the Chapel of the Evangel.",
 			about:[
@@ -164,7 +164,7 @@ const entries={
 			]
 		},
 		{
-			title:"CCS Opening Devotion",
+			title:"CCS Opening Devotion",pts:"+1 for participating.",
 			org:orgs[1],date:"August 24, 2026",time:"7:30AM – 8:30AM",
 			desc:"An opening devotion for the College of Computer Studies to formally start the Hibalag season with a solemn prayer.",
 			about:[
@@ -181,7 +181,7 @@ const entries={
 			]
 		},
 		{
-			title:"UCLEM 2026: Remembering with Gratitude",
+			title:"UCLEM 2026: Remembering with Gratitude",pts:"+1 for participating.",
 			org:orgs[4],date:"September 22, 2026",time:"5:30PM – 7:00PM",
 			desc:"",
 			about:[],
@@ -192,7 +192,7 @@ const entries={
 			]
 		},
 		{
-			title:"CHS Closing Worship Service & Class Fellowship",
+			title:"CHS Closing Worship Service & Class Fellowship",pts:"+2 for performing in a choir.",
 			org:"Alma Ruiz",date:"October 8, 2026",time:"2:30PM – 4:00PM",
 			desc:"",
 			about:[],
@@ -203,7 +203,7 @@ const entries={
 			]
 		},
 		{
-			title:"DCC Youth Friday Night Bible Study",
+			title:"DCC Youth Friday Night Bible Study",pts:"+2 for participating and engaging in the bible study.",
 			org:"Davin Erickson",date:"October 9, 2026",time:"7:30PM – 9:00PM",
 			desc:"A praise and worship service, and a bible study and discussion session at the Dumaguete Christian Church.",
 			about:[
@@ -224,9 +224,9 @@ const entries={
 	],
 	court:[
 		{
-			title:"CCS Sportsfest Pickleball",
+			title:"CCS Sportsfest Pickleball",pts:"+1 for spectating.",
 			org:orgs[1],date:"September 30, 2026",time:"8:30AM – 12:00NN",
-			desc:"",
+			desc:"The first set of games of the first day of the CCS Sportsfest.",
 			about:[],
 			reflection:[],
 			photos:[
@@ -234,9 +234,9 @@ const entries={
 			]
 		},
 		{
-			title:"CCS Sportsfest Badminton",
+			title:"CCS Sportsfest Badminton",pts:"+1 for spectating.",
 			org:orgs[1],date:"September 30, 2026",time:"8:30AM – 12:00NN",
-			desc:"",
+			desc:"The first set of games of the first day of the CCS Sportsfest.",
 			about:[],
 			reflection:[],
 			photos:[
@@ -244,12 +244,12 @@ const entries={
 			]
 		},
 		{
-			title:"CCS Sportsfest Chess",
+			title:"CCS Sportsfest Chess",pts:"+4 for being a player.",
 			org:orgs[1],date:"September 30, 2026",time:"3:00PM – 5:00PM",
 			desc:"Participating in a chess game as part of the CCS Sportsfest.",
 			about:[
 				`The chess games were held at one of the ATA Hall Rooms on August 30, 2026, call time at 2:30PM and officially started at 3:00PM.`,
-				`Initially I was apart of the players that were going to be matched, but due to a lack of players in my house pair, I ended up registering last minute. In the venue, there were two chess boards and so two matches were played at a time. Waiting for my match, I decided to inspect the on going matches since I neither play chess often nor know the more advances strategies. On my first match, I was up against someone who seemed to be an expert at the game, judging by the murmurs and commentary from the other matches. Although I lost, both parties were still able to show sportsmaship, and he did teach me a few techniques and explained why I lost.`
+				`Initially I was not planning to be a part of the players that were going to be matched, but due to a lack of players in my house pair, I ended up registering last minute. In the venue, there were two chess boards and so two matches were played at a time. Waiting for my match, I decided to inspect the on going matches since I neither play chess often nor know the more advances strategies. On my first match, I was up against someone who seemed to be an expert at the game, judging by the murmurs and commentary from the other matches. Although I lost, both parties were still able to show sportsmaship, and he did teach me a few techniques and explained why I lost.`
 			],
 			reflection:[
 				`I learned that it is important that you enjoy the game you are playing rather than just trying to win. I'm not saying this because I lost my game, that is not my point, my point is if you only put your enjoyment towards winning a game, then you are not really enjoying the game in itself. By accepting a loss, you can convert it to a learning experience rather than being sour about it.`,
@@ -261,9 +261,9 @@ const entries={
 			]
 		},
 		{
-			title:"CCS Sportsfest Basketball",
+			title:"CCS Sportsfest Basketball",pts:"+1 for spectating.",
 			org:orgs[1],date:"October 3, 2026",time:"2:30PM – 4:00PM",
-			desc:"",
+			desc:"The final games of the CCS Sportsfest.",
 			about:[],
 			reflection:[],
 			photos:[
@@ -271,9 +271,9 @@ const entries={
 			]
 		},
 		{
-			title:"CCS Sportsfest Volleyball",
+			title:"CCS Sportsfest Volleyball",pts:"+1 for spectating.",
 			org:orgs[1],date:"October 3, 2026",time:"2:30PM – 4:00PM",
-			desc:"",
+			desc:"The final games of the CCS Sportsfest.",
 			about:[],
 			reflection:[],
 			photos:[
@@ -284,7 +284,7 @@ const entries={
 	],
 	culture:[
 		{
-			title:"Resonance: 100 Years of Music with the Manila Symphony Orchestra",
+			title:"Resonance: 100 Years of Music with the Manila Symphony Orchestra",pts:"+1 for spectating.",
 			org:orgs[2],date:"June 26, 2026",time:"7:00PM – 9:00PM",
 			desc:"This cultural show features the Manila Symphony Orchestra in celebration of their 100th anniversary by presenting many pieces from multiple generations.",
 			about:[
@@ -302,7 +302,7 @@ const entries={
 			]
 		},
 		{
-			title:"Accumulation: Co. Erasga Dance",
+			title:"Accumulation: Co. Erasga Dance",pts:"+1 for spectating.",
 			org:orgs[2],date:"August 20, 2026",time:"7:00PM – 9:00PM",
 			desc:"A cultural show featuring members from the Co.ERASGA Dance which shows environmental destruction, pollution, and the consequences of human consumption through expressive body movements.",
 			about:[
@@ -318,7 +318,7 @@ const entries={
 			]
 		},
 		{
-			title:"Parada Sillimaniana",
+			title:"Parada Sillimaniana",pts:"+2 for being a banner bearer.",
 			org:"Silliman University",date:"August 27, 2026",time:"1:00PM – 6:00PM",
 			desc:"As a part of celebrating Silliman University's 125th Founders Day Anniversary, the whole campus came together bringing vibrant colors and lively dances through a parade.",
 			about:[
@@ -335,7 +335,7 @@ const entries={
 			]
 		},
 		{
-			title:"ROTC Inter-Company Speech Contest",
+			title:"ROTC Inter-Company Speech Contest",pts:"+1 for spectating.",
 			org:orgs[3],date:"September 5, 2026",time:"7:30AM – 10:30AM",
 			desc:"An annual event in the ROTC Unit where representatives from each company presents a speech regarding a certain given topic.",
 			about:[
@@ -352,7 +352,7 @@ const entries={
 			]
 		},
 		{
-			title:"Pilipino: Ang Pgka Mulat",
+			title:"Pilipino: Ang Pgka Mulat",pts:"+1 for spectating.",
 			org:"the SU Religion and Peace Studies Department",date:"September 18, 2026",time:"7:00PM – 9:00PM",
 			desc:"A cultural show presented by the Bagong ASIN band which reflects and appreciates Filipino culture and as an independent nation.",
 			about:[
@@ -369,7 +369,7 @@ const entries={
 			]
 		},
 		{
-			title:"Souvenirs: The Art of Song and Piano",
+			title:"Souvenirs: The Art of Song and Piano",pts:"+1 for spectating.",
 			org:orgs[2],date:"September 25, 2026",time:"7:00PM – 9:00PM",
 			desc:"A musical performance presented at the Luce Auditorium that feature vocalists and pianists who showcased Filipino music throughout the ages.",
 			about:[
@@ -386,7 +386,7 @@ const entries={
 			]
 		},
 		{
-			title:"Legacy in Sound: 120 Years of Silliman University Symphonic Band",
+			title:"Legacy in Sound: 120 Years of Silliman University Symphonic Band",pts:"+1 for spectating.",
 			org:orgs[2],date:"October 2, 2026",time:"7:00PM – 9:00PM",
 			desc:"",
 			about:[],
@@ -398,7 +398,7 @@ const entries={
 	],
 	community:[
 		{
-			title:"ROTC Nutri-Fit Walk 2026",
+			title:"ROTC Nutri-Fit Walk 2026",pts:"+2 for participating in the Nurti-Walk.",
 			org:orgs[3],date:"July 26, 2026",time:"4:30AM – 11:00AM",
 			desc:"In celebration of the Nutrition Month, the ROTC cadets are to join a Nutri-Walk to spread the message of better nutrition and healthier living.",
 			about:[
@@ -417,11 +417,18 @@ const entries={
 			]
 		},
 		{
-			title:"Virtual Fun Run/Ride for a Cause",
+			title:"Virtual Fun Run/Ride for a Cause",pts:"+3 for doing a fun run.",
 			org:orgs[3],date:"September 26, 2026",time:"9:00AM – 11:00AM",
-			desc:"",
-			about:[],
-			reflection:[],
+			desc:"Participating in a fun run/ride for a cause that is organized by the ROTC Unit along with the Redshield Fraternity.",
+			about:[
+				`The event was announced on September 26, 2026 and would be valid until October 3, 2026. This fun run/ride can be achieved any time around the specified date with the goal of running 10 kms total (which could be accumulated from up to 5 sessions) or by biking for 20 km. The run was to be submitted online and verified by an officer.`,
+				`When this announced to use during our ROTC meeting, me and a couple friends decided to do it after our training since we will be dismissing early that day. After planning on where we should do it, we went to the RTY to submit our registration form which had a fee that costed P250.`,
+				`We went to our planned location which was near the Macias building due to the main field being closed. We had to take a few stops during the run causing our pacing to slow down, but we persevered until we reach our goal of 10 km.`
+			],
+			reflection:[
+				`This was a fun activity to participate because not only is it an opportunity to run together with friends while also contributing to a charity that advocates for physical fitness.`,
+				`When it comes contributing for a cause like this, hopefully the feeling doesn't just end at the registration where you have given your amount, but also keep it all throughout the activity.`
+			],
 			photos:[
 				["IMG_20260926_1.jpg",225],
 				["IMG_20260926_2.jpg",666.66,"Strava result of the run."],
@@ -429,11 +436,17 @@ const entries={
 			]
 		},
 		{
-			title:"Sto. Niño Orphanage White Gift",
+			title:"Sto. Niño Orphanage White Gift",pts:"+3 for white gift making.",
 			org:"Alfie Arcelo",date:"October 7, 2026",time:"9:30AM – 12:00NN",
-			desc:"",
-			about:[],
-			reflection:[],
+			desc:"White gift making and wrapping for the children of the Sto. Niño Orphanage.",
+			about:[
+				`As a final output given to us by our GE10 professor, Ma'am Alfie Arcelo, on October 7, 2026 during our class period, we are task to purchase items as a group in order to provide for an orphanage in need. The instructions were given to us through an announcement.`,
+				`For my contribution to the white gift, I was able to purchase around 8+ bottles of Zonrox, and about 20+ sachets of Bear Brand powdered milk which we placed along with the materials from other groupmates into a box. We had to make sure everything fits properly as to not overflow or break the box. After that was done, we wrapped it with a gift wrapper and place a note from all of us on it.`
+			],
+			reflection:[
+				`I am thankful that I can contribute to a cause like this that is able to help and provide for the orphanage that really needs it.`,
+				`I take my time to realize that not everyone is always fortunate, and that they don't also have stay that way. Through this white gift making, I hope that more can be done in the future.`
+			],
 			photos:[
 				["IMG_20261007_1.jpg",225],
 				["IMG_20261007_2.jpg",225],
@@ -495,7 +508,7 @@ function pager(a,c,i,t){
 function j_entry(c,i){
 	const e=entries[c][i],f=$("entry_tpl").content.cloneNode(true);
 	slot(f,"title").textContent=`Journal Entry #${i+1}: ${e.title}`;
-	slot(f,"meta").textContent=`• Organized by ${e.org} • ${e.date} • ${e.time}`;
+	slot(f,"meta").innerText=`• Organized by ${e.org} • ${e.date} • ${e.time}\n${e.pts}`;
 	slot(f,"about").after(...paragraphs(e.about));
 	slot(f,"reflection").after(...paragraphs(e.reflection));
 	slot(f,"photos").append(...e.photos.flatMap((p,n)=>[photo(c,p,`${e.title}, photo ${n+1}`)]));
