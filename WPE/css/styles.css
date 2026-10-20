@@ -255,14 +255,16 @@ section{
 	.content-footer{
 		margin:16px 0 20px;
 		width:100%;padding:0 30px;
-		color:var(--text);
 		display:flex;
 		justify-content:space-between;
+		color:var(--text);
 		a{
 			cursor:pointer;
+			color:var(--text-muted);
 			user-select:none;
 			&:hover{
 				text-decoration:underline;
+				color:var(--text);
 			}
 		}
 	}

@@ -58,8 +58,8 @@ const entries={
 			org:orgs[0],date:"July 29, 2026",time:"9:00AM – 11:00AM",
 			desc:"Officially welcoming incoming freshmen and new students, introducing them to university life, policies, student services, and campus culture.",
 			about:[
-				`Many colleges were called on July 29, 2026 to assemble in the Luce Auditorium to have an orientation on how university life may be, the policies that the university abides by, and the nature and culture of being a sillimanian.`,
-				`The different building, their location, and their purposes were discussed during the orientation, they also introduced the different dormitories that college students can move in to incase they're not from the city. General rules were also laid out.`,
+				`Many colleges were called on July 29, 2026 to assemble in the Luce Auditorium to have an orientation on how university life may be, the policies that the university abides by, and the nature and culture of being a Sillimanian.`,
+				`The different building, their location, and their purposes were discussed during the orientation, they also introduced the different dormitories that college students can move in to in case they're not from the city. General rules were also laid out.`,
 				`Then the different services and commities were introduced to explain their roles and what they can do for the students.`
 			],
 			reflection:[
@@ -94,7 +94,7 @@ const entries={
 			org:orgs[1],date:"August 19, 2026",time:"9:00AM – 11:00AM",
 			desc:"A campus tour that not only showcases the different buildings but also their backstory.",
 			about:[
-				`On August 19, 2026, a number of students who were not able to attend the initial campus tour were gathered, accompanied by a campus ambassador to serve as our tour guide. To go around the campus and showcase the different buildings and discuss about their history.`,
+				`On August 19, 2026, a number of students who were not able to attend the initial campus tour were gathered, accompanied by a campus ambassador to serve as our tour guide. To go around the campus and showcase the different buildings and discuss their history.`,
 				`The students were gathered in front of the UCS building, and started with the Dr. James W. Chapman Science Complex which was noted to be the only lecture building with a tiered seating layout which gives it its unique 'butterfly like' appearance on the outside. Moving through the halls of the AH building where most of the GE subjects are held, the next stop is the Scheide Chapel which date back to around 1937 where it served as a Chapel for the nearby medical center (Now known as the Katipunan Hall). Then we slowly made our way to the Claire Isabel McGill Luce Auditorium, SU Gymnasium, the tree of life and death, Oriental Hall, and Villareal Hall where each building had their purpose and backstory told to us.`,
 				`We took a short break at the Silliman Cafeteria, and continued with the buildings proceeding to the Guy Hall and Silliman Hall.`,
 				`We concluded at the Horace B. Silliman Bust where we were told about a molding mistake causing an incorrect order of the folds of his suit.`
@@ -149,13 +149,13 @@ const entries={
 		{
 			title:"CHS Chapel Worship Service",
 			org:"Alma Ruiz",date:"July 12, 2026",time:"8:30AM – 10:00AM",
-			desc:"A choir sunday worship service with the CHS class at the Chapel of the Evangel.",
+			desc:"A Sunday worship service as a choir with the CHS class at the Chapel of the Evangel.",
 			about:[
 				`This event was done under our CHS professor, Alma Ruiz, on July 12, 2026, from 8:30AM to 10:00AM at the Chapel of the Evangel as a fulfillment of our task in the CHS Subject. At the call time of 8:30, we were given 30 minutes that serves at time to practice our selected song as a choir. The song that we performed was named "Siyahamba" which is an African worship song sung in Zulu. The time alloted for practice was used to arrange us based on our vocal ranges and to properly deliver the melody and lyrics of the song.`,
-				`After the practice at around 10:00AM, we were given a program flow to soon start the worship service. When it came to our part to perform the song, we were instructed to make a formation at the front to begin the performance. Lastly, the service is concluded with everyone shaking hands with one another.`
+				`After the practice at around 9:00AM, we were given a program flow to soon start the worship service. When it came to our part to perform the song, we were instructed to make a formation at the front to begin the performance. Lastly, the service is concluded with everyone shaking hands with one another.`
 			],
 			reflection:[
-				`This served as a new experience for me because of it being a protestant church service which is not the usual kind of service that I attend. By being involved in this service, I was able learn about protestant practices and how their sunday services usually go. I also did some reading about the worship song we performed, and found interesting information about its origins and such.`,
+				`This served as a new experience for me because of it being a Protestant church service which is not the usual kind of service that I attend. By being involved in this service, I was able to learn about Protestant practices and how their Sunday services usually go. I also did some reading about the worship song we performed, and found interesting information about its origins and such.`,
 				`Overall, it was a valuable experience which gave me another angle at how faith is expressed, and how it is able to connect the people participating in it.`
 			],
 			photos:[
@@ -166,13 +166,14 @@ const entries={
 		{
 			title:"CCS Opening Devotion",
 			org:orgs[1],date:"August 24, 2026",time:"7:30AM – 8:30AM",
-			desc:"An opening devotion for the College of Computer Studies to formally start the Hibalag season with solemn prayer.",
+			desc:"An opening devotion for the College of Computer Studies to formally start the Hibalag season with a solemn prayer.",
 			about:[
 				`It is August 24, 2026 and it is finally Hibalag week and so to formally start the week, our college held an opening devotion in the ATA Hall starting 7:30AM. After the greetings, there were singing of songs and a psalm reading, an invocation, scripture reading, and an offertory.`,
 				`The highlight of this event is during the reflection, where we reflect on the year's theme:"Remembering with Gratitude, Moving Forward with Hope." which captures our reason for this celebration and for this entire founders week.`
 			],
 			reflection:[
-				`Celebrating this year's Hibalag season,`
+				`Celebrating this year's Hibalag season, it is very appropriate to start the week with an opening devotion because it ensures that activities done during the week will be achieved with excellence, safe, and fruitful. It sets the first step to the right direction.`,
+				`I was able to enjoy the rest of the week knowing that we are all guided in the activities that we will participate in.`
 			],
 			photos:[
 				["IMG_20260824_1.jpg",400],
@@ -205,8 +206,16 @@ const entries={
 			title:"DCC Youth Friday Night Bible Study",
 			org:"Davin Erickson",date:"October 9, 2026",time:"7:30PM – 9:00PM",
 			desc:"A praise and worship service, and a bible study and discussion session at the Dumaguete Christian Church.",
-			about:[],
-			reflection:[],
+			about:[
+				`This event took place at the Dumaguete Christian Church (DCC) held by a fellow classmate, Davin Erickson, on the 9th of October, 2026. We were invited as guests to participate in the Friday night praise and workship then after, the youth bible study.`,
+				`For the first half of the night, the host let us introduce ourselves, then we had singing of worship songs. After about 3 songs, we moved on to scripture reading. We were told to group ourselves in to 2-3 people to read John 19:28-30 which talks about the final moments of Jesus on the cross. We reflected on the passage and had some discussion about it.`,
+				`For the second part, after we had finished our small group reflection, they flashed a few guide questions on a projector screen to be answered soon during the bible study. We were divided into groups of around 5 people to answer and discuss about the passage and maybe answer the guide questions as well. We had a long discussion reaching up until 9:30 I believe.`,
+				`Afterwards, they had offered us some ice cream which we accepted with gratitude.`
+			],
+			reflection:[
+				`This was a new experience to me, mainly because the people there are specifically Born Again Christians which had a different way of worshipping.`,
+				`I also learned many insights from all the discussions we had during the bible study with my fellow groupmates. Seeing their perspective in the subject, made me realize a diversity of faith.`
+			],
 			photos:[
 				["IMG_20261009_1.jpg",168.75],
 				["IMG_20261009_2.jpg",168.75]
@@ -237,9 +246,15 @@ const entries={
 		{
 			title:"CCS Sportsfest Chess",
 			org:orgs[1],date:"September 30, 2026",time:"3:00PM – 5:00PM",
-			desc:"",
-			about:[],
-			reflection:[],
+			desc:"Participating in a chess game as part of the CCS Sportsfest.",
+			about:[
+				`The chess games were held at one of the ATA Hall Rooms on August 30, 2026, call time at 2:30PM and officially started at 3:00PM.`,
+				`Initially I was apart of the players that were going to be matched, but due to a lack of players in my house pair, I ended up registering last minute. In the venue, there were two chess boards and so two matches were played at a time. Waiting for my match, I decided to inspect the on going matches since I neither play chess often nor know the more advances strategies. On my first match, I was up against someone who seemed to be an expert at the game, judging by the murmurs and commentary from the other matches. Although I lost, both parties were still able to show sportsmaship, and he did teach me a few techniques and explained why I lost.`
+			],
+			reflection:[
+				`I learned that it is important that you enjoy the game you are playing rather than just trying to win. I'm not saying this because I lost my game, that is not my point, my point is if you only put your enjoyment towards winning a game, then you are not really enjoying the game in itself. By accepting a loss, you can convert it to a learning experience rather than being sour about it.`,
+				`I was also able to observe good sportsmaship towards all the matches being played. It helps keep things respectful and orderly.`
+			],
 			photos:[
 				["IMG_20260930_3a.jpg",225,"Final board of first game, some pieces were moved though."],
 				["IMG_20260930_3b.jpg",400,"Attendance and matching."]
@@ -271,9 +286,15 @@ const entries={
 		{
 			title:"Resonance: 100 Years of Music with the Manila Symphony Orchestra",
 			org:orgs[2],date:"June 26, 2026",time:"7:00PM – 9:00PM",
-			desc:"",
-			about:[],
-			reflection:[],
+			desc:"This cultural show features the Manila Symphony Orchestra in celebration of their 100th anniversary by presenting many pieces from multiple generations.",
+			about:[
+				`The Manila Symphony Orchestra celebrates it's 100th anniversary by presenting at the Luce Auditiorium on June 26, 2026, featuring a variety of musical pieces, including Filipino music (known as OPM), classical compositions, and popular movie soundtracks.`,
+				`They first performed Cello Concerto in C-Major followed by Oboe Concerto in D-Major, then an intermission break. After the intermission, they performed pieces by Filipino composers and moved on to popular OPM songs. Then near the end, they performed composition from popular movies such as the Pirates of the Carribean and then a finale by playing pieces in tribute of specific people.`
+			],
+			reflection:[
+				`I am able to recognize the value of music as form of art and as a cultural heritage through the variety of pieces performed.`,
+				`Progressing through the show, you can see the different styles of music from each generation. And I find the importance in preserving them through these kinds of shows.`
+			],
 			photos:[
 				["IMG_20260626_1.jpg",225],
 				["IMG_20260626_2.jpg",400],
@@ -281,11 +302,17 @@ const entries={
 			]
 		},
 		{
-			title:"Accumulation: Co. Esgara Dance",
+			title:"Accumulation: Co. Erasga Dance",
 			org:orgs[2],date:"August 20, 2026",time:"7:00PM – 9:00PM",
-			desc:"",
-			about:[],
-			reflection:[],
+			desc:"A cultural show featuring members from the Co.ERASGA Dance which shows environmental destruction, pollution, and the consequences of human consumption through expressive body movements.",
+			about:[
+				`This show was held in the Luce Auditorium on August 20, 2026 at 7:00PM. A small background and discussion was given before the start of the show to spread awareness and clarify their theme that they will be presenting. At start of the show, the stage had different kinds of discarded material hanged at the back. While the dancer was moving around the stage, another artist slowly attached those materials to his body. The dancer expressed discomfort and struggle through movements because of the increasing amount of trash on him. With even more materials accumulating on him, his movement became slower and less lively and restricted until finally he collapses where only the trash is visible but not him.`,
+				`Other than the main dancer, there was also a composer who created live sound. Using his voice, percussion and other materials, he was able to replicate nature-like sounds which sets the atmosphere and creates a tension that accompanies the current state of the dancer.`
+			],
+			reflection:[
+				`This show displays a strong theme of environmental problems, pollution and climate change, spreading awareness to it and showing its affects to ecosystems by enacting being covered in waste which captures the struggles of animals. They were able communicate such strong messages through the combination of visuals, the expression in each movement, and the sounds being composed.`,
+				`I am reminded by this show to be mindful of my consumptions, reducing waste, and responsible with my actions.`
+			],
 			photos:[
 				["IMG_20260820_1.jpg",400]
 			]
@@ -293,9 +320,16 @@ const entries={
 		{
 			title:"Parada Sillimaniana",
 			org:"Silliman University",date:"August 27, 2026",time:"1:00PM – 6:00PM",
-			desc:"",
-			about:[],
-			reflection:[],
+			desc:"As a part of celebrating Silliman University's 125th Founders Day Anniversary, the whole campus came together bringing vibrant colors and lively dances through a parade.",
+			about:[
+				`The Parada Sillimaniana was held on August 27, 2026, started from 1:00PM and finished with a program until around 6:00PM in celebration Silliman University's founders week. Our float had a minecraft theme that featured the founders in their minecraft equivalent appearances.`,
+				`The route taken for our college started at the front of the CBA building, following the road until we turn right towards the Locsin Street then another right following the nation road. After a long walk along the national road, we take another right that leads to the Cimafranca Ballfield where all the colleges gather for a program and dance competition.`,
+				`Throughout the entire parade, I was in charged with carrying the college banner, waving and moving it up and down, and so I was ahead the rest being behind our float. We greeted people as we passed by them.`
+			],
+			reflection:[
+				`I celebrated my first founder's day with Silliman remembering its legacy through various events and especially this parade. Highlighting the milestone of 125 years serving as a school and university.`,
+				`As the bearer of the college banner, I endured having to keep high throughout the entire parade especially because of the strong winds at the time. But it is a worthy task as I am able to express gratitude towards the event.`
+			],
 			photos:[
 				["IMG_20260827_1.jpg",400]
 			]
@@ -303,9 +337,15 @@ const entries={
 		{
 			title:"ROTC Inter-Company Speech Contest",
 			org:orgs[3],date:"September 5, 2026",time:"7:30AM – 10:30AM",
-			desc:"",
-			about:[],
-			reflection:[],
+			desc:"An annual event in the ROTC Unit where representatives from each company presents a speech regarding a certain given topic.",
+			about:[
+				`This speech contest was held in the Luce Auditorium on September 5, 2026. This year's theme for the speech contest is "Rizalism at 75: Sustaining the Legacy, Inspiring the World" which showcases the modern Filipino identity and unity, and to combat historical disinformation.`,
+				`Each contestant was able to express and convey strong emotions through their delivery on why acknowleging the legacy of filipinos is vital to grow as a nation, relating our service and patriotism as an ROTC cadet to the nation.`
+			],
+			reflection:[
+				`Although I am only an audience of this contest, I was able to grasp the ideas that each contestant expressed. Through their strong and moving delivery which captures their dedication and respect towards the country and to fellow filipinos.`,
+				`I am also able to acknowledge the 75th year of knightship towards Rizal where his teachings, ideals, and humanitarian values are preserved through study and teachings.`
+			],
 			photos:[
 				["IMG_20260905_1.jpg",225],
 				["IMG_20260905_2.jpg",225]
@@ -314,9 +354,15 @@ const entries={
 		{
 			title:"Pilipino: Ang Pgka Mulat",
 			org:"the SU Religion and Peace Studies Department",date:"September 18, 2026",time:"7:00PM – 9:00PM",
-			desc:"",
-			about:[],
-			reflection:[],
+			desc:"A cultural show presented by the Bagong ASIN band which reflects and appreciates Filipino culture and as an independent nation.",
+			about:[
+				`The show was held in the Luce Auditorium on September 18, 2026 following their usual schedule. This features the Bagong ASIN band which is comprised with a new generation of members and one from the original band. As the program pretext states, they present their songs in a chronological order which creates a storytelling narative of how the Philippine was as a society through the years, from precolonialism up until the modern times. They shared a strong message that says that we should not let foreigners bury and rewrite our history and legacy.`,
+				`Apart from the electronic guitars, the band members showcased their talents by playing many native and indigenous instruments. Although I can't name them, one instrument stood out to me as it is a long piece of bamboo filled with water and is tilted to create the sound of flowing water.`
+			],
+			reflection:[
+				`Through the lyrics of the band's songs, I am able to understand the history of the Philippines. The way they emulate what it was like at the time through their instruments makes you connect further to the culture during that time period.`,
+				`Knowing the historical context of the Philippines, I see the importance of preserving our heritage and celebrating them as a Filipino citizen.`
+			],
 			photos:[
 				["IMG_20260918_1.jpg",400],
 				["IMG_20260918_2.jpg",400]
@@ -325,9 +371,16 @@ const entries={
 		{
 			title:"Souvenirs: The Art of Song and Piano",
 			org:orgs[2],date:"September 25, 2026",time:"7:00PM – 9:00PM",
-			desc:"",
-			about:[],
-			reflection:[],
+			desc:"A musical performance presented at the Luce Auditorium that feature vocalists and pianists who showcased Filipino music throughout the ages.",
+			about:[
+				`This show was held in the Luce Auditorium on September 25, 2026. In total, there were 10 perfomers, 5 of which are vocalists and the rest are pianist.`,
+				`For the first part, it was the vocalists who sang a classic Filipino song. Each vocalist took a turn going on to the stage and sang while a pianist accompanied them. Then the next wave came in duets. An intermission number played out while the vocalists changed in to a different attire.`,
+				`The second part showcases piano covers of Filipino compositions. The first piece involved 2 pianos being played, the next involved two people playing on a single piano, and in the next piece, another person went to same piano, this continued until there were five of them, but they didnt stop at just playing the piano, they also performed a comedic skit in where they would quarel around the piano as if theyre trying to take turns.`
+			],
+			reflection:[
+				`I was able to enjoy the show as it was entertaining, at the same time, I was also able to appreciate Filipino music.`,
+				`I also observed the skill it takes that the performers are executing, from the control of the voice of the vocalists to the mastery of the pianist who are playing and the same time doing humorous acts.`
+			],
 			photos:[
 				["IMG_20260925_1.jpg",225]
 			]
@@ -349,7 +402,7 @@ const entries={
 			org:orgs[3],date:"July 26, 2026",time:"4:30AM – 11:00AM",
 			desc:"In celebration of the Nutrition Month, the ROTC cadets are to join a Nutri-Walk to spread the message of better nutrition and healthier living.",
 			about:[
-				`This is event organized by the SU ROTC Unit to celebrate the nutrition month. The event was held on July 26, 2026 with a call time of 4:30AM near the Looc Bypass Road. The route goes from the crossing near Harold's Mansion, passing by Silliman University Medical Center towards the intersection, turning left and going forward until we reached the Philippine National Bank. From the bank, we turned left until we reached the boulevard, then turned right until we reached our destination at the Rizal Boulevard Extension.`,
+				`This is event organized by the SU ROTC Unit to celebrate the Nutrition Month. The event was held on July 26, 2026 with a call time of 4:30AM near the Looc Bypass Road. The route goes from the crossing near Harold's Mansion, passing by Silliman University Medical Center towards the intersection, turning left and going forward until we reached the Philippine National Bank. From the bank, we turned left until we reached the boulevard, then turned right until we reached our destination at the Rizal Boulevard Extension.`,
 				`During the walk we were instructed to follow formation corresponding our company, platoon, and squad which was to be maintained until reaching our destination. Once at the destination, we gathered near the stage there along with the other groups outside of Silliman that joined. On the venue, a program was held at the stage with themes relating to the Nutrition Month, as well as a zumba exercise where anyone near the venue can participate in. The venue also featured decorated booths where you could purchase healthy products from charity related organizations.`
 			],
 			reflection:[
@@ -452,7 +505,7 @@ function j_entry(c,i){
 	j_display("journal_entry");
 	preload(c,i);
 }
-const idle=requestIdleCallback||(fn=>setTimeout(fn,250));
+const idle=window.requestIdleCallback||(fn=>setTimeout(fn,250));
 function preload(c,i){
 	idle(()=>[i-1,i+1].forEach(k=>entries[c][k]?.photos.forEach(([fn])=>new Image().src=`images/${c}/${fn}`)));
 }
