@@ -242,8 +242,14 @@ const entries={
 			title:"CCS Sportsfest Pickleball",pts:"+1 for spectating.",
 			org:orgs[1],date:"September 30, 2026",time:"8:30AM – 12:00NN",
 			desc:"The first set of games of the first day of the CCS Sportsfest.",
-			about:[],
-			reflection:[],
+			about:[
+				`It is September 30, 2026, and it is the first day of CCS Sportsfest, in the morning there will be two games, Pickleball and Badminton. They will take place in the Silliman Gymnasium.`,
+				`This is the first of the two games that I am observing, which is the game of pickleball, I was not able to keep track with the points because even though I have played the sport before, I am still not familiar with the scoring system. So I mostly just watched rather than keeping track. In the first game though, based on the photo to the side, the players on the left won.`
+			],
+			reflection:[
+				`This has taken over many places and understandably so due to its new mechanics and how entertaining the sports is, especially when playing with friends. Either competitive or friendly manner, the importance is that entertains both parties and also serve as a form of exercise.`,
+				`Although I rarely play this sport, I am able to learn more about the game and how it plays out through watching these players.`
+			],
 			photos:[
 				["IMG_20260930_1.jpg",225]
 			]
@@ -252,8 +258,14 @@ const entries={
 			title:"CCS Sportsfest Badminton",pts:"+1 for spectating.",
 			org:orgs[1],date:"September 30, 2026",time:"8:30AM – 12:00NN",
 			desc:"The first set of games of the first day of the CCS Sportsfest.",
-			about:[],
-			reflection:[],
+			about:[
+				`It is September 30, 2026, and the first day of CCS Sportsfest. The first two sports scheduled in the morning will take place in the Silliman Gymnasium.`,
+				`This is second game that I am spectating. I find this badminton match to be very intense with all the fast movements going on. Unfortunately, the team I rooted for ended up not winning, although it was a very close game, the team on the right won overall after two change courts.`,
+			],
+			reflection:[
+				`Badminton was one of my childhood sports which I had played with my parents so this holds a special place in me. The game that observed that day was nothing like the ones I had mainly because I only ever played casually and so the game here was more competitive and intense.`,
+				`It is important that nothing is taken personally to keep the atmosphere light hearted even after an intense game like this.`
+			],
 			photos:[
 				["IMG_20260930_2.jpg",225]
 			]
@@ -279,8 +291,14 @@ const entries={
 			title:"CCS Sportsfest Basketball",pts:"+1 for spectating.",
 			org:orgs[1],date:"October 3, 2026",time:"2:30PM – 4:00PM",
 			desc:"The final games of the CCS Sportsfest.",
-			about:[],
-			reflection:[],
+			about:[
+				`Final day of CCS Sportsfest, these games took place at the Alaska Court beside the Cimafranca Ballfield during the afternoon at around 2:30PM, there will be two games, Basketball and Volleyball.`,
+				`Unlike the previous basketball games I've been to, this was less crowded, pressumably from the lower amount of overall CCS students. Observing the game, I notice a few players that stood out as being very good at shooting and so those were the few players that I directed my focus on.`
+			],
+			reflection:[
+				`Back in my previous school, basketball is the sport that had the most live audiences coming from different year levels, and so every game during that was more intense and loud. This was a culture shock to me, although I didnt know what I expected knowing that are significantly less people from the CCS.`,
+				`What I learned though, is that the level of entertainment you get from the sport does not come from the crowd and their hype, rather from your interest and focus in the game itself.`
+			],
 			photos:[
 				["IMG_20261003_1.jpg",225]
 			]
@@ -289,7 +307,10 @@ const entries={
 			title:"CCS Sportsfest Volleyball",pts:"+1 for spectating.",
 			org:orgs[1],date:"October 3, 2026",time:"2:30PM – 4:00PM",
 			desc:"The final games of the CCS Sportsfest.",
-			about:[],
+			about:[
+				`For the final day of CCS Sportsfest and the last game that I spectated, this took place at the Alaska Court beside the Cimafranca Ballfield during the afternoon at 2:30PM.`,
+				`Due to unforseen circumstances, they had to call other members from their house to fill in the missing players to start the game.`
+			],
 			reflection:[],
 			photos:[
 				["IMG_20261003_2a.jpg",225],
