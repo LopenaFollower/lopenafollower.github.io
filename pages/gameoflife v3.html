@@ -817,7 +817,7 @@ useWrap.oninput=e=>{
 stepBtn.onclick=()=>{
 	if(!device)return;
 	const encoder=device.createCommandEncoder();
-	encodeCompute(encoder,parseInt(gps));
+	encodeCompute(encoder,1);
 	gridChanged();
 	if(!benchmarking)updateTracking();
 	device.queue.submit([encoder.finish()]);
